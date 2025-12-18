@@ -1,1 +1,47 @@
-/* You can add global styles to this file, and also import other style files */
+
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+body {
+  color-scheme: light;
+
+   background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+
+  margin: 0;
+}
+html, body {
+  background: #f7f7f7;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+}
+
+.card, .card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Aplicar estilo Filled (preenchido) por padrão nos ícones */
+.material-symbols-outlined, .material-icons, mat-icon {
+  font-variation-settings:
+    'FILL' 1,  /* 🎯 1 = Ícone Preenchido (Filled); 0 = Ícone Contornado (Outlined) */
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

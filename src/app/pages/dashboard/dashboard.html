@@ -1,0 +1,259 @@
+<div class="layout">
+  <div class="content content-adjustable">
+    <div class="content">
+      <div class="header">
+        <div>
+          <h1>
+            <mat-icon>dashboard</mat-icon>
+            Dashboard
+          </h1>
+          <p class="subtitle">Visão geral do seu negócio</p>
+        </div>
+      </div>
+
+      <!-- CARDS SUPERIORES -->
+      <div class="cards">
+        <div class="card green">
+          <div class="info">
+            <span>Vendas Hoje</span>
+            <strong>{{ todayPaymentsTotal() | currency:'BRL' }}</strong>
+            <small>Pagamentos hoje</small>
+          </div>
+          <mat-icon class="icon">today</mat-icon>
+        </div>
+
+        <div class="card blue">
+          <div class="info">
+            <span>Vendas do Mês</span>
+            <strong>{{ monthSalesTotal() | currency:'BRL' }}</strong>
+            <small>{{ monthSalesCount() }} vendas</small>
+          </div>
+          <mat-icon class="icon">calendar_month</mat-icon>
+        </div>
+
+        <div class="card purple" (click)="refreshProductsStats()" style="cursor: pointer;">
+          <div class="info">
+            <span>Produtos Cadastrados</span>
+            @if (loadingProducts()) {
+              <strong>
+                <mat-icon class="loading-spinner-mini">refresh</mat-icon>
+              </strong>
+            } @else {
+              <strong>{{ totalProducts() }}</strong>
+            }
+            @if (loadingProducts()) {
+              <small>Atualizando...</small>
+            } @else {
+              <small>Valor: {{ totalProductsValue() | currency:'BRL' }}</small>
+            }
+          </div>
+          <mat-icon class="icon">inventory_2</mat-icon>
+        </div>
+
+        <div class="card orange">
+          <div class="info">
+            <span>Baixo Estoque</span>
+            <strong>{{ lowStockCount() }}</strong>
+            <small>Produtos</small>
+          </div>
+          <mat-icon class="icon">warning</mat-icon>
+        </div>
+      </div>
+
+      <!-- SEÇÕES INFERIORES -->
+      <div class="dashboard-sections">
+
+        <!-- ÚLTIMAS VENDAS -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <mat-icon>receipt_long</mat-icon>
+              Últimas Vendas do Dia
+            </h3>
+            <button class="refresh-btn" (click)="refreshTodaySales()" matTooltip="Atualizar lista">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+
+          <div class="section-content">
+            <!-- LOADING -->
+            @if (loadingToday()) {
+              <div class="loading-state">
+                <mat-icon class="loading-spinner">refresh</mat-icon>
+                Carregando vendas...
+              </div>
+            }
+
+            <!-- EMPTY -->
+            @else if (!loadingToday() && todaySales().length === 0) {
+              <div class="empty-state">
+                <mat-icon>history_toggle_off</mat-icon>
+                <p>Nenhuma venda realizada hoje</p>
+                <small>As vendas aparecerão aqui assim que forem feitas</small>
+              </div>
+            }
+
+            <!-- TABELA -->
+            <!-- TABELA CORRIGIDA -->
+@else if (!loadingToday() && todaySales().length > 0) {
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table class="sales-table">
+        <thead>
+          <tr>
+            <th class="col-id">
+              <mat-icon>tag</mat-icon>
+              ID
+            </th>
+            <th class="col-date">
+              <mat-icon>schedule</mat-icon>
+              Horário
+            </th>
+            <th class="col-customer">
+              <mat-icon>person</mat-icon>
+              Cliente
+            </th>
+            <th class="col-total">
+              <mat-icon>payments</mat-icon>
+              Total
+            </th>
+            <th class="col-status">
+              <mat-icon>circle</mat-icon>
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (sale of todaySales(); track sale.id) {
+            <tr [class.paid]="getNormalizedStatus(sale.saleStatus) === 'paid'" 
+                [class.pending]="getNormalizedStatus(sale.saleStatus) === 'pending'"
+                [class.cancelled]="getNormalizedStatus(sale.saleStatus) === 'cancelled'">
+              <td class="sale-id">
+                <strong>#{{ sale.id }}</strong>
+              </td>
+              <td class="sale-date">
+                {{ sale.dateSale | date:'HH:mm' }}
+              </td>
+              <td class="sale-customer">
+                <div class="customer-info">
+                  <strong>{{ sale.customerName }}</strong>
+                  <small class="phone">{{ sale.customerPhone }}</small>
+                </div>
+              </td>
+              <td class="sale-total">
+                <strong>{{ sale.total | currency:'BRL' }}</strong>
+              </td>
+              <td class="sale-status">
+                <span [class]="'status-tag ' + getNormalizedStatus(sale.saleStatus)">
+                  <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
+                  {{ getStatusText(sale.saleStatus) }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+          </div>
+        </div>
+
+        <!-- ESTOQUE BAIXO -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>
+              <mat-icon>inventory</mat-icon>
+              Estoque Baixo
+            </h3>
+            <button 
+              class="refresh-btn" 
+              (click)="refreshLowStock()"
+              matTooltip="Atualizar estoque"
+              [disabled]="loadingLowStock()">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+
+          <div class="section-content">
+            <!-- LOADING -->
+            @if (loadingLowStock()) {
+              <div class="loading-state">
+                <mat-icon class="loading-spinner">refresh</mat-icon>
+                Carregando estoque...
+              </div>
+            }
+
+            <!-- EMPTY -->
+            @else if (!loadingLowStock() && lowStockProducts().length === 0) {
+              <div class="empty-state">
+                <mat-icon>check_circle</mat-icon>
+                <p>Todos os produtos com estoque adequado</p>
+                <small>Nenhum produto abaixo do estoque mínimo</small>
+              </div>
+            }
+
+            <!-- TABELA -->
+            @else if (!loadingLowStock() && lowStockProducts().length > 0) {
+              <div class="table-container">
+                <div class="table-wrapper">
+                  <table class="sales-table">
+                    <thead>
+                      <tr>
+                        <th class="col-id">
+                          <mat-icon>tag</mat-icon>
+                          ID
+                        </th>
+                        <th class="col-product">
+                          <mat-icon>inventory_2</mat-icon>
+                          Produto
+                        </th>
+                        <th class="col-stock">
+                          <mat-icon>warehouse</mat-icon>
+                          Estoque
+                        </th>
+                        <th class="col-price">
+                          <mat-icon>attach_money</mat-icon>
+                          Preço
+                        </th>
+                        <th class="col-status">
+                          <mat-icon>circle</mat-icon>
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (p of lowStockProducts(); track p.id) {
+                        <tr class="low-stock">
+                          <td class="product-id">
+                            <strong>#{{ p.id }}</strong>
+                          </td>
+                          <td class="product-name">
+                            <strong>{{ p.name }}</strong>
+                          </td>
+                          <td class="product-stock">
+                            <span class="stock-badge">{{ p.stockQty }}</span>
+                          </td>
+                          <td class="product-price">
+                            <strong>{{ p.price | currency:'BRL' }}</strong>
+                          </td>
+                          <td class="product-status">
+                            <span class="status-tag low">
+                              <mat-icon class="status-icon">warning</mat-icon>
+                              Baixo Estoque
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

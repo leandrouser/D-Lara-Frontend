@@ -1,0 +1,48 @@
+/* payment.scss */
+.cards {
+  /* Garante que o grid use o estilo global do app.scss */
+  display: grid;
+  gap: 20px;
+}
+
+.card {
+  cursor: pointer;
+  position: relative;
+  
+  // Estilo para o texto interno
+  strong {
+    color: #333;
+    display: block;
+    font-size: 1.2rem;
+  }
+
+  span {
+    color: #888;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+  }
+
+  .edit-hint {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    opacity: 0.2;
+    color: #000;
+  }
+
+  &:hover .edit-hint {
+    opacity: 1;
+  }
+
+  .form-grid {
+  min-width: 350px;
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+mat-dialog-actions {
+  padding-bottom: 1.5rem !important;
+}
+}

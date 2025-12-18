@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Alterar' : 'Cadastrar' }} Método</h2>
+
+<mat-dialog-content>
+  <div class="form-grid" style="display: flex; flex-direction: column; gap: 1rem; padding-top: 10px;">
+    
+    <mat-form-field appearance="outline">
+      <mat-label>Nome para exibição</mat-label>
+      <input matInput [(ngModel)]="method.displayName" placeholder="Ex: Cartão de Crédito" required>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Código</mat-label>
+      <input matInput [(ngModel)]="method.code" [disabled]="isEdit" placeholder="Ex: CARD_V_1">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descrição (opcional)</mat-label>
+      <textarea matInput [(ngModel)]="method.description"></textarea>
+    </mat-form-field>
+
+    <div style="display: flex; gap: 20px;">
+      <mat-checkbox [(ngModel)]="method.active" color="primary">Ativo</mat-checkbox>
+      <mat-checkbox [(ngModel)]="method.allowsChange" color="primary">Permite Troco</mat-checkbox>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">CANCELAR</button>
+  <button mat-raised-button color="primary" [disabled]="!method.displayName" (click)="onSave()">
+    {{ isEdit ? 'SALVAR ALTERAÇÕES' : 'CRIAR' }}
+  </button>
+</mat-dialog-actions>

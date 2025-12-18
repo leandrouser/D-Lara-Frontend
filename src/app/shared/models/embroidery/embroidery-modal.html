@@ -1,0 +1,102 @@
+<h2 mat-dialog-title>Novo Pedido de Bordado</h2>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <mat-dialog-content>
+    
+   <div class="customer-select-group">
+    <div class="customer-select-wrapper">
+        <mat-form-field appearance="outline" class="full-width search-input-field">
+            <mat-label>Buscar Cliente</mat-label>
+            <input matInput 
+                   type="text" 
+                   (keyup)="onCustomerSearchInput($event)" 
+                   [value]="customerSearchTerm()"
+                   placeholder="Nome, Telefone ou ID">
+            <mat-icon matSuffix *ngIf="isSearchingCustomer()" class="loading-spinner">autorenew</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width select-field">
+            <mat-label>Selecionar Cliente</mat-label>
+            <mat-select formControlName="customerId" required>
+                <mat-option *ngIf="customerSearchResults().length === 0" disabled>
+                    Nenhum cliente encontrado.
+                </mat-option>
+                <mat-option *ngFor="let customer of customerSearchResults()" [value]="customer.id">
+                    {{ customer.name }} (ID: {{ customer.id }})
+                </mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.controls['customerId'].hasError('required')">
+                O cliente é obrigatório.
+            </mat-error>
+        </mat-form-field>
+    </div>
+
+    <button mat-flat-button color="accent" type="button" (click)="openCustomerModal()" class="add-customer-btn">
+        <mat-icon>person_add</mat-icon>
+        Novo
+    </button>
+</div>
+    
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descrição do Bordado</mat-label>
+      <textarea matInput formControlName="description" rows="3" required></textarea>
+      <mat-error *ngIf="form.controls['description'].hasError('required')">
+        A descrição é obrigatória.
+      </mat-error>
+    </mat-form-field>
+
+    <div class="row">
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Preço</mat-label>
+          <input matInput type="number" formControlName="price" required min="0.01">
+          <mat-icon matSuffix>attach_money</mat-icon>
+          <mat-error *ngIf="form.controls['price'].hasError('required')">O preço é obrigatório.</mat-error>
+          <mat-error *ngIf="form.controls['price'].hasError('min')">O valor deve ser positivo.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Data de Entrega</mat-label>
+          <input matInput [matDatepicker]="picker" formControlName="deliveryDate">
+          <mat-hint>Opcional</mat-hint>
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+    </div>
+
+    <div class="file-upload-container">
+      <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;">
+      
+      <button mat-stroked-button type="button" (click)="fileInput.click()">
+        <mat-icon>attach_file</mat-icon>
+        {{ selectedFile ? selectedFile.name : 'Anexar Arquivo (.dst, .emb, etc.)' }}
+      </button>
+
+      <div *ngIf="selectedFile" class="file-info">
+        <span>{{ selectedFile.name }} ({{ (selectedFile.size / 1024 / 1024) | number:'1.0-2' }} MB)</span>
+        <button mat-icon-button type="button" (click)="selectedFile = null; fileInput.value = '';">
+          <mat-icon color="warn">close</mat-icon>
+        </button>
+      </div>
+    </div>
+    
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+    <button 
+        mat-raised-button 
+        color="primary" 
+        type="submit" 
+        [disabled]="form.invalid || loading">
+        <mat-icon *ngIf="!loading">save</mat-icon>
+        <mat-icon *ngIf="loading" class="loading-spinner">autorenew</mat-icon>
+        {{ loading ? 'Salvando...' : 'Salvar Bordado' }}
+    </button>
+  </mat-dialog-actions>
+</form>
+
+<customer-modal
+  [isOpen]="isCustomerModalOpen()"
+  (save)="saveNewCustomer($event)"
+  (close)="closeCustomerModal()"
+></customer-modal>

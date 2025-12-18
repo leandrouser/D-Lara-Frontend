@@ -1,0 +1,139 @@
+<div class="products-container">
+  
+  <div class="page-header">
+    <h1>
+      <mat-icon>inventory_2</mat-icon>
+      Gerenciamento de Bordados
+    </h1>
+    <p class="subtitle">Gerencie os pedidos de bordado, clientes e arquivos digitais.</p>
+  </div>
+  
+  <div class="search-filters">
+    
+    <div class="search-box">
+      <div class="input-box">
+        <mat-icon>search</mat-icon>
+        <input 
+          type="text" 
+          placeholder="Buscar bordado por {{ getSearchLabel(searchField()) }}" 
+          [ngModel]="searchText()" 
+          (ngModelChange)="searchText.set($event); onSearchChange()">
+      </div>
+    </div>
+    
+    <div class="filter-buttons">
+      <button 
+        *ngFor="let field of searchFields"
+        [class.active]="searchField() === field" 
+        (click)="searchField.set(field); onSearchChange()">
+        {{ getSearchLabel(field) }}
+      </button>
+    </div>
+
+    <div class="new-product-btn">
+      <button (click)="openCreateDialog()">
+        <mat-icon>add</mat-icon>
+        Novo Bordado
+      </button>
+    </div>
+  </div>
+  
+  <div *ngIf="loading()" class="search-loading">
+    <mat-icon class="loading-spinner">autorenew</mat-icon>
+    Carregando bordados...
+  </div>
+
+  <div *ngIf="!loading() && embroideries().length === 0" class="search-info">
+    <mat-icon>info</mat-icon>
+    Nenhum bordado encontrado com os critérios atuais.
+  </div>
+
+  <div *ngIf="!loading() && embroideries().length > 0" class="table-container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th class="col-customer">Cliente</th>
+            <th class="col-description">Descrição</th>
+            <th class="col-price">Preço</th>
+            <th class="col-filename">Arquivo</th>
+            <th class="col-delivery">Entrega</th>
+            <th class="col-created">Criado Em</th>
+            <th class="col-actions center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+    <tr *ngFor="let item of embroideries()">
+        <td data-label="ID">{{ item.id }}</td>
+        <td class="product-name" data-label="Cliente" title="{{ item.customerName }} (ID: {{ item.customerId }})">
+            {{ item.customerName }}
+            <small class="barcode">(ID: {{ item.customerId }})</small>
+        </td>
+        <td class="product-description" data-label="Descrição">{{ item.description }}</td>
+        <td class="price" data-label="Preço">{{ formatCurrency(item.price) }}</td>
+        <td data-label="Arquivo">
+            <span *ngIf="item.fileName" class="tag active">
+                <mat-icon>attach_file</mat-icon>
+                {{ item.fileName }}
+            </span>
+            <span *ngIf="!item.fileName" class="tag inactive">
+                <mat-icon>close</mat-icon>
+                N/A
+            </span>
+        </td>
+        <td data-label="Entrega">{{ formatDate(item.deliveryDate) }}</td>
+        <td data-label="Criado Em">{{ formatDate(item.createdAt) }}</td>
+        
+        <td class="actions-col center">
+            <button class="mini-btn" (click)="edit(item)">
+                <mat-icon>edit</mat-icon>
+                Editar
+            </button>
+            <button class="mini-btn danger" (click)="delete(item.id)">
+                <mat-icon>delete</mat-icon>
+                Excluir
+            </button>
+        </td>
+    </tr>
+</tbody>
+      </table>
+    </div>
+    
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Mostrando {{ embroideries().length }} de {{ totalEmbroideryCount() }} bordados.
+      </div>
+
+      <div class="pagination-controls">
+        <div class="items-per-page">
+          <span>Itens por página:</span>
+          <select [ngModel]="pageSize()" 
+          #pageSizeSelect (change)="onPageSizeChange(pageSizeSelect.value)">
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+
+        <div class="pagination-buttons">
+          <button 
+            class="pagination-btn" 
+            [disabled]="currentPage() === 0" 
+            (click)="goToPage(currentPage() - 1)">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          
+          <span class="pagination-ellipsis">Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
+
+          <button 
+            class="pagination-btn" 
+            [disabled]="currentPage() >= totalPages() - 1 || totalPages() === 0" 
+            (click)="goToPage(currentPage() + 1)">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

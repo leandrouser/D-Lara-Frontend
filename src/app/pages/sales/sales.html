@@ -1,0 +1,289 @@
+<div class="layout">
+  <div class="content content-adjustable">
+    <div class="content">
+      <div class="header">
+        <div>
+          <h1>
+            <mat-icon>history</mat-icon>
+            Histórico de Vendas
+          </h1>
+          <p class="subtitle">Visualize e gerencie todas as vendas realizadas</p>
+        </div>
+      </div>
+
+      <!-- Cards com dados da API - CORRIGIDO -->
+      <!-- Cards com dados da API - LAYOUT RESPONSIVO -->
+<div class="cards-container">
+  <div class="cards-grid">
+    <div class="card green">
+      <div class="info">
+        <span>Total em Vendas</span>
+        <strong>{{ formatCurrency(salesStats().totalAmount) }}</strong>
+        <small>{{ salesStats().totalSales }} vendas</small>
+      </div>
+      <mat-icon class="icon">payments</mat-icon>
+    </div>
+
+    <div class="card blue">
+      <div class="info">
+        <span>Vendas Hoje</span>
+        <strong>{{ salesStats().todaySales }}</strong>
+        <small>{{ formatCurrency(salesStats().todayAmount) }}</small>
+      </div>
+      <mat-icon class="icon">today</mat-icon>
+    </div>
+
+    <div class="card purple">
+      <div class="info">
+        <span>Vendas Pagas</span>
+        <strong>{{ salesStats().paidSales }}</strong>
+        <small>Vendas finalizadas</small>
+      </div>
+      <mat-icon class="icon">check_circle</mat-icon>
+    </div>
+
+    <!-- NOVO CARD DE VENDAS PENDENTES -->
+    <div class="card red">
+      <div class="info">
+        <span>Vendas Pendentes</span>
+        <strong>{{ salesStats().pendingSales }}</strong>
+        <small>{{ formatCurrency(salesStats().pendingAmount) }}</small>
+      </div>
+      <mat-icon class="icon">schedule</mat-icon>
+    </div>
+
+    <div class="card orange">
+      <div class="info">
+        <span>Ticket Médio</span>
+        <strong>{{ formatCurrency(getAverageTicket()) }}</strong>
+        <small>Por venda</small>
+      </div>
+      <mat-icon class="icon">trending_up</mat-icon>
+    </div>
+  </div>
+</div>
+
+      <div class="filter-box">
+        <div class="search-box">
+          <div class="input-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              placeholder="Buscar por ID, cliente ou produto..."
+              [value]="search()"
+              (input)="search.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="filter-buttons">
+          <button 
+            [class.active]="statusFilter() === 'all'"
+            (click)="setFilter('all')">
+            <mat-icon>apps</mat-icon>
+            Todos ({{ salesStats().totalSales }})
+          </button>
+          <button 
+            [class.active]="statusFilter() === 'paid'"
+            (click)="setFilter('paid')">
+            <mat-icon>check_circle</mat-icon>
+            Pagas ({{ salesStats().paidSales }})
+          </button>
+          <button 
+            [class.active]="statusFilter() === 'pending'"
+            (click)="setFilter('pending')">
+            <mat-icon>schedule</mat-icon>
+            Pendentes ({{ salesStats().pendingSales }})
+          </button>
+          <button 
+            [class.active]="statusFilter() === 'cancelled'"
+            (click)="setFilter('cancelled')">
+            <mat-icon>cancel</mat-icon>
+            Canceladas ({{ salesStats().cancelledSales }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Estado de erro -->
+      @if (error()) {
+        <div class="error-state">
+          <div class="error-message">
+            <mat-icon>warning</mat-icon>
+            <span>{{ error() }}</span>
+            <button class="btn-retry" (click)="retryLoadSales()">
+              <mat-icon>refresh</mat-icon>
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      }
+
+<!-- CONTROLES DE PAGINAÇÃO INFERIOR -->
+<div class="pagination-controls bottom">
+  <div class="pagination-info">
+    <span>
+      Mostrando {{ paginationInfo().start }} - {{ paginationInfo().end }} 
+      de {{ paginationInfo().total }} registros
+    </span>
+  </div>
+  
+  <div class="pagination-actions">
+    <div class="pagination-buttons">
+      <button 
+        class="pagination-btn" 
+        (click)="prevPage()"
+        [disabled]="currentPage() === 1">
+        <mat-icon>chevron_left</mat-icon>
+        <span class="text">Anterior</span>
+      </button>
+
+      <div class="page-numbers">
+        @for (page of getPageNumbers(); track $index) {
+          @if (page === '...') {
+            <span class="page-ellipsis">...</span>
+          } @else {
+            <button 
+              class="page-number"
+              [class.active]="currentPage() === page"
+              (click)="goToPage($any(page))">
+              {{ page }}
+            </button>
+          }
+        }
+      </div>
+
+      <button 
+        class="pagination-btn" 
+        (click)="nextPage()"
+        [disabled]="currentPage() === totalPages()">
+        <span class="text">Próxima</span>
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+        <!-- TABELA ATUALIZADA -->
+      <div class="table-container">
+        <div class="table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th class="col-id">
+                  <mat-icon>tag</mat-icon>
+                  ID
+                </th>
+                <th class="col-date">
+                  <mat-icon>calendar_today</mat-icon>
+                  Data
+                </th>
+                <th class="col-customer">
+                  <mat-icon>person</mat-icon>
+                  Cliente
+                </th>
+                <th class="col-phone">
+                  <mat-icon>phone</mat-icon>
+                  Telefone
+                </th>
+                <th class="col-quantity">
+                  <mat-icon>format_list_numbered</mat-icon>
+                  Qtd Itens
+                </th>
+                <th class="col-subtotal">
+                  <mat-icon>attach_money</mat-icon>
+                  Subtotal
+                </th>
+                <th class="col-discount">
+                  <mat-icon>local_offer</mat-icon>
+                  Desconto
+                </th>
+                <th class="col-total">
+                  <mat-icon>payments</mat-icon>
+                  Total
+                </th>
+                <th class="col-status">
+                  <mat-icon>circle</mat-icon>
+                  Status
+                </th>
+                <th class="col-actions center">
+                  <mat-icon>settings</mat-icon>
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (isLoading()) {
+                <tr>
+                  <td colspan="10" class="loading">
+                    <mat-icon class="loading-spinner">refresh</mat-icon>
+                    Carregando vendas...
+                  </td>
+                </tr>
+              } @else if (filteredSales().length === 0 && !error()) {
+                <tr>
+                  <td colspan="10" class="empty">
+                    <mat-icon>search_off</mat-icon>
+                    @if (search() || statusFilter() !== 'all') {
+                      Nenhuma venda encontrada com os filtros aplicados
+                    } @else {
+                      Nenhuma venda cadastrada
+                    }
+                  </td>
+                </tr>
+              } @else if (!error()) {
+                @for (sale of filteredSales(); track sale.id) {
+                  <tr [class.paid]="sale.saleStatus === 'PAID'" 
+                      [class.pending]="sale.saleStatus === 'PENDING'"
+                      [class.cancelled]="sale.saleStatus === 'CANCELLED'">
+                    <td class="sale-id">
+                      <strong>#{{ sale.id }}</strong>
+                    </td>
+                    <td class="sale-date">
+                      {{ formatDate(sale.dateSale) }}
+                    </td>
+                    <td class="sale-customer">
+                      <div class="customer-info">
+                        <strong>{{ getCustomerDisplayName(sale) }}</strong>
+                      </div>
+                    </td>
+                    <td class="sale-phone">
+                      {{ getCustomerPhone(sale) }}
+                    </td>
+                    <td class="sale-quantity">
+                      <span class="quantity-badge">{{ getTotalItems(sale.items) }}</span>
+                    </td>
+                    <td class="sale-subtotal">
+                      {{ formatCurrency(sale.subtotal) }}
+                    </td>
+                    <td class="sale-discount">
+                      {{ formatCurrency(sale.discount) }}
+                    </td>
+                    <td class="sale-total">
+                      <strong>{{ formatCurrency(sale.total) }}</strong>
+                    </td>
+                    <td class="sale-status">
+                      <span [class]="'status-tag ' + getStatusClass(sale.saleStatus)">
+                        <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
+                        {{ getStatusText(sale.saleStatus) }}
+                      </span>
+                    </td>
+                    <td class="sale-actions">
+                      <button 
+                        class="mini-btn view-btn" 
+                        title="Visualizar detalhes"
+                        (click)="viewSaleDetails(sale)">
+                        <mat-icon>visibility</mat-icon>
+                        Detalhes
+                      </button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

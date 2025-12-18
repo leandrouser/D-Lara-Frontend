@@ -1,0 +1,641 @@
+/* =========================================
+   LAYOUT BASE (MESMO ESTILO DO PRODUCT)
+   ========================================= */
+.products-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  animation: fadein .3s ease-in-out;
+
+  @media (max-width: 768px) {
+    padding: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px;
+  }
+}
+
+/* =========================================
+   TITULOS
+   ========================================= */
+.page-header {
+  margin-bottom: 25px;
+
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin-bottom: -5px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    @media (max-width: 768px) {
+      font-size: 28px;
+      gap: 8px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 24px;
+    }
+  }
+
+  .subtitle {
+    color: #666;
+    margin-bottom: 0;
+
+    @media (max-width: 768px) {
+      font-size: 14px;
+    }
+  }
+}
+
+/* =========================================
+   CARDS — MESMO LAYOUT DOS PRODUTOS
+   ========================================= */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  padding: 1.25rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: currentColor;
+    opacity: 0.3;
+  }
+
+  .info {
+    z-index: 2;
+    position: relative;
+
+    span {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
+      opacity: 0.9;
+    }
+
+    strong {
+      display: block;
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.125rem;
+    }
+
+    small {
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+  }
+
+  .icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    opacity: 0.8;
+    z-index: 2;
+    position: relative;
+  }
+}
+
+/* 🎨 CORES PASTEL - MESMAS DO PRODUCT */
+.card.blue {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+}
+
+.card.green {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+}
+
+.card.orange {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  color: #c2410c;
+}
+
+.card.purple {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  color: #7e22ce;
+}
+
+/* =========================================
+   BARRA DE BUSCA E FILTROS (MESMO ESTILO)
+   ========================================= */
+.search-filters {
+  background: #fff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 300px;
+
+    .input-box {
+      background: #f8f9fa;
+      padding: 12px 15px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid #e5e7eb;
+
+      input {
+        border: none;
+        width: 100%;
+        outline: none;
+        font-size: 14px;
+        background: transparent;
+
+        &::placeholder {
+          color: #9ca3af;
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      min-width: auto;
+    }
+  }
+
+  .filter-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    button {
+      background: #f3f4f6;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      &.active {
+        background: #2563eb;
+        color: #fff;
+      }
+
+      &:hover:not(.active) {
+        background: #e5e7eb;
+      }
+    }
+
+    @media (max-width: 768px) {
+      justify-content: center;
+      
+      button {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  .new-product-btn {
+    button {
+      background: #2563eb;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+      }
+    }
+
+    @media (max-width: 768px) {
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+/* =========================================
+   TABELA (MESMO ESTILO DO PRODUCT)
+   ========================================= */
+.table-container {
+  background: #fff;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    margin: 0 -12px;
+    border-radius: 0;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  font-size: 15px;
+
+  /* ✅ DEFINIR LARGURAS DAS COLUNAS */
+  th.col-id { width: 80px; }
+  th.col-code { width: 120px; }
+  th.col-name { width: 250px; }
+  th.col-status { width: 120px; }
+  th.col-change { width: 120px; }
+  th.col-actions { width: 120px; }
+
+  th {
+    padding: 14px 10px;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 15px;
+  }
+
+  td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 15px;
+  }
+
+  tr {
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background: #f9fafb;
+    }
+  }
+
+  .center {
+    text-align: center;
+  }
+}
+
+/* =========================================
+   ESTILOS ESPECÍFICOS DE PAGAMENTOS
+   ========================================= */
+.code-tag {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-block;
+
+  &.blue {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+  &.green {
+    background: #dcfce7;
+    color: #15803d;
+  }
+  &.purple {
+    background: #f3e8ff;
+    color: #7e22ce;
+  }
+  &.orange {
+    background: #ffedd5;
+    color: #c2410c;
+  }
+  &.indigo {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+}
+
+.product-name {
+  .name-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .method-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: #6b7280;
+    }
+
+    .name-text {
+      font-weight: 600;
+      color: #1f2937;
+    }
+  }
+}
+
+.status-tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.green {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  &.red {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  mat-icon {
+    font-size: 15px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.change-tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.yes {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  &.no {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+/* =========================================
+   BOTÕES DE AÇÃO
+   ========================================= */
+.actions-col {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+
+    &.mini-btn {
+      background: #f3f4f6;
+      color: #374151;
+
+      &:hover {
+        background: #e5e7eb;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+/* =========================================
+   ESTADOS DE CARREGAMENTO E VAZIO
+   ========================================= */
+.loading, .empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  mat-icon {
+    font-size: 34px;
+    width: 32px;
+    height: 32px;
+    opacity: 0.5;
+  }
+}
+
+/* =========================================
+   ANIMAÇÕES
+   ========================================= */
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =========================================
+   PAGINAÇÃO (MESMO ESTILO)
+   ========================================= */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+  border-radius: 0 0 8px 8px;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+
+  select {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+  }
+}
+
+.pagination-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #6b7280;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  &:disabled {
+    background: #f9fafb;
+    color: #d1d5db;
+    cursor: not-allowed;
+  }
+
+  &.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+
+  mat-icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+.pagination-ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* ✅ RESPONSIVIDADE DA PAGINAÇÃO */
+@media (max-width: 768px) {
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .pagination-controls {
+    justify-content: space-between;
+  }
+
+  .items-per-page {
+    order: 2;
+  }
+
+  .pagination-buttons {
+    order: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .items-per-page {
+    align-self: flex-start;
+  }
+
+  .pagination-buttons {
+    align-self: center;
+  }
+}

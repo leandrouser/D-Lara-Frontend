@@ -1,0 +1,66 @@
+<div class="cash-container">
+  ## 💰 Gerenciamento de Caixa
+
+  <p>
+    Status Atual: 
+    <span 
+      [ngClass]="{
+        'status-open': cashRegisterStatus === 'OPEN', 
+        'status-closed': cashRegisterStatus === 'CLOSED',
+        'status-unknown': cashRegisterStatus === 'UNKNOWN'
+      }">
+      {{ cashRegisterStatus }}
+    </span>
+    <span *ngIf="currentOpeningId"> (ID de Abertura: **{{ currentOpeningId }}**)</span>
+  </p>
+
+  <hr>
+
+  <div *ngIf="cashRegisterStatus !== 'OPEN'">
+    <h3>Abrir Novo Caixa</h3>
+    <div class="form-group">
+      <label for="initialValue">Valor Inicial (R$):</label>
+      <input 
+        id="initialValue" 
+        type="number" 
+        [(ngModel)]="initialValue" 
+        placeholder="Ex: 150.00" 
+        min="0.01"
+      >
+    </div>
+    <button 
+      (click)="openCashRegister()" 
+      [disabled]="isLoading || initialValue <= 0"
+      class="btn-open"
+    >
+      {{ isLoading ? 'Abrindo...' : 'Abrir Caixa' }}
+    </button>
+  </div>
+
+  <div *ngIf="cashRegisterStatus === 'OPEN'">
+    <h3>Fechar Caixa Atual</h3>
+    <p>Confirme o fechamento do caixa ID: **{{ currentOpeningId }}**.</p>
+    <button 
+      (click)="closeCashRegister()" 
+      [disabled]="isLoading"
+      class="btn-close"
+    >
+      {{ isLoading ? 'Fechando...' : 'Fechar Caixa' }}
+    </button>
+  </div>
+  
+  <hr>
+
+  <div *ngIf="message" class="alert alert-success">{{ message }}</div>
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
+  <div *ngIf="totalsByPaymentMethod">
+    <h4>Resumo do Fechamento</h4>
+    <p>Totais Recebidos por Forma de Pagamento:</p>
+    <ul>
+      <li *ngFor="let total of totalsArray">
+        ID {{ total[0] }}: **R$ {{ total[1] | number:'1.2-2' }}**
+      </li>
+    </ul>
+  </div>
+</div>

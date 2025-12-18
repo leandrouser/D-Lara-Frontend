@@ -1,0 +1,442 @@
+:host {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 250px;
+  background: #fff;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  overflow: hidden; /* Impede que conteúdo ultrapasse */
+
+  &.collapsed {
+    width: 70px;
+  }
+
+  &.open {
+    transform: translateX(0) !important;
+  }
+}
+
+.sidebar {
+  flex: 1;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box; /* Inclui padding na largura total */
+}
+
+/* HEADER */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 0 5px;
+  min-height: 50px;
+}
+
+.logo-section {
+  flex: 1;
+  min-width: 0; /* Permite que o texto quebre */
+}
+
+.toggle-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* Impede que o botão diminua */
+  margin-left: 10px;
+
+  &:hover {
+    background: #e5e5e5;
+  }
+
+  span {
+    transition: transform 0.3s ease;
+    
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+/* MENU */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto; /* Scroll se necessário */
+  padding: 0 5px;
+}
+
+.sidebar-nav ul {
+  padding: 0;
+  list-style: none;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #333;
+  text-decoration: none;
+  margin-bottom: 5px;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:hover {
+    background: #f1f5ff;
+  }
+
+  &.active {
+    background: #1d4ed8;
+    color: #fff;
+  }
+}
+
+.icon {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.menu-text {
+  white-space: nowrap;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+/* Quando está recolhido */
+:host.collapsed {
+  .menu-text {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+  }
+
+  .logo-section {
+    display: none;
+  }
+
+  .sidebar-nav li {
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .user-area {
+    justify-content: center;
+    padding: 15px 0;
+  }
+}
+
+/* USER AREA */
+.user-area {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 10px;
+  border-top: 1px solid #eee;
+  min-height: 60px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1d4ed8;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: #777;
+  margin-top: 2px;
+  margin-bottom: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* BOTÃO MOBILE */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1100;
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* =========================================
+   MOBILE
+   ========================================= */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  :host {
+    width: 280px;
+    transform: translateX(-100%);
+    
+    &.collapsed {
+      transform: translateX(-100%);
+      width: 280px;
+    }
+
+    &.open {
+      transform: translateX(0);
+    }
+  }
+
+  .toggle-btn {
+    display: none;
+  }
+
+  .sidebar {
+    padding: 20px;
+  }
+
+  /* No mobile, sempre mostra tudo */
+  :host.collapsed {
+    .menu-text {
+      opacity: 1;
+      width: auto;
+      margin: 0;
+    }
+
+    .logo-section {
+      display: block;
+    }
+
+    .sidebar-nav li {
+      justify-content: flex-start;
+      padding: 12px 10px;
+    }
+
+    .user-area {
+      justify-content: flex-start;
+      padding: 20px 10px;
+    }
+  }
+}
+
+/* Scrollbar personalizada */
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* =========================================
+   USER AREA (Parte Inferior)
+   ========================================= */
+.user-area {
+  margin-top: auto; /* Empurra para o fundo */
+  padding: 16px 12px;
+  border-top: 1px solid #eee;
+  background-color: #f9fafb; /* Cinza bem suave para destacar */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 70px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.user-info-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  overflow: hidden; /* Impede que texto vaze na animação */
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px; /* Quadrado arredondado moderno */
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* Gradiente Azul */
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.user-details .name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.user-details .role {
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Botão de Logout */
+.logout-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #fee2e2; /* Vermelho claro */
+    color: #ef4444; /* Vermelho */
+  }
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* ESTADOS (Collapsed / Mobile)
+*/
+
+/* Quando o menu fecha (Desktop) */
+:host.collapsed {
+  .user-area {
+    padding: 16px 0;
+    justify-content: center;
+  }
+
+  /* Esconde textos e botão de sair */
+  .user-details,
+  .logout-btn {
+    display: none;
+    opacity: 0;
+  }
+
+  /* Centraliza o avatar */
+  .user-info-group {
+    justify-content: center;
+    flex: 0;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Mobile (Sempre mostra tudo, mesmo se a flag collapsed estiver true) */
+@media (max-width: 768px) {
+  :host.collapsed {
+    .user-details,
+    .logout-btn {
+      display: flex;
+      opacity: 1;
+    }
+    
+    .user-area {
+      padding: 16px 12px;
+      justify-content: space-between;
+    }
+    
+    .user-info-group {
+      justify-content: flex-start;
+      flex: 1;
+    }
+  }
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.3s;
+  gap: 10px;
+  color: white;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  mat-icon {
+    font-size: 24px;
+  }
+}

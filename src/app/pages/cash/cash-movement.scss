@@ -1,0 +1,59 @@
+/* cash-register-status.component.scss */
+.cash-register-status {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  &.open {
+    border-left: 4px solid #22c55e;
+  }
+  
+  &.closed {
+    border-left: 4px solid #ef4444;
+  }
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.status-text {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.cash-details {
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    
+    .label {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    
+    .value {
+      font-weight: 500;
+      
+      &.highlight {
+        color: #22c55e;
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+    }
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: #6b7280;
+}

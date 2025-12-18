@@ -1,0 +1,232 @@
+<div class="products-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h1>
+      <mat-icon>payments</mat-icon>
+      Métodos de Pagamento
+    </h1>
+    <p class="subtitle">Gerencie como seus clientes podem pagar</p>
+  </div>
+
+  <!-- CARDS DE MÉTRICAS - MESMO LAYOUT DOS PRODUTOS -->
+  <div class="cards">
+    <div class="card blue">
+      <div class="info">
+        <span>Total</span>
+        <strong>{{ totalMethods() }}</strong>
+        <small>Métodos</small>
+      </div>
+      <mat-icon class="icon">payments</mat-icon>
+    </div>
+
+    <div class="card green">
+      <div class="info">
+        <span>Ativos</span>
+        <strong>{{ activeCount() }}</strong>
+      </div>
+      <mat-icon class="icon">check_circle</mat-icon>
+    </div>
+
+    <div class="card orange">
+      <div class="info">
+        <span>Inativos</span>
+        <strong>{{ inactiveCount() }}</strong>
+      </div>
+      <mat-icon class="icon">pause_circle</mat-icon>
+    </div>
+
+    <div class="card purple">
+      <div class="info">
+        <span>Permite Troco</span>
+        <strong>{{ allowsChangeCount() }}</strong>
+      </div>
+      <mat-icon class="icon">currency_exchange</mat-icon>
+    </div>
+  </div>
+
+  <!-- BARRA DE BUSCA E FILTROS -->
+  <div class="search-filters">
+    <div class="search-box">
+      <div class="input-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="Buscar por nome ou código..."
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        >
+      </div>
+    </div>
+
+    <div class="filter-buttons">
+      <button 
+        [class.active]="activeFilter() === 'all'" 
+        (click)="applyFilter('all')">
+        <mat-icon>apps</mat-icon>
+        Todos
+      </button>
+      
+      <button 
+        [class.active]="activeFilter() === 'active'" 
+        (click)="applyFilter('active')">
+        <mat-icon>check_circle</mat-icon>
+        Ativos
+      </button>
+      
+      <button 
+        [class.active]="activeFilter() === 'inactive'" 
+        (click)="applyFilter('inactive')">
+        <mat-icon>pause_circle</mat-icon>
+        Inativos
+      </button>
+    </div>
+
+    <div class="new-product-btn">
+      <button (click)="openModal()" class="btn-primary">
+        <mat-icon>add</mat-icon>
+        Novo Método
+      </button>
+    </div>
+  </div>
+
+  <!-- INDICADORES DE BUSCA -->
+  <div *ngIf="isLoading()" class="search-loading">
+    <mat-icon class="loading-spinner">refresh</mat-icon>
+    Buscando métodos de pagamento...
+  </div>
+
+  <div *ngIf="search().trim().length >= 1 && !isLoading()" class="search-info">
+    <mat-icon>search</mat-icon>
+    Buscando por: "{{ search() }}"
+    <span *ngIf="filteredList().length !== totalMethods()">• {{ filteredList().length }} resultados</span>
+  </div>
+
+  <!-- TABELA -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-id">🆔 ID</th>
+            <th class="col-code">🏷️ Código</th>
+            <th class="col-name">📋 Nome</th>
+            <th class="col-status">📊 Status</th>
+            <th class="col-change">💰 Troco</th>
+            <th class="col-actions center">⚙️ Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <!-- LOADING -->
+          <tr *ngIf="isLoading() && filteredList().length === 0">
+            <td colspan="6" class="loading">
+              <mat-icon class="loading-spinner">refresh</mat-icon>
+              Carregando métodos de pagamento...
+            </td>
+          </tr>
+
+          <!-- EMPTY -->
+          <tr *ngIf="!isLoading() && filteredList().length === 0">
+            <td colspan="6" class="empty">
+              <mat-icon>search_off</mat-icon>
+              <div *ngIf="search().trim().length >= 1">
+                Nenhum método encontrado para "{{ search() }}"
+              </div>
+              <div *ngIf="search().trim().length === 0">
+                Nenhum método de pagamento cadastrado
+              </div>
+            </td>
+          </tr>
+
+          <!-- LISTA -->
+          <tr *ngFor="let m of paginatedMethods()">
+            <td class="product-id">{{ m.id }}</td>
+            <td class="barcode">
+              <span class="code-tag" [class]="getCardColor(m.code)">
+                {{ m.code }}
+              </span>
+            </td>
+            
+            <td class="product-name">
+              <div class="name-with-icon">
+                <mat-icon class="method-icon">{{ getMethodIcon(m.code) }}</mat-icon>
+                <span class="name-text">{{ m.displayName }}</span>
+              </div>
+            </td>
+            
+            <td>
+              <span class="status-tag" [class]="getStatusColor(m.active)">
+                {{ getStatusLabel(m.active) }}
+              </span>
+            </td>
+
+            <td>
+              <span class="change-tag" [class]="m.allowsChange ? 'yes' : 'no'">
+                {{ m.allowsChange ? 'Permite' : 'Não permite' }}
+              </span>
+            </td>
+
+            <!-- COLUNA AÇÕES -->
+            <td class="actions-col">
+              <button class="mini-btn" (click)="openModal(m)">
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ✅ CONTROLES DE PAGINAÇÃO -->
+    <div class="pagination-container" *ngIf="totalItems() > 0">
+      <div class="pagination-info">
+        <span>
+          Mostrando {{ getStartIndex() }} - {{ getEndIndex() }} de {{ totalItems() }} métodos
+        </span>
+      </div>
+
+      <div class="pagination-controls">
+        <!-- Selecionar itens por página -->
+        <div class="items-per-page">
+          <label>Itens por página:</label>
+          <select [value]="itemsPerPage()" (change)="changeItemsPerPage($event)">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        <!-- Navegação -->
+        <div class="pagination-buttons">
+          <button 
+            class="pagination-btn" 
+            (click)="previousPage()"
+            [disabled]="currentPage() === 1">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+
+          <!-- Números das páginas -->
+          <ng-container *ngFor="let page of visiblePages()">
+            <button 
+              *ngIf="page !== -1"
+              class="pagination-btn page-number"
+              [class.active]="page === currentPage()"
+              (click)="goToPage(page)">
+              {{ page }}
+            </button>
+            <span *ngIf="page === -1" class="pagination-ellipsis">...</span>
+          </ng-container>
+
+          <button 
+            class="pagination-btn" 
+            (click)="nextPage()"
+            [disabled]="currentPage() === totalPages()">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

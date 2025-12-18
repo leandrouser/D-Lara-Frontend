@@ -1,0 +1,143 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <div class="header-title">
+        <mat-icon>point_of_sale</mat-icon>
+        <div>
+          <h2>Finalizar Venda #{{ paymentData?.saleId }}</h2>
+          <span class="customer-name">{{ paymentData?.customerName || 'Consumidor Final' }}</span>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeModal()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      
+      <div class="summary-cards">
+        <div class="card total">
+          <small>Total da Venda</small>
+          <span>{{ formatPrice(paymentData?.totalAmount || 0) }}</span>
+        </div>
+        <div class="card paid" [class.completed]="remainingAmount() === 0">
+          <small>Pago</small>
+          <span>{{ formatPrice(totalPaid()) }}</span>
+        </div>
+        <div class="card remaining" *ngIf="remainingAmount() > 0">
+          <small>Falta Pagar</small>
+          <span>{{ formatPrice(remainingAmount()) }}</span>
+        </div>
+        <div class="card change" *ngIf="totalChange() > 0">
+          <small>Troco</small>
+          <span>{{ formatPrice(totalChange()) }}</span>
+        </div>
+      </div>
+
+      <div class="main-content-grid">
+        
+        <div class="payment-controls">
+          <label class="section-label">Selecione o Método:</label>
+          
+          <div class="methods-grid">
+            <button 
+              *ngFor="let method of paymentMethods" 
+              class="method-btn"
+              [class.active]="currentPaymentMethod() === method"
+              (click)="selectCurrentPaymentMethod(method)">
+              <mat-icon *ngIf="method === 'CASH'">payments</mat-icon>
+              <mat-icon *ngIf="method === 'CREDIT_CARD'">credit_card</mat-icon>
+              <mat-icon *ngIf="method === 'DEBIT_CARD'">credit_score</mat-icon>
+              <mat-icon *ngIf="method === 'PIX'">qr_code_2</mat-icon>
+              <span>{{ getPaymentMethodText(method) }}</span>
+            </button>
+          </div>
+
+          <div class="amount-entry">
+            <label>Valor a Pagar (R$)</label>
+            <div class="input-group">
+              <span class="currency-symbol">R$</span>
+              <input 
+                type="number" 
+                [ngModel]="currentAmount()" 
+                (ngModelChange)="updateCurrentAmount($event)"
+                placeholder="0.00" 
+                min="0"
+                step="0.01"
+                (keyup.enter)="addPaymentMethod()">
+              
+              <button 
+                class="btn-add" 
+                (click)="addPaymentMethod()"
+                [disabled]="currentAmount() <= 0">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <small class="hint" *ngIf="currentPaymentMethod() === 'CASH' && currentAmount() > remainingAmount() && remainingAmount() > 0">
+              Isso irá gerar troco de {{ formatPrice(currentAmount() - remainingAmount()) }}
+            </small>
+          </div>
+        </div>
+
+        <div class="payment-list-container">
+          <label class="section-label">Pagamentos Adicionados:</label>
+          
+          <div class="empty-list" *ngIf="selectedPaymentMethods().length === 0">
+            Nenhum pagamento adicionado.
+          </div>
+
+          <ul class="payment-list" *ngIf="selectedPaymentMethods().length > 0">
+            <li *ngFor="let item of selectedPaymentMethods(); let i = index" 
+                class="payment-item"
+                [class.is-change]="item.isChange">
+              
+              <div class="item-info">
+                <span class="method-name">
+                  {{ item.isChange ? 'Troco' : getPaymentMethodText(item.method) }}
+                </span>
+                <span class="item-amount">
+                  {{ item.isChange ? '-' : '' }}{{ formatPrice(item.amount) }}
+                </span>
+              </div>
+              
+              <button 
+                *ngIf="!item.isChange"
+                class="btn-remove" 
+                (click)="removePaymentMethod(i)"
+                title="Remover pagamento">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <div *ngIf="item.isChange" class="spacer"></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <div class="footer-status">
+        <span *ngIf="isProcessing()" class="processing-text">
+          <mat-icon class="spin">autorenew</mat-icon> Processando...
+        </span>
+        <span *ngIf="isFullyPaid() && !isProcessing()" class="success-text">
+          <mat-icon>check_circle</mat-icon> Total Atingido
+        </span>
+      </div>
+
+      <div class="actions">
+        <button class="btn-cancel" (click)="closeModal()" [disabled]="isProcessing()">
+          Cancelar
+        </button>
+        <button 
+          class="btn-confirm" 
+          [disabled]="!isFullyPaid() || isProcessing()"
+          (click)="processPayments()">
+          Finalizar Venda (F2)
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

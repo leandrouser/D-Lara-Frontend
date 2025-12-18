@@ -1,0 +1,311 @@
+<!-- src/app/pages/product/product.html -->
+<div class="products-container">
+  <!-- HEADER -->
+  <div class="page-header">
+    <h1>
+      <mat-icon>inventory_2</mat-icon>
+      Produtos
+    </h1>
+    <p class="subtitle">Gerencie o catálogo de produtos</p>
+  </div>
+
+  <!-- CARDS DE MÉTRICAS - UMA LINHA -->
+<div class="cards">
+  <div class="card blue">
+    <div class="info">
+      <span>Total</span>
+      <strong>{{ totalProducts() }}</strong>
+      <small>Produtos</small>
+    </div>
+    <mat-icon class="icon">inventory_2</mat-icon>
+  </div>
+
+  <div class="card green">
+    <div class="info">
+      <span>Em Estoque</span>
+      <strong>{{ inStockCount() }}</strong>
+    </div>
+    <mat-icon class="icon">check_circle</mat-icon>
+  </div>
+
+  <div class="card orange">
+    <div class="info">
+      <span>Estoque Baixo</span>
+      <strong>{{ lowStockCount() }}</strong>
+    </div>
+    <mat-icon class="icon">warning</mat-icon>
+  </div>
+
+  <div class="card purple">
+    <div class="info">
+      <span>Cama</span>
+      <strong>{{ camaCount() }}</strong>
+      <small>Produtos</small>
+    </div>
+    <mat-icon class="icon">bed</mat-icon>
+  </div>
+
+  <div class="card indigo">
+    <div class="info">
+      <span>Mesa</span>
+      <strong>{{ mesaCount() }}</strong>
+      <small>Produtos</small>
+    </div>
+    <mat-icon class="icon">table_restaurant</mat-icon>
+  </div>
+
+  <div class="card pink">
+    <div class="info">
+      <span>Banho</span>
+      <strong>{{ banhoCount() }}</strong>
+      <small>Produtos</small>
+    </div>
+    <mat-icon class="icon">bathtub</mat-icon>
+  </div>
+
+  <div class="card brown">
+  <div class="info">
+    <span>Bordado</span>
+    <strong>{{ bordadoCount() }}</strong>
+    <small>Produtos</small>
+  </div>
+  <mat-icon class="icon">🧵</mat-icon>
+</div>
+</div>
+
+
+
+
+  <!-- BARRA DE BUSCA E FILTROS -->
+  <div class="search-filters">
+    <div class="search-box">
+      <div class="input-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="Buscar por nome, código ou descrição..."
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        >
+      </div>
+    </div>
+
+    <div class="filter-buttons">
+      <button 
+        [class.active]="categoryFilter() === 'all'" 
+        (click)="applyCategoryFilter('all')">
+        <mat-icon>apps</mat-icon>
+        Todos
+      </button>
+      
+      <button 
+        *ngFor="let category of categories"
+        [class.active]="categoryFilter() === category" 
+        (click)="applyCategoryFilter(category)">
+        <mat-icon>{{ getCategoryIcon(category) }}</mat-icon>
+        {{ getCategoryLabel(category) }}
+      </button>
+    </div>
+    
+
+        <div class="new-product-btn">
+    <button (click)="openModal()" class="btn-primary">
+        <mat-icon>add</mat-icon>
+        Novo Produto
+    </button>
+        </div>
+    </div>
+
+  <!-- INDICADORES DE BUSCA -->
+  <div *ngIf="isLoading()" class="search-loading">
+    <mat-icon class="loading-spinner">refresh</mat-icon>
+    Buscando produtos...
+  </div>
+
+  <div *ngIf="search().trim().length >= 1 && !isLoading()" class="search-info">
+    <mat-icon>search</mat-icon>
+    Buscando por: "{{ search() }}"
+    <span *ngIf="filteredList().length !== totalProducts()">• {{ filteredList().length }} resultados</span>
+  </div>
+
+  <!-- TABELA -->
+  <div class="table-container">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+        <tr>
+          <th class="col-id">🆔 ID</th>
+          <th class="col-barcode">🏷️ Código</th>
+          <th class="col-name">📦 Nome</th>
+          <th class="col-description">📝 Descrição</th> 
+          <th class="col-category">🏷️ Categoria</th>
+          <th class="col-price">💰 Preço</th>
+          <th class="col-stock">📊 Estoque</th>
+          <th class="col-actions center">⚙️ Ações</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          <!-- LOADING -->
+          <tr *ngIf="isLoading() && filteredList().length === 0">
+            <td colspan="8" class="loading">
+              <mat-icon class="loading-spinner">refresh</mat-icon>
+              Carregando produtos...
+            </td>
+          </tr>
+
+          <!-- EMPTY -->
+          <tr *ngIf="!isLoading() && filteredList().length === 0">
+            <td colspan="8" class="empty">
+              <mat-icon>search_off</mat-icon>
+              <div *ngIf="search().trim().length >= 1">
+                Nenhum produto encontrado para "{{ search() }}"
+              </div>
+              <div *ngIf="search().trim().length === 0">
+                Nenhum produto cadastrado
+              </div>
+            </td>
+          </tr>
+
+           <!-- LISTA -->
+        <tr *ngFor="let p of filteredList()" 
+            [class.low-stock]="isLowStock(p)"
+            [class.editing]="editingProductId() === p.id">
+          
+          <td class="product-id">{{ p.id }}</td>
+          <td class="barcode">{{ p.barcode || 'N/A' }}</td>
+
+           <!-- COLUNA NOME MAIOR -->
+          <td class="product-name">
+            <span class="name-text">{{ p.name }}</span>
+          </td>
+
+           <!-- COLUNA DESCRIÇÃO MENOR -->
+          <td class="product-description">
+            <span class="description-text">{{ p.description || 'Sem descrição' }}</span>
+          </td>
+          
+          <td>
+            <span class="category-tag" [class]="p.categoryEnum.toLowerCase()">
+              <mat-icon>{{ getCategoryIcon(p.categoryEnum) }}</mat-icon>
+              {{ getCategoryLabel(p.categoryEnum) }}
+            </span>
+          </td>
+
+            <!-- COLUNA PREÇO (EDITÁVEL) -->
+            <td class="price-cell">
+              <div *ngIf="editingProductId() === p.id" class="edit-input">
+                <input
+                  type="number"
+                  [(ngModel)]="editForm().price"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                  class="price-input"
+                >
+                <span class="currency">R$</span>
+              </div>
+              <span *ngIf="editingProductId() !== p.id" class="price">
+                R$ {{ p.price | number:'1.2-2' }}
+              </span>
+            </td>
+
+            <!-- COLUNA ESTOQUE (EDITÁVEL) -->
+            <td class="stock-cell">
+              <div *ngIf="editingProductId() === p.id" class="edit-input">
+                <input
+                  type="number"
+                  [(ngModel)]="editForm().stockQty"
+                  placeholder="0"
+                  min="0"
+                  class="stock-input"
+                >
+                <span class="unit">un</span>
+              </div>
+              <span *ngIf="editingProductId() !== p.id" class="stock-display">
+                <span class="tag" [class.active]="!isLowStock(p) && p.stockQty > 0" 
+                               [class.inactive]="p.stockQty === 0"
+                               [class.warning]="isLowStock(p) && p.stockQty > 0">
+                  <mat-icon>{{ p.stockQty === 0 ? 'cancel' : isLowStock(p) ? 'warning' : 'check_circle' }}</mat-icon>
+                  {{ getStockStatus(p) }} ({{ p.stockQty }})
+                </span>
+              </span>
+            </td>
+
+            <!-- COLUNA AÇÕES -->
+            <td class="actions-col">
+              <div *ngIf="editingProductId() === p.id" class="edit-actions">
+                <button class="mini-btn success" (click)="saveEditing()">
+                  <mat-icon>check</mat-icon>
+                  OK
+                </button>
+                <button class="mini-btn cancel" (click)="cancelEditing()">
+                  <mat-icon>close</mat-icon>
+                  Cancelar
+                </button>
+              </div>
+              <button *ngIf="editingProductId() !== p.id" 
+                      class="mini-btn" 
+                      (click)="startEditing(p)"
+                      [disabled]="editingProductId() !== null">
+                <mat-icon>edit</mat-icon>
+                Editar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    
+
+    <!-- ✅ CONTROLES DE PAGINAÇÃO -->
+  <div class="pagination-container" *ngIf="totalItems() > 0">
+  <div class="pagination-info">
+    <span>
+      Mostrando {{ getStartIndex() }} - {{ getEndIndex() }} de {{ totalItems() }} produtos
+    </span>
+  </div>
+
+    <div class="pagination-controls">
+      <!-- Selecionar itens por página -->
+      <div class="items-per-page">
+        <label>Itens por página:</label>
+        <select [value]="itemsPerPage()" (change)="changeItemsPerPage($event)">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <!-- Navegação -->
+      <div class="pagination-buttons">
+        <button 
+          class="pagination-btn" 
+          (click)="previousPage()"
+          [disabled]="currentPage() === 1">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+
+        <!-- Números das páginas -->
+        <ng-container *ngFor="let page of visiblePages()">
+          <button 
+            *ngIf="page !== -1"
+            class="pagination-btn page-number"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+          <span *ngIf="page === -1" class="pagination-ellipsis">...</span>
+        </ng-container>
+
+        <button 
+          class="pagination-btn" 
+          (click)="nextPage()"
+          [disabled]="currentPage() === totalPages()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>

@@ -1,0 +1,250 @@
+<div class="layout">
+  <div class="content content-adjustable">
+    <div class="content">
+      <div class="header">
+        <div>
+          <h1>
+            <mat-icon>people</mat-icon>
+            Clientes
+          </h1>
+          <p class="subtitle">Gerencie o cadastro de clientes</p>
+        </div>
+        <button class="btn-new-sale" (click)="showModal.set(true)">
+          <mat-icon>person_add</mat-icon>
+          Novo Cliente
+        </button>
+      </div>
+
+      <!-- Cards com métricas -->
+      <div class="cards">
+        <div class="card blue">
+          <div class="info">
+            <span>Total de Clientes</span>
+            <strong>{{ totalClientes() }}</strong>
+          </div>
+          <mat-icon class="icon">groups</mat-icon>
+        </div>
+
+        <div class="card green">
+          <div class="info">
+            <span>Clientes Ativos</span>
+            <strong>{{ clientesAtivos() }}</strong>
+          </div>
+          <mat-icon class="icon">check_circle</mat-icon>
+        </div>
+
+        <div class="card orange">
+          <div class="info">
+            <span>Clientes Inativos</span>
+            <strong>{{ clientesInativos() }}</strong>
+          </div>
+          <mat-icon class="icon">cancel</mat-icon>
+        </div>
+      </div>
+
+      <!-- Barra de busca e filtros -->
+      <div class="filter-box">
+        <div class="search-box">
+          <div class="input-box">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input
+              type="text"
+              placeholder="Buscar por código, nome ou telefone..."
+              [value]="search()"
+              (input)="onSearchInput($event)"
+            />
+          </div>
+        </div>
+
+        <div class="filter-buttons">
+          <button 
+            [class.active]="statusFilter() === 'all'"
+            (click)="applyFilter('all')">
+            <mat-icon>apps</mat-icon>
+            Todos ({{ totalClientes() }})
+          </button>
+          <button 
+            [class.active]="statusFilter() === 'active'"
+            (click)="applyFilter('active')">
+            <mat-icon>check_circle</mat-icon>
+            Ativos ({{ clientesAtivos() }})
+          </button>
+          <button 
+            [class.active]="statusFilter() === 'inactive'"
+            (click)="applyFilter('inactive')">
+            <mat-icon>cancel</mat-icon>
+            Inativos ({{ clientesInativos() }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Indicadores de busca -->
+      @if (isLoading()) {
+        <div class="search-loading">
+          <mat-icon class="loading-spinner">refresh</mat-icon>
+          Buscando clientes...
+        </div>
+      }
+
+      @if (search().trim().length >= 3 && !isLoading()) {
+        <div class="search-info">
+          <mat-icon>search</mat-icon>
+          Buscando por: "{{ search() }}"
+          @if (paged()) {
+            <span>• {{ paged()!.totalElements }} resultados</span>
+          }
+        </div>
+      }
+
+      <!-- Estado de erro -->
+      @if (hasError()) {
+        <div class="error-state">
+          <div class="error-message">
+            <mat-icon>warning</mat-icon>
+            <span>{{ errorMessage() }}</span>
+            <button class="btn-retry" (click)="loadCustomers()">
+              <mat-icon>refresh</mat-icon>
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Tabela de clientes -->
+      <div class="table-container">
+        <div class="table-wrapper">
+          <table class="sales-table">
+            <thead>
+              <tr>
+                <th class="col-id">
+                  <mat-icon>tag</mat-icon>
+                  Código
+                </th>
+                <th class="col-name">
+                  <mat-icon>person</mat-icon>
+                  Nome
+                </th>
+                <th class="col-phone">
+                  <mat-icon>phone</mat-icon>
+                  Telefone
+                </th>
+                <th class="col-status">
+                  <mat-icon>circle</mat-icon>
+                  Status
+                </th>
+                <th class="col-actions center">
+                  <mat-icon>settings</mat-icon>
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Estado de carregamento -->
+              @if (isLoading() && currentPageData().length === 0) {
+                <tr>
+                  <td colspan="6" class="loading">
+                    <mat-icon class="loading-spinner">refresh</mat-icon>
+                    Carregando clientes...
+                  </td>
+                </tr>
+              }
+
+              <!-- Estado vazio -->
+              @if (!isLoading() && currentPageData().length === 0 && !hasError()) {
+                <tr>
+                  <td colspan="6" class="empty">
+                    <mat-icon>search_off</mat-icon>
+                    @if (search().trim().length >= 1) {
+                      Nenhum cliente encontrado para "{{ search() }}"
+                    } @else {
+                      Nenhum cliente cadastrado
+                    }
+                  </td>
+                </tr>
+              }
+
+              <!-- Lista de clientes -->
+              @if (!isLoading() && !hasError() && currentPageData().length > 0) {
+                @for (client of currentPageData(); track client.id) {
+                  <tr [class.active]="client.active" 
+                      [class.inactive]="!client.active">
+                    <td class="client-id">
+                      <strong>#{{ client.id }}</strong>
+                    </td>
+                    <td class="client-name">
+                      {{ client.name }}
+                    </td>
+                    <td class="client-phone">
+                      {{ client.phone || 'Não informado' }}
+                    </td>
+                    <td class="client-status">
+                      <span [class]="'status-tag ' + (client.active ? 'active' : 'inactive')">
+                        <mat-icon class="status-icon">{{ client.active ? 'check_circle' : 'cancel' }}</mat-icon>
+                        {{ client.active ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </td>
+                    <td class="client-actions">
+                      <button 
+                        class="mini-btn edit-btn" 
+                        title="Editar cliente"
+                        [routerLink]="['/clientes/editar', client.id]"
+                        [disabled]="!client.id">
+                        <mat-icon>edit</mat-icon>
+                        Editar
+                      </button>
+                      <button 
+                        class="mini-btn toggle-btn" 
+                        title="{{ client.active ? 'Inativar' : 'Ativar' }} cliente"
+                        (click)="toggleStatus(client)"
+                        [disabled]="!client.id">
+                        <mat-icon>{{ client.active ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+                        {{ client.active ? 'Inativar' : 'Ativar' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Paginação -->
+        @if (showPagination()) {
+          <div class="pagination">
+            <div class="page-info">
+              Página {{ currentPageDisplay() }} de {{ totalPages() }} 
+              • {{ totalElements() }} clientes no total
+            </div>
+            
+            <div class="page-buttons">
+              <button (click)="prevPage()" [disabled]="!hasPrevPage()">
+                ‹ Anterior
+              </button>
+              
+              @for (p of pageNumbers(); track p) {
+                <button 
+                  (click)="goToPage(p)"
+                  [class.active]="isCurrentPage(p)">
+                  {{ p + 1 }}
+                </button>
+              }
+              
+              <button 
+                (click)="nextPage()" 
+                [disabled]="!hasNextPage()">
+                Próxima ›
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de cliente -->
+<customer-modal
+  [isOpen]="showModal()"
+  (save)="createCustomer($event)"
+  (close)="showModal.set(false)">
+</customer-modal>

@@ -1,0 +1,58 @@
+<div class="modal-overlay" *ngIf="open()" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h2>{{ title }}</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <form (ngSubmit)="submit()" class="modal-form">
+      <div class="form-group">
+        <label for="name">Nome *</label>
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="form.name"
+          name="name"
+          placeholder="Digite o nome do cliente"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Telefone</label>
+        <input
+          type="text"
+          id="phone"
+          [(ngModel)]="form.phone"
+          name="phone"
+          placeholder="Digite o telefone"
+        >
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="form.active"
+            name="active"
+          >
+          <span class="checkmark"></span>
+          Cliente ativo
+        </label>
+      </div>
+
+      <!-- FOOTER COM BOTÕES -->
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeModal()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-save">
+          Salvar Cliente
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

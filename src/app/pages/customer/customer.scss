@@ -1,0 +1,672 @@
+/* =========================================
+   LAYOUT BASE
+   ========================================= */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f7f7f7;
+}
+
+.content-adjustable {
+  flex: 1;
+  padding: 30px 25px;
+  margin-left: 10px;
+  margin-right: auto;
+  transition: all 0.3s ease;
+  max-width: auto;
+
+  .sidebar-collapsed & {
+    margin-left: 70px;
+    max-width: calc(100vw - 70px);
+    padding: 30px 20px;
+  }
+
+  @media (max-width: 768px) {
+    margin-left: 0 !important;
+    max-width: 100vw !important;
+    padding: 15px 12px;
+  }
+
+  .content {
+    width: 100%;
+    max-width: none;
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 32px;
+      margin-bottom: -5px;
+      color: #1f2937;
+      margin-left: 0;
+      padding-left: 0;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 25px;
+      font-size: 14px;
+      margin-left: 0;
+      padding-left: 0;
+    }
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.btn-new-sale {
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+
+  &:hover {
+    background: #15803d;
+  }
+}
+
+/* =========================================
+   CARDS
+   ========================================= */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  padding: 1.25rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 100px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: currentColor;
+    opacity: 0.3;
+  }
+
+  .info {
+    z-index: 2;
+    position: relative;
+
+    span {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
+      opacity: 0.9;
+    }
+
+    strong {
+      display: block;
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.125rem;
+    }
+
+    small {
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+  }
+
+  .icon {
+    font-size: 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    opacity: 0.8;
+    z-index: 2;
+    position: relative;
+  }
+}
+
+/* Cores dos cards */
+.card.blue {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+}
+
+.card.green {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+}
+
+.card.orange {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  color: #c2410c;
+}
+
+/* =========================================
+   FILTROS
+   ========================================= */
+.filter-box {
+  background: #fff;
+  padding: 16px 20px; // Reduzido o padding vertical
+  margin-top: 25px;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 15px; // Reduzido o gap
+  align-items: center;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 250px; // Largura mínima reduzida
+
+  .input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .search-icon {
+      position: absolute;
+      left: 10px; // Ajustado
+      color: #6b7280;
+      z-index: 2;
+      font-size: 18px; // Ícone menor
+    }
+
+    input {
+      padding: 10px 12px 10px 35px; // Padding reduzido
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px; // Fonte menor
+
+      &:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); // Sombra reduzida
+      }
+    }
+  }
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 6px; // Gap reduzido entre botões
+
+  button {
+    border: 1px solid #d1d5db;
+    padding: 8px 14px; // Padding reduzido
+    border-radius: 6px;
+    background: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px; // Fonte menor
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px; // Gap interno reduzido
+
+    &:hover {
+      background: #f9fafb;
+    }
+
+    &.active {
+      background: #1d4ed8;
+      color: white;
+      border-color: #1d4ed8;
+    }
+
+    mat-icon {
+      font-size: 16px; // Ícone menor
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+/* =========================================
+   ESTADO DE ERRO
+   ========================================= */
+.error-state {
+  margin-top: 25px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+
+  .error-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+
+    span {
+      color: #dc2626;
+      font-weight: 500;
+    }
+
+    .btn-retry {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      &:hover {
+        background: #b91c1c;
+      }
+    }
+  }
+}
+
+/* =========================================
+   TABELA
+   ========================================= */
+.table-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-top: 25px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.sales-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+
+  thead {
+    background: #f8fafc;
+    
+    th {
+      padding: 16px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+
+      mat-icon {
+        vertical-align: middle;
+        margin-right: 6px;
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      &.center {
+        text-align: center;
+      }
+
+      // Larguras das colunas para clientes
+      &.col-id { width: 100px; }
+      &.col-name { width: 200px; }
+      &.col-phone { width: 150px; }
+      &.col-email { width: 200px; }
+      &.col-status { width: 120px; }
+      &.col-actions { width: 180px; }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background: #f9fafb;
+      }
+
+      // Cores para diferentes status de clientes
+      &.active {
+        background: #f0fdf4;
+        
+        &:hover {
+          background: #dcfce7;
+        }
+      }
+
+      &.inactive {
+        background: #fef2f2;
+        
+        &:hover {
+          background: #fee2e2;
+        }
+      }
+
+      td {
+        padding: 16px 12px;
+        font-size: 14px;
+        vertical-align: top;
+
+        &.client-actions {
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .loading, .empty {
+    text-align: center;
+    padding: 40px;
+    color: #9ca3af;
+    font-size: 16px;
+    
+    mat-icon {
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+  }
+
+  .loading-spinner {
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+}
+
+/* =========================================
+   STATUS TAGS
+   ========================================= */
+.status-tag {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  .status-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.inactive {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+/* =========================================
+   BOTÕES DE AÇÃO
+   ========================================= */
+.mini-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px;
+
+  &:hover {
+    background: #2563eb;
+  }
+
+  &.edit-btn {
+    background: #10b981;
+
+    &:hover {
+      background: #059669;
+    }
+  }
+
+  &.toggle-btn {
+    background: #f59e0b;
+
+    &:hover {
+      background: #d97706;
+    }
+  }
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* =========================================
+   PAGINAÇÃO
+   ========================================= */
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+
+  .page-info {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .page-buttons {
+    display: flex;
+    gap: 8px;
+
+    button {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &:hover:not(:disabled) {
+        background: #f3f4f6;
+      }
+
+      &.active {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+      }
+    }
+  }
+}
+
+/* =========================================
+   ANIMAÇÕES
+   ========================================= */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+@media (max-width: 1200px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .content-adjustable {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  .filter-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+    
+    button {
+      flex: 1;
+      min-width: 120px;
+      justify-content: center;
+    }
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    
+    .btn-new-sale {
+      align-self: stretch;
+      justify-content: center;
+    }
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .table-container {
+    border-radius: 8px;
+    margin: 0 -15px;
+    width: calc(100% + 30px);
+  }
+}
+
+@media (max-width: 480px) {
+  .content-adjustable {
+    padding: 15px;
+  }
+
+  .card {
+    padding: 1rem;
+    
+    .info {
+      strong {
+        font-size: 1.5rem;
+      }
+    }
+    
+    .icon {
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  .mini-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    
+    mat-icon {
+      font-size: 12px;
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  /* Indicadores de busca */
+.search-loading {
+  padding: 10px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.search-info {
+  padding: 8px 16px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  margin: 15px 0;
+  font-size: 14px;
+  color: #1565c0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Estados da tabela */
+.loading, .empty {
+  text-align: center;
+  padding: 40px;
+  color: #9ca3af;
+  font-size: 16px;
+  
+  mat-icon {
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+}
