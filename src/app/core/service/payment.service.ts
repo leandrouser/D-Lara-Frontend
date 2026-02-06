@@ -3,10 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
 import { Observable } from 'rxjs';
 
+/* =======================
+   MODELS
+======================= */
+
 export interface PaymentResponse {
   id: number;
   saleId: number;
-  paymentMethod: 'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX';
+  paymentMethod: string;
   amountPaid: number;
   changeAmount: number;
   paymentDate: string;
@@ -22,11 +26,6 @@ export interface PaymentMethodResponse {
   allowsInstallments: boolean;
 }
 
-export interface PaymentMethod {
-  id: number;
-  name: string;
-}
-
 export interface PaymentMethodRequest {
   code: string;
   displayName: string;
@@ -36,45 +35,86 @@ export interface PaymentMethodRequest {
   allowsInstallments: boolean;
 }
 
-export interface PaymentRequest {
-  saleId: number;
-  methodId: number;
-  amount: number;
+export interface PaymentItemRequest {
+  paymentMethodId: number;
+  amountPaid: number;
 }
+
+export interface PaymentMultiRequest {
+  saleId: number;
+  totalAmount: number;
+  changeAmount: number;
+  payments: PaymentItemRequest[];
+}
+
+export interface PaymentMultiResponse {
+  saleId: number;
+  totalSale: number;
+  totalPaid: number;
+  changeAmount: number;
+  payments: PaymentResponse[];
+}
+
+/* =======================
+   SERVICE
+======================= */
 
 @Injectable({
   providedIn: 'root'
 })
 export class PaymentService {
+
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/payments`;
-  private apiMethodsUrl = `${environment.apiUrl}/payment-methods`;
+  private baseUrl = `${environment.apiUrl}/payments`;
+
+  /* =======================
+     MÉTODOS DE PAGAMENTO
+  ======================= */
+
+  listPaymentMethods(): Observable<PaymentMethodResponse[]> {
+    return this.http.get<PaymentMethodResponse[]>(`${this.baseUrl}/methods`);
+  }
+
+  /* =======================
+     PAGAMENTO MULTIPLO (PDV)
+  ======================= */
+
+  processMultiPayment(
+    request: PaymentMultiRequest
+  ): Observable<PaymentMultiResponse> {
+    return this.http.post<PaymentMultiResponse>(
+      `${this.baseUrl}/multi`,
+      request
+    );
+  }
+
+  /* =======================
+     CONSULTAS
+  ======================= */
+
+  listPaymentsBySale(saleId: number): Observable<PaymentResponse[]> {
+    return this.http.get<PaymentResponse[]>(
+      `${this.baseUrl}/sale/${saleId}`
+    );
+  }
+
+  getTodayPayments(): Observable<PaymentResponse[]> {
+    return this.http.get<PaymentResponse[]>(`${this.baseUrl}/today`);
+  }
+
+  getTodayTotal(): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/today/total`);
+  }
 
   listAll(): Observable<PaymentMethodResponse[]> {
-  return this.http.get<PaymentMethodResponse[]>(this.apiMethodsUrl);
-}
+    return this.http.get<PaymentMethodResponse[]>(this.baseUrl);
+  }
 
-  // CRIAR novo método (O que o modal chama)
   createMethod(request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
-    return this.http.post<PaymentMethodResponse>(this.apiMethodsUrl, request);
-  }
-
-  update(id: number, request: PaymentMethodRequest): Observable<any> {
-  return this.http.put(`${environment.apiUrl}/payment-methods/${id}`, request);
+  return this.http.post<PaymentMethodResponse>(this.baseUrl, request);
 }
 
-  // Processar pagamento de venda
-  processMultiPayment(request: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/multi`, request);
-  }
-
-  getPaymentMethods() {
-    // Se não tiver endpoint, retorne um array fixo para teste:
-    // return of([{id: 1, name: 'DINHEIRO'}, {id: 2, name: 'PIX'}]);
-    return this.http.get<PaymentMethod[]>(`${environment.apiUrl}/payment-methods`);
-  }
-
-  processPayment(request: PaymentRequest) {
-    return this.http.post<any>(this.apiUrl, request);
-  }
+updateMethod(id: number, request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
+  return this.http.put<PaymentMethodResponse>(`${this.baseUrl}/${id}`, request);
+}
 }

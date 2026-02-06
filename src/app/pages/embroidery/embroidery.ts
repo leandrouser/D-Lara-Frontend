@@ -1,173 +1,219 @@
-import { Component, inject, signal, computed, OnInit, WritableSignal } from '@angular/core';
+import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import { debounceTime, distinctUntilChanged, Subject, switchMap, tap } from 'rxjs';
-import { EmbroideryService, EmbroideryResponse, EmbroiderySearchField } from '../../core/service/embroidery.service';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { EmbroideryResponse, EmbroideryService } from '../../core/service/embroidery.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { EmbroideryModal } from '../../shared/models/embroidery/embroidery-modal';
-
+import { MatCard, MatCardContent } from "@angular/material/card";
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-embroidery',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MatIconModule, MatDialogModule],
+  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatTableModule,
+    MatPaginatorModule, MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule],
   templateUrl: './embroidery.html',
   styleUrls: ['./embroidery.scss']
 })
 export class Embroidery implements OnInit {
-  private embroideryService = inject(EmbroideryService);
-  private dialog = inject(MatDialog);
-  private searchSubject = new Subject<void>();
 
-  // --- ESTADO DA TELA ---
-  embroideries = signal<EmbroideryResponse[]>([]);
-  totalEmbroideryCount = signal<number>(0);
-  currentPage = signal<number>(0);
-  pageSize = signal<number>(10);
-  searchText = signal<string>('');
-  searchField = signal<EmbroiderySearchField | null>(EmbroiderySearchField.CUSTOMER_NAME);
-  loading = signal<boolean>(false);
+  displayedColumns: string[] = ['id', 'customerName', 'description', 'price', 'deliveryDate', 'actions'];
+  dataSource = signal<EmbroideryResponse[]>([]);
+  
+  // Estado da Busca e Paginação
+  searchControl = new FormControl('');
+  totalElements = signal(0);
+  currentPage = signal(0);
+  pageSize = signal(10);
+  loading = signal(false);
+  searchTerm = signal('');
 
-  totalPages = computed(() => Math.ceil(this.totalEmbroideryCount() / this.pageSize()));
+  totalPages = computed(() => Math.ceil(this.totalElements() / this.pageSize()));
+  pendingCount = computed(() => 
+  this.dataSource().filter(e => e.status === 'PENDING').length);
+  showDelivered = signal<boolean>(false);
 
-  searchFields = Object.values(EmbroiderySearchField);
-    
-  // --- LIFECYCLE E INICIALIZAÇÃO ---
+  // Sinais para os Cards de Métricas
+  overdueCount = signal(0);
+  todayCount = signal(0);
+  totalRevenue = signal(0);
 
-  ngOnInit(): void {
-    this.setupSearch();
-    this.loadEmbroidery();
+  filteredDataSource = computed(() => {
+  const list = [...this.dataSource()]; // Criamos uma cópia para não mutar o original
+  const isFilteringDelivered = this.showDelivered();
+
+  if (isFilteringDelivered) {
+    // ESTADO DO BOTÃO ATIVO: Mostra APENAS os entregues
+    return list.filter(item => item.status === 'DELIVERED');
+  } else {
+    // ESTADO PADRÃO: Mostra apenas Pendentes, ordenados por data (mais próximas primeiro)
+    return list
+      .filter(item => item.status === 'PENDING')
+      .sort((a, b) => {
+        if (!a.deliveryDate || !b.deliveryDate) return 0;
+        return new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime();
+      });
   }
+});
 
-  // Configura o debounce para a busca
-  setupSearch(): void {
-    this.searchSubject.pipe(
+  constructor(
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private embroideryService: EmbroideryService
+  ) {}
+
+ ngOnInit(): void {
+    this.loadData();
+
+    // Escuta mudanças na busca com delay para não sobrecarregar o servidor
+    this.searchControl.valueChanges.pipe(
       debounceTime(400),
-      distinctUntilChanged(),
-      tap(() => this.loadEmbroidery()),
-    ).subscribe();
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.currentPage.set(0);
+      this.loadData();
+    });
   }
 
-  onSearchChange(): void {
-    if (this.currentPage() !== 0) {
-      this.currentPage.set(0); 
+  loadData() {
+  this.loading.set(true);
+  
+  // Garante que o termo seja uma string limpa
+  const term = (this.searchControl.value || '').trim();
+  const page = this.currentPage();
+  const size = this.pageSize();
+
+  const status = this.showDelivered() ? 'DELIVERED' : 'PENDING';
+
+  this.embroideryService.search(term, status, page, size).subscribe({
+    next: (response) => {
+      this.dataSource.set([...response.content]); 
+      this.totalElements.set(response.totalElements);
+      this.calculateMetrics(response.content);
+      this.loading.set(false);
+    },
+    error: (err) => {
+      console.error('Erro na requisição API:', err);
+      this.showError('Falha ao conectar com o servidor.');
+      this.loading.set(false);
+      this.dataSource.set([]);
     }
-    this.searchSubject.next();
-  }
-
-  // --- LÓGICA DE CARREGAMENTO DE DADOS ---
-
-  loadEmbroidery(): void {
-    this.loading.set(true);
-      this.embroideryService.searchEmbroidery(
-        this.searchText() || '',
-        this.currentPage(),
-        this.pageSize(),
-        this.searchField(),
-      ).subscribe({
-        next: (response) => {
-          this.embroideries.set(response.content);
-          this.totalEmbroideryCount.set(response.totalElements);
-          this.loading.set(false);
-        },
-        error: (err) => {
-          console.error('Erro ao carregar bordados:', err);
-          this.loading.set(false);
-        }
-      });
-    } 
-
-  // --- AÇÕES NA TABELA ---
-
-  // Abre o modal de criação/edição
-  openCreateDialog(embroideryToEdit?: EmbroideryResponse): void {
-    const dialogRef = this.dialog.open(EmbroideryModal, { 
-        width: '600px',
-        disableClose: true // Não permite fechar clicando fora
-    });
-
-    // Recarrega a lista se o modal for fechado com sucesso (result === true)
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadEmbroidery();
-      }
-    });
+  });
 }
-  
-  edit(embroidery: EmbroideryResponse): void {
-    this.openCreateDialog(embroidery);
+
+toggleDelivered() {
+  this.showDelivered.update(v => !v);
+  this.currentPage.set(0); 
+  this.loadData();
+}
+
+  handlePageEvent(e: PageEvent) {
+    this.currentPage.set(e.pageIndex);
+    this.pageSize.set(e.pageSize);
+    this.loadData();
   }
-  
+
+  calculateMetrics(items: EmbroideryResponse[]) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    this.overdueCount.set(items.filter(i => this.isOverdue(i.deliveryDate)).length);
+    this.todayCount.set(items.filter(i => i.deliveryDate === todayStr).length);
+    this.totalRevenue.set(items.filter(i => i.status === 'DELIVERED').reduce((acc, curr) => acc + curr.price, 0));  }
+
+  isOverdue(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const delivery = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return delivery < today;
+}
+
+  openModal(data?: EmbroideryResponse): void {
+    const dialogRef = this.dialog.open(EmbroideryModal, {
+      width: '600px',
+      data: data,
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) this.loadData();
+    });
+  }
+
   delete(id: number): void {
-    if (confirm('Tem certeza que deseja excluir este bordado?')) {
-      this.embroideryService.deleteEmbroidery(id).subscribe({
-        next: () => {
-          alert('Bordado excluído com sucesso.');
-          this.loadEmbroidery();
-        },
-        error: (err) => console.error('Erro ao deletar:', err)
+    if (confirm('Deseja realmente excluir este bordado?')) {
+      this.embroideryService.delete(id).subscribe(() => {
+        this.showSuccess('Bordado excluído!');
+        this.loadData();
       });
     }
   }
-
-  // --- LÓGICA AUXILIAR ---
-  
-  formatCurrency(value: number): string {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
-
-  formatDate(dateStr: string | null): string {
-    if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR');
-  }
-
-  getSearchLabel(field: EmbroiderySearchField | null): string {
-    if (!field) return 'campo';
-    const labels = {
-      [EmbroiderySearchField.ID]: 'ID do Bordado',
-      [EmbroiderySearchField.CUSTOMER_ID]: 'ID do Cliente',
-      [EmbroiderySearchField.CUSTOMER_NAME]: 'Nome do Cliente',
-      [EmbroiderySearchField.PHONE]: 'Telefone',
-    };
-    return labels[field] || 'campo';
-  }
-
-  // --- LÓGICA DE PAGINAÇÃO ---
 
   goToPage(page: number): void {
-    if (page >= 0 && page < this.totalPages()) {
-      this.currentPage.set(page);
-      this.loadEmbroidery();
-    }
+  if (page >= 0 && page < this.totalPages()) {
+    this.currentPage.set(page);
+    this.loadData();
   }
+}
 
-  onSearch(): void {
-    this.currentPage.set(0); // Reset para primeira página ao pesquisar
-    this.loadEmbroidery();
+// Navegação simplificada (Próximo/Anterior)
+changePage(delta: number): void {
+  const nextPage = this.currentPage() + delta;
+  if (nextPage >= 0 && nextPage < this.totalPages()) {
+    this.goToPage(nextPage);
   }
+}
 
-  onPageSizeChange(eventValue: string): void {
-    const newSize = parseInt(eventValue, 10);
-    if (this.pageSize() !== newSize) {
-      this.pageSize.set(newSize);
-      this.currentPage.set(0);
-      this.loadEmbroidery();      
-    }
-  }
+// Helpers para o texto "Mostrando X - Y de Z"
+getStartIndex(): number {
+  return this.totalElements() === 0 ? 0 : (this.currentPage() * this.pageSize()) + 1;
+}
+
+getEndIndex(): number {
+  const last = (this.currentPage() + 1) * this.pageSize();
+  return last > this.totalElements() ? this.totalElements() : last;
+}
+
+markAsDelivered(embroidery: EmbroideryResponse) {
+  // 1. Mensagem de confirmação amigável
+  const confirmacao = confirm(`Confirmar entrega do bordado #${embroidery.id} para ${embroidery.customerName}?`);
   
-  onPageChange(event: any): void {
-    this.currentPage.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
-    this.loadEmbroidery();
+  if (confirmacao) {
+    this.loading.set(true);
+    this.embroideryService.updateStatus(embroidery.id, 'DELIVERED').subscribe({
+      next: () => {
+        this.showSuccess('Status atualizado para Entregue!');
+        this.loadData(); // Recarrega a lista e as métricas de receita automaticamente
+      },
+      error: (err) => {
+        this.showError('Erro ao atualizar status');
+        this.loading.set(false);
+      }
+    });
   }
-  
-  clearSearch(): void {
-    this.searchText.set('');
-    this.searchField.set(EmbroiderySearchField.CUSTOMER_NAME);
-    this.currentPage.set(0);
-    this.loadEmbroidery();
-  }
+}
+
+private showSuccess(message: string): void {
+  this.snackBar.open(message, 'OK', { 
+    duration: 3000, 
+    panelClass: ['success-snackbar'],
+    horizontalPosition: 'end',
+    verticalPosition: 'top'
+  });
+}
+
+private showError(message: string): void {
+  this.snackBar.open(message, 'Fechar', { 
+    duration: 4000, 
+    panelClass: ['error-snackbar'],
+    horizontalPosition: 'end',
+    verticalPosition: 'top'
+  });
+}
 }

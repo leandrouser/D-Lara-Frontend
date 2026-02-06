@@ -46,10 +46,10 @@
               class="method-btn"
               [class.active]="currentPaymentMethod() === method"
               (click)="selectCurrentPaymentMethod(method)">
-              <mat-icon *ngIf="method === 'CASH'">payments</mat-icon>
-              <mat-icon *ngIf="method === 'CREDIT_CARD'">credit_card</mat-icon>
-              <mat-icon *ngIf="method === 'DEBIT_CARD'">credit_score</mat-icon>
-              <mat-icon *ngIf="method === 'PIX'">qr_code_2</mat-icon>
+              <mat-icon *ngIf="method === 'DINHEIRO'">payments</mat-icon>
+<mat-icon *ngIf="method === 'CARTAO_CREDITO'">credit_card</mat-icon>
+<mat-icon *ngIf="method === 'CARTAO_DEBITO'">credit_score</mat-icon>
+<mat-icon *ngIf="method === 'PIX'">qr_code_2</mat-icon>
               <span>{{ getPaymentMethodText(method) }}</span>
             </button>
           </div>
@@ -74,7 +74,7 @@
                 <mat-icon>add</mat-icon>
               </button>
             </div>
-            <small class="hint" *ngIf="currentPaymentMethod() === 'CASH' && currentAmount() > remainingAmount() && remainingAmount() > 0">
+            <small class="hint" *ngIf="currentPaymentMethod() === 'DINHEIRO' && currentAmount() > remainingAmount() && remainingAmount() > 0">
               Isso irá gerar troco de {{ formatPrice(currentAmount() - remainingAmount()) }}
             </small>
           </div>
@@ -131,11 +131,12 @@
           Cancelar
         </button>
         <button 
-          class="btn-confirm" 
-          [disabled]="!isFullyPaid() || isProcessing()"
-          (click)="processPayments()">
-          Finalizar Venda (F2)
-        </button>
+  class="btn-confirm" 
+  [disabled]="!canProcessPayment()"
+  (click)="processPayments()"
+  [title]="!isFullyPaid() ? 'Total não atingido' : 'Finalizar venda'">
+  Finalizar Venda (F2)
+</button>
       </div>
     </div>
 

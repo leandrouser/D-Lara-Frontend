@@ -1,0 +1,208 @@
+<div class="cash-container">
+  @if (isLoading() || cashService.isInitializing()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  }
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-info">
+      <h1><mat-icon>account_balance_wallet</mat-icon> Gerenciamento de Caixa</h1>
+      <p class="subtitle">Controle de aberturas, fechamentos e movimentações financeiras</p>
+    </div>
+
+    <button class="cash-status-btn" [class.open]="isCashOpen()" 
+      (click)="!isCashOpen() ? isOpeningModalOpen.set(true) : null">
+      <mat-icon>{{ isCashOpen() ? 'lock_open' : 'lock' }}</mat-icon>
+      <span>CAIXA {{ isCashOpen() ? 'ABERTO' : 'FECHADO' }}</span>
+    </button>
+  </div>
+
+  <!-- CARDS DE RESUMO (Apenas quando aberto) -->
+  <div class="cards" *ngIf="isCashOpen() && cashService.activeSession() as session">
+    <div class="card green">
+      <div class="card-info">
+        <span class="card-label">Total Entradas</span>
+        <strong class="card-value">R$ {{ session.totalIncomes | number:'1.2-2' }}</strong>
+        <small>Vendas + Suprimentos</small>
+      </div>
+      <mat-icon class="card-icon">trending_up</mat-icon>
+    </div>
+
+    <div class="card red">
+      <div class="card-info">
+        <span class="card-label">Total Saídas</span>
+        <strong class="card-value">R$ {{ session.totalExpenses | number:'1.2-2' }}</strong>
+        <small>Sangrias e Retiradas</small>
+      </div>
+      <mat-icon class="card-icon">trending_down</mat-icon>
+    </div>
+
+    <div class="card blue">
+      <div class="card-info">
+        <span class="card-label">Saldo em Caixa</span>
+        <strong class="card-value" [style.color]="session.finalBalance >= 0 ? '#15803d' : '#dc2626'">
+          R$ {{ session.finalBalance | number:'1.2-2' }}
+        </strong>
+        <small>Valor atual</small>
+      </div>
+      <mat-icon class="card-icon">payments</mat-icon>
+    </div>
+
+    <div class="card purple">
+      <div class="card-info">
+        <span class="card-label">Abertura</span>
+        <strong class="card-value">{{ formatDate(session.openedAt) }}</strong>
+        <small>ID: {{ session.id }}</small>
+      </div>
+      <mat-icon class="card-icon">schedule</mat-icon>
+    </div>
+  </div>
+
+  <!-- AÇÕES PRINCIPAIS -->
+  <div class="action-bar" *ngIf="isCashOpen()">
+    <div class="action-group">
+      <button class="btn-action supply" (click)="movementType.set('SUPPLEMENT'); showMovementForm.set(true)" [disabled]="isLoading()">
+        <mat-icon>add_circle_outline</mat-icon>
+        <span>Suprimento</span>
+      </button>
+
+      <button class="btn-action withdrawal" (click)="movementType.set('SANGRIA'); showMovementForm.set(true)" [disabled]="isLoading()">
+        <mat-icon>remove_circle_outline</mat-icon>
+        <span>Sangria</span>
+      </button>
+    </div>
+
+    <button class="btn-danger" (click)="isClosingModalOpen.set(true)" [disabled]="isLoading()">
+      <mat-icon>lock</mat-icon>
+      <span>Fechar Caixa</span>
+    </button>
+  </div>
+
+  <!-- FORMULÁRIO DE MOVIMENTAÇÃO -->
+  <div class="movement-form" *ngIf="showMovementForm()">
+<h3>Nova Movimentação: {{ movementType() === 'SUPPLEMENT' ? 'Suprimento' : 'Sangria' }}</h3>
+    <div class="form-fields">
+      <input 
+        type="number" 
+        [ngModel]="movementValue()" 
+        (ngModelChange)="movementValue.set($event)"
+        placeholder="Valor (R$)"
+        min="0"
+        step="0.01"
+        [disabled]="isLoading()">
+      
+      <input 
+        type="text" 
+        [ngModel]="movementObservation()" 
+        (ngModelChange)="movementObservation.set($event)"
+        placeholder="Observação (opcional)"
+        [disabled]="isLoading()">
+    </div>
+
+    <div class="form-actions">
+      <button (click)="showMovementForm.set(false)">Cancelar</button>
+      <button class="btn-confirm" (click)="addMovement()" [disabled]="movementValue() <= 0 || isLoading()">
+        <mat-icon *ngIf="!isLoading()">check</mat-icon>
+        <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
+        {{ isLoading() ? 'Registrando...' : 'Confirmar' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- TABELA DE TRANSAÇÕES -->
+  <div class="table-section" *ngIf="isCashOpen()">
+    <div class="section-header">
+      <h3><mat-icon>list_alt</mat-icon> Movimentações da Sessão</h3>
+      <span class="session-badge">Sessão #{{ cashService.activeSessionId() }}</span>
+    </div>
+
+    <div class="table-container">
+      <table class="cash-table">
+        <thead>
+          <tr>
+            <th><mat-icon>schedule</mat-icon> Data/Hora</th>
+            <th><mat-icon>category</mat-icon> Tipo</th>
+            <th><mat-icon>payments</mat-icon> Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="4" class="loading-cell">
+                <mat-icon class="spin">refresh</mat-icon>
+                Carregando movimentações...
+              </td>
+            </tr>
+          } @else if (transactions().length === 0) {
+            <tr>
+              <td colspan="4" class="empty-cell">
+                <mat-icon>inbox</mat-icon>
+                Nenhuma movimentação registrada nesta sessão
+              </td>
+            </tr>
+          } @else {
+            @for (item of transactions(); track item.id) {
+              <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLEMENT'"
+                  [class.expense]="item.type === 'SANGRIA'">
+                <td class="date-cell">
+                  {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td class="type-cell">
+                  <span [class]="'type-badge ' + item.type.toLowerCase()">
+                    <mat-icon>
+                      {{ item.type === 'SALE' ? 'shopping_cart' : 
+                         item.type === 'SUPPLEMENT' ? 'add_circle' : 
+                         item.type === 'SANGRIA' ? 'remove_circle' : 
+                         'sync_alt' }}
+                    </mat-icon>
+                    {{ getTypeLabel(item.type) }}
+                  </span>
+                </td>
+                <td class="value-cell" 
+                    [class.positive]="item.type === 'SALE' || item.type === 'SUPPLEMENT'"
+                    [class.negative]="item.type === 'SANGRIA'">
+                  {{ item.type === 'SANGRIA' ? '- ' : '+ ' }}
+                  {{ item.value | currency: 'BRL' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL: ABERTURA DE CAIXA -->
+ <app-cash-modal 
+    [isOpen]="isOpeningModalOpen()" 
+    (close)="isOpeningModalOpen.set(false)"
+    (confirm)="onConfirmCashOpen($event)">
+  </app-cash-modal>
+
+  <div class="modal-overlay" *ngIf="isClosingModalOpen()">
+    <div class="modal-content large">
+      <div class="modal-header">
+        <h2><mat-icon>account_balance</mat-icon> Fechamento de Caixa</h2>
+        <button (click)="isClosingModalOpen.set(false)"><mat-icon>close</mat-icon></button>
+      </div>
+
+      <div class="modal-body">
+        <p>Informe o valor físico contado para cada método:</p>
+        <div class="payment-inputs">
+          <div *ngFor="let m of paymentMethods()" class="payment-field">
+            <label>{{ m.name }}</label>
+            <input type="number" placeholder="0.00" (change)="updateCount(m.id, $event)">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="isClosingModalOpen.set(false)">Cancelar</button>
+        <button class="btn-confirm" (click)="executeCashClosing()">
+          Confirmar Fechamento
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,417 +1,402 @@
-<div class="layout">
-  <div class="content content-adjustable">
-
-    <!-- Header -->
-    <div class="header-main">
-      <h1>
-        <mat-icon>point_of_sale</mat-icon>
-        Ponto de Venda (PVD)
-      </h1>
-      <p class="subtitle">Realize vendas de forma rápida e eficiente</p>
+<div class="pdv-container">
+  <div class="page-header">
+    <div class="header-info">
+      <h1><mat-icon>shopping_cart_checkout</mat-icon> {{ pageTitle() }}</h1>
+      <p class="subtitle">{{ pageSubtitle() }}</p>
     </div>
 
-    <!-- CONTAINER PRINCIPAL -->
-    <div class="pvd-main">
+    <div class="header-actions">
+      <button class="cash-status-btn" 
+              [class.is-open]="isCashRegisterOpen()" 
+              (click)="handleButtonClick()">
+        <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
+        <span>CAIXA {{ isCashRegisterOpen() ? 'ABERTO' : 'FECHADO' }}</span>
+      </button>
+    </div>
+  </div>
 
-      <!-- ====================== LEFT PANEL ====================== -->
-      <div class="left-panel">
+  <div class="main-layout">
+    <div class="left-side">
+      <div class="top-controls">
+        <div class="customer-selection-row">
+          <div class="customer-selection-area">
+            <div class="search-filters compact">
+              <div class="search-box">
+                <div class="input-box">
+                  <mat-icon>person_search</mat-icon>
+                  <input 
+                    type="text" 
+                    placeholder="ID, Nome ou Telefone..." 
+                    [value]="customerSearchValue()" 
+                    (input)="onCustomerSearchInput($event)">
+                </div>
 
- <!-- ====================== CLIENTE ====================== -->
-        <div class="customer-section">
-          <!-- ... (mantenha todo o conteúdo do cliente igual) ... -->
-          <div class="customer-search-row">
-            <div class="customer-input-box">
-              <label for="customer-input">Buscar Cliente</label>
-              <input
-                id="customer-input"
-                type="text"
-                placeholder="Código, nome ou telefone"
-                [value]="customerSearchTerm()"
-                (input)="onCustomerSearchInput($event.target.value)"
-                (focus)="showCustomerResults.set(true)"
-              />
+                
+              </div>
+              <div class="new-customer-btn">
+                <button (click)="openCustomerModal()"><mat-icon>person_add</mat-icon></button>
+              </div>
+              
+                </div>
+
+            @if (showCustomerDropdown()) {
+              <div class="customer-dropdown">
+                @for (c of suggestedCustomers(); track c.id) {
+                  <div class="dropdown-item" (click)="selectCustomer(c)">
+                    <span class="c-id">#{{c.id}}</span>
+                    <div class="c-info">
+                      <span class="c-name">{{c.name}}</span>
+                      <span class="c-phone">
+                        <mat-icon style="font-size: 14px; width: 14px; height: 14px; margin-right: 4px;">phone</mat-icon> 
+                        {{c.phone}}
+                      </span>
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="dropdown-empty">
+                    <mat-icon>search_off</mat-icon>
+                    <span>Nenhum cliente encontrado</span>
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="quick-actions-row">
+              <button [class.active]="productCategoryFilter() === 'all'" (click)="setProductFilter('all')">
+                Produtos
+              </button>
+              <button [class.active]="productCategoryFilter() === CategoryEnum.BORDADO" (click)="setProductFilter(CategoryEnum.BORDADO)">
+                Bordados
+              </button>
             </div>
-
-            <button class="btn-new-customer" (click)="openCustomerModal()">
-              <mat-icon>person_add</mat-icon>
-              Novo
-            </button>
           </div>
 
-  <!-- Resultados -->
-  <div class="dropdown" *ngIf="showCustomerResults()">
-
-    <div class="loading-spinner" *ngIf="isSearchingCustomer()">
-      <mat-icon>autorenew</mat-icon>
-      Buscando...
-    </div>
-
-    <div class="no-results"
-         *ngIf="!isSearchingCustomer() && customerSearchResults().length === 0">
-      Nenhum cliente encontrado.
-    </div>
-
-    <div class="results" *ngIf="customerSearchResults().length > 0">
-      <div
-        class="result-item"
-        *ngFor="let customer of customerSearchResults(); trackBy: trackByCustomerId"
-        (click)="selectCustomer(customer)"
-      >
-        <div>{{ customer.name }}</div>
-        <small>Telefone: {{ customer.phone }}</small>
-      </div>
-    </div>
-  </div>
-
-  <!-- Cliente selecionado -->
-  <div class="customer-selected" *ngIf="selectedCustomer()">
-
-    <div class="customer-avatar">
-      <mat-icon>person</mat-icon>
-    </div>
-
-    <div class="customer-details">
-      <h3 class="customer-name">{{ selectedCustomer()?.name }}</h3>
-
-      <div class="customer-contact">
-        <div class="contact-item">
-          <mat-icon>call</mat-icon>
-          {{ selectedCustomer()?.phone || 'Sem telefone' }}
+          @if (selectedCustomer(); as customer) {
+            <div class="card selected-item-card purple" (click)="clearCustomer()" title="Clique para remover">
+              <div class="info">
+                <span class="c-id">ID: #{{ customer.id }}</span>
+                <strong class="c-name">{{ customer.name }}</strong>
+                <small class="c-phone"><mat-icon>phone</mat-icon> {{ customer.phone }}</small>
+              </div>
+              <mat-icon class="icon">person</mat-icon>
+              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+            </div>
+          }
         </div>
       </div>
 
-      <div class="customer-meta">
-        <div
-          class="customer-status"
-          [class.active]="selectedCustomer()?.active"
-          [class.inactive]="!selectedCustomer()?.active"
-        >
-          {{ selectedCustomer()?.active ? 'Ativo' : 'Inativo' }}
-        </div>
-
-        <div class="customer-id">
-          <mat-icon>badge</mat-icon>
-          ID: {{ selectedCustomer()?.id }}
-        </div>
-      </div>
-    </div>
-
-    <button class="btn-clear-customer" (click)="clearCustomer()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-  </div>
-<customer-modal
-  [isOpen]="isCustomerModalOpen()"
-  (save)="saveNewCustomer($event)"
-  (close)="closeCustomerModal()"
-></customer-modal>
-
-
- <!-- ====================== PRODUTOS ====================== -->
-<div class="products-section">
-  <div class="section-header">
-    <h3>
+     <div class="items-display-area">
+  <div class="product-search-bar">
+    <div class="search-input-wrapper">
       <mat-icon>search</mat-icon>
-      Buscar Produtos
-    </h3>
-    
-    <!-- ✅ NOVO: Controles de busca -->
-    <div class="search-controls" *ngIf="hasSearchedProducts() || productSearchTerm()">
-      <div class="total-badge">
-        {{ productSearchResults().length }} produtos
+      <input #searchInput 
+             type="text" 
+             placeholder="Pesquisar produto ou bordado (F2)..." 
+             (input)="onProductSearchInput($event)" />
+      
+      @if (isLoading()) { 
+        <mat-icon class="spinner-loading">refresh</mat-icon> 
+      }
+    </div>
+    <div class="results-info">
+      {{ totalElements() }} produtos encontrados
+    </div>
+  </div>
+
+        <div class="products-grid-scroll">
+          @for (p of filteredProducts(); track p.id) {
+            <div class="product-card" [class.is-embroidery]="p.categoryEnum === CategoryEnum.BORDADO">
+              <div class="card-content">
+                <div class="card-header-top">
+                  <div class="header-left">
+                    <span class="p-category">{{ p.categoryEnum }}</span>
+                    @if (p.categoryEnum !== CategoryEnum.BORDADO) {
+                      <span class="p-stock" [class.danger]="p.stockQty <= 5">
+                        {{ p.stockQty }} em estoque
+                      </span>
+                    } 
+                  </div>
+                  <span class="p-price">R$ {{ p.price | number:'1.2-2' }}</span>
+                </div>
+                <h3 class="p-name">{{ p.name }}</h3>
+
+                @if (p.categoryEnum === CategoryEnum.BORDADO) {
+                  <p class="p-description-hint" style="font-size: 11px; color: #666; margin-bottom: 4px;">
+                    {{ p.description | slice:0:35 }}{{ p.description.length > 35 ? '...' : '' }}
+                  </p>
+
+                  @if (p.deliveryDate) {
+                    <div class="delivery-date-info" 
+                        [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
+                        style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <mat-icon style="font-size: 16px; width: 16px; height: 16px;">event</mat-icon>
+                      <span>Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  }
+                }
+                <div class="p-footer">
+                  @if (p.barcode) {
+                    <div class="p-barcode" title="Identificador">
+                      <mat-icon>view_week</mat-icon>
+                      <span>{{ p.barcode }}</span>
+                    </div>
+                  } @else if (p.categoryEnum === CategoryEnum.BORDADO) {
+                    <div class="p-barcode">
+                      <mat-icon>architecture</mat-icon>
+                      <span>OS #{{ p.id }}</span>
+                    </div>
+                  }
+                  <button class="btn-add-cart" 
+                          [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0" 
+                          (click)="addToCart(p)">
+                    <span>
+                      {{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}
+                    </span>
+                    <mat-icon>
+                      {{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}
+                    </mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-grid-state">
+              <mat-icon>inventory_2</mat-icon>
+              <p>Nenhum produto ou bordado encontrado.</p>
+            </div>
+          }
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="pdv-pagination">
+            <span class="page-counter">
+              Página <b>{{ currentPage() + 1 }}</b> de {{ totalPages() }}
+            </span>
+            <div class="pagination-actions">
+              <button [disabled]="currentPage() === 0" (click)="changePage(-1)">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button [disabled]="currentPage() >= totalPages() - 1" (click)="changePage(1)">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
       </div>
-      <button class="clear-btn" (click)="clearProductSearch()" *ngIf="productSearchTerm()">
-        <mat-icon>clear</mat-icon>
-        Limpar
-      </button>
     </div>
-  </div>
 
-  <!-- ✅ ATUALIZADO: Barra de busca funcional -->
-  <div class="search-box">
-    <div class="input-box">
-      <mat-icon class="search-icon">search</mat-icon>
-      <input
-        type="text"
-        placeholder="Buscar por código, nome ou código de barras..."
-        [value]="productSearchTerm()"
-        (input)="onProductSearchInput($any($event.target).value)"
-        (keyup.enter)="onProductSearchInput(productSearchTerm())"
-      />
-      <button 
-        class="clear-search" 
-        title="Limpar busca"
-        (click)="clearProductSearch()"
-        *ngIf="productSearchTerm()">
-        <mat-icon>close</mat-icon>
-      </button>
+    <div class="right-side">
+ <div class="sale-recovery-area">
+  <div class="recovery-input-container">
+    <div class="recovery-input">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Buscar venda..." (input)="onSearchSale($any($event.target).value)">
     </div>
-  </div>
 
-  <!-- ✅ NOVO: Estados de carregamento -->
-  <div class="loading-state" *ngIf="isSearchingProduct()">
-    <div class="loading-spinner">
-      <mat-icon>autorenew</mat-icon>
-    </div>
-    <span>Buscando produtos...</span>
-  </div>
-
-  <!-- ✅ NOVO: Estado vazio após busca -->
-  <div class="no-products" *ngIf="!isSearchingProduct() && productSearchResults().length === 0 && hasSearchedProducts()">
-    <mat-icon>search_off</mat-icon>
-    <p>Nenhum produto encontrado</p>
-    <small>Tente buscar por outro termo</small>
-  </div>
-
-  <!-- ✅ ATUALIZADO: Grid de produtos dinâmico -->
-  <div class="products-grid" *ngIf="!isSearchingProduct() && (productSearchResults().length > 0 || !hasSearchedProducts())">
-    
-    <!-- Produtos da busca -->
-    <div
-      class="product-card"
-      *ngFor="let product of (hasSearchedProducts() ? productSearchResults() : topSellingProducts()); trackBy: trackByProductId"
-      (click)="addToCart(product)"
-      [ngClass]="getStockClass(product.stockQty)"
-    >
-      <div class="product-info">
-        <h3 class="product-name">{{ product.name }}</h3>
-
-        <p class="product-price">
-          {{ formatPrice(product.price) }}
-        </p>
-
-        <p class="product-stock" [ngClass]="getStockClass(product.stockQty)">
-          <mat-icon>inventory_2</mat-icon>
-          {{ product.stockQty }} UN
-          <span class="stock-status" *ngIf="product.stockQty <= 5">• Estoque Baixo</span>
-          <span class="stock-status" *ngIf="product.stockQty <= 0">• Esgotado</span>
-        </p>
-
-        <!-- ✅ NOVO: Informações adicionais -->
-        <p class="product-barcode" *ngIf="product.barcode">
-          <small>Cód: {{ product.barcode }}</small>
-        </p>
+    @if (showSaleSuggestions() && saleSuggestions().length > 0) {
+      <div class="suggestions-dropdown">
+        @for (sale of saleSuggestions(); track sale.id) {
+          <div class="suggestion-item" (click)="selectSaleToEdit(sale)">
+            <div class="sug-info">
+              <span class="sug-id">Venda #{{ sale.id }}</span>
+              <span class="sug-name">{{ sale.customerName }}</span>
+            </div>
+            <div class="sug-details">
+              <span class="sug-total">{{ sale.total | currency:'BRL' }}</span>
+              <span class="status-badge">{{ sale.status }}</span>
+            </div>
+          </div>
+        }
       </div>
-
-      <button 
-        class="add-button" 
-        (click)="addToCart(product); $event.stopPropagation()"
-        [disabled]="product.stockQty <= 0">
-        <mat-icon>add_shopping_cart</mat-icon>
-        {{ product.stockQty <= 0 ? 'Esgotado' : 'Adicionar' }}
-      </button>
-    </div>
-  </div>
-
-  <!-- ✅ NOVO: Estado inicial -->
-  <div class="initial-state" *ngIf="!isSearchingProduct() && !hasSearchedProducts() && topSellingProducts().length > 0">
-    <div class="initial-hint">
-      <mat-icon>info</mat-icon>
-      <span>Digite acima para buscar produtos ou clique para adicionar ao carrinho</span>
-    </div>
+    }
   </div>
 </div>
-      </div>
 
-   <!-- ====================== RIGHT PANEL (CARRINHO) ====================== -->
-<div class="right-panel">
- <!-- 🔎 BUSCA DE VENDAS -->
-<div class="search-box-container">
-  <label>Buscar venda</label>
-
-  <div class="search-line">
-    <input
-      type="text"
-      placeholder="Digite ID, nome ou telefone..."
-      [value]="saleSearchTerm()"
-      (input)="onSaleSearchInput($event.target.value)"
-      (focus)="showSalesResults.set(true)"
-    />
-  </div>
-
-  <!-- 🔄 Spinner -->
-  <div
-    class="results-list"
-    *ngIf="showSalesResults() && saleSearchResults().length > 0"
-  >
-    <div
-     class="result-item"
-     *ngFor="let sale of saleSearchResults()"
-     (click)="selectSale(sale)"
-    >
-      <strong>ID {{ sale.id }}</strong>  
-      <span>{{ sale.customerName }}</span>
-      <small>{{ sale.customerPhone }}</small>
-    </div>
-  </div>
-
-    <div 
-    *ngIf="!isSearchingSales() && showSalesResults() && saleSearchResults().length === 0"
-    class="results-list no-results"
-  >
-    Nenhuma venda encontrada
-  </div>
-
-  <div class="cart-panel">
+  <div class="cart-wrapper">
     <div class="cart-header">
-      <h2>
-        <mat-icon>shopping_cart</mat-icon>
-        Carrinho de Vendas
-      </h2>
-      <div class="cart-summary">
-        <span class="item-count">{{ cartItemCount() }} itens</span>
-        <span class="total-amount">{{ formatPrice(total()) }}</span>
+  <div class="header-main-info">
+    <mat-icon>shopping_basket</mat-icon>
+    <h2>Resumo da Venda</h2>
+  </div>
+  
+  @if (activeSaleId()) {
+    <span class="edit-badge">
+      <mat-icon>edit</mat-icon>
+      EDITANDO #{{ activeSaleId() }}
+    </span>
+  }
+</div>
+
+   <div class="cart-content">
+  @for (item of cart(); track $index) { 
+    <div class="cart-item">
+      <div class="col-id">
+        <span class="p-id">#{{ item.product.id }}</span>
+        <span class="p-barcode">
+          <mat-icon>view_week</mat-icon>
+          {{ item.product.barcode || 'S/ REF' }}
+        </span>
+      </div>
+
+      <div class="col-info">
+        <span class="item-name">{{ item.product.name }}</span>
+        @if (item.isEmbroidery) {
+          <span class="item-tag">SERVIÇO BORDADO</span>
+        }
+      </div>
+
+      <div class="col-qty">
+        <div class="qty-stepper">
+          <button (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1">
+            <mat-icon>remove</mat-icon>
+          </button>
+          <span class="qty-val">{{ item.quantity }}</span>
+          <button (click)="updateQuantity(item, 1)">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="col-price-row">
+        <div class="price-box unit">
+          <small>Unit.</small>
+          <span>{{ item.product.price | currency:'BRL' }}</span>
+        </div>
+
+        <div class="price-divider"></div> <div class="price-box line-total">
+          <small>Total Item</small>
+          <span class="total-value">{{ item.total | currency:'BRL' }}</span>
+        </div>
+
+        <button class="btn-remove" (click)="removeFromCart($index)">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </div>
+    </div> } @empty {
+    <div class="cart-empty">
+      <mat-icon>add_shopping_cart</mat-icon>
+      <p>Carrinho vazio</p>
+    </div>
+  }
+</div>
+
+ <div class="cart-footer">
+  <div class="discount-container">
+    <div class="input-group">
+      <div class="label-with-icon">
+        <mat-icon>local_offer</mat-icon>
+        <span>Desconto</span>
+      </div>
+
+      <div class="discount-row">
+      <div class="discount-controls">
+        <div class="type-selector">
+          <button [class.active]="discountType() === 'value'" 
+                  (click)="changeDiscountType('value')">R$</button>
+          <button [class.active]="discountType() === 'percent'" 
+                  (click)="changeDiscountType('percent')">%</button>
+        </div>
+
+        <div class="input-wrapper">
+          @if (discountType() === 'value') { <span class="prefix">R$</span> }
+          <input type="number" 
+                 [value]="discountInput()" 
+                 (input)="updateDiscountValue($event)"
+                 placeholder="0,00">
+          @if(discountType() === 'percent') { <span class="suffix">%</span> }
+        </div>
+      </div>
+      @if (calculatedDiscount() > 0) {
+      <div class="summary-item discount-applied">
+        <span>
+          Desconto 
+          @if (discountType() === 'percent') { ({{ discountInput() }}%) }
+        </span>
+        <span>- {{ calculatedDiscount() | currency:'BRL' }}</span>
+      </div>
+    }
       </div>
     </div>
+  </div>
 
-    <div class="cart-content">
-      
-      <!-- Carrinho vazio -->
-      <div class="empty-cart" *ngIf="cartItems().length === 0">
-        <mat-icon>remove_shopping_cart</mat-icon>
-        <p>Carrinho vazio</p>
-        <small>Adicione produtos para iniciar uma venda</small>
+  <div class="divider-dashed">
+  <div class="total-line">
+    <div class="total-row">
+      <span>Total a Pagar:</span>
+      <strong>{{ totalWithDiscount() | currency:'BRL' }}</strong>
+    </div>
+  </div>
+
+
+  <button class="btn-checkout" 
+          [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
+          (click)="preparePayment()"> <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
+    
+    <span>
+      {{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}
+    </span>
+
+    @if (isLoading()) {
+      <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+    }
+  </button>
+
+  @if (!isCashRegisterOpen() && cart().length > 0) {
+    <p style="color: #ef4444; font-size: 11px; text-align: center; margin-top: 8px; font-weight: 700; text-transform: uppercase;">
+      Abra o caixa para concluir a venda
+    </p>
+  }
+
+  <app-cash-modal 
+    [isOpen]="isOpeningModalOpen()" 
+    (close)="isOpeningModalOpen.set(false)"
+    (confirm)="onConfirmCashOpen($event)">
+  </app-cash-modal>
+</div>
+
+@if (isDetailVisible() && selectedEmbroideryDetail(); as emb) {
+  <div class="modal-overlay" (click)="closeDetails()">
+    <div class="detail-modal" (click)="$event.stopPropagation()">
+      <div class="detail-header">
+        <mat-icon>architecture</mat-icon>
+        <h3>Detalhes da OS #{{ emb.id }}</h3>
+        <button class="close-btn" (click)="closeDetails()">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
-
-      <!-- Tabela do carrinho -->
-      <div class="cart-items" *ngIf="cartItems().length > 0">
-        
-        <!-- Header da tabela -->
-        <div class="cart-table-header">
-          <div class="col-product">Produto</div>
-          <div class="col-price">Preço</div>
-          <div class="col-quantity">Quantidade</div>
-          <div class="col-total">Total</div>
+      <div class="detail-body">
+        <div class="detail-section">
+          <label>Cliente do Serviço</label>
+          <p>{{ emb.name }}</p>
         </div>
-
-        <!-- Itens do carrinho -->
-        <div 
-          class="cart-item" 
-          *ngFor="let item of cartItems(); trackBy: trackByCartItemId"
-        >
-
-        
-          <!-- 👇 INFORMAÇÕES DO PRODUTO COM ÍCONE AO LADO -->
-          <div class="item-info">
-            <!-- Botão excluir -->
-            <button 
-              class="remove-btn" 
-              (click)="removeFromCart(item.id)"
-              title="Remover item"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
-
-            <!-- Conteúdo do produto -->
-            <div class="product-content">
-              <span class="item-name">{{ item.productName }}</span>
-              <span class="item-barcode" *ngIf="item.barcode">
-                Cód: {{ item.barcode }}
-              </span>
-              <span class="item-price-mobile">
-                {{ formatPrice(item.productPrice) }} un
-              </span>
-            </div>
-          </div>
-
-          <!-- Preço unitário -->
-          <div class="item-price">
-            {{ formatPrice(item.productPrice) }}
-          </div>
-
-          <!-- Controles de quantidade -->
-          <div class="item-controls">
-            <button 
-              class="quantity-btn" 
-              (click)="updateQuantity(item.id, item.quantity - 1)"
-              [disabled]="item.quantity <= 1"
-            >
-              <mat-icon>remove</mat-icon>
-            </button>
-
-            <span class="quantity">{{ item.quantity }}</span>
-
-            <button 
-              class="quantity-btn" 
-              (click)="updateQuantity(item.id, item.quantity + 1)"
-            >
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-
-          <!-- Total do item -->
-          <div class="item-total">
-            {{ formatPrice(item.total) }}
-          </div>
+        <div class="detail-section">
+          <label>Descrição Completa do Bordado</label>
+          <div class="description-box">{{ emb.description }}</div>
+        </div>
+        <div class="detail-footer-info">
+          <span>Valor do Serviço: <strong>R$ {{ emb.price | number:'1.2-2' }}</strong></span>
         </div>
       </div>
-
-      <!-- Seção de totais e finalização -->
-      <div class="sale-details" *ngIf="cartItems().length > 0">
-        <div class="discount-section">
-          <div class="form-group">
-            <label for="discount">Desconto (R$):</label>
-            <input
-              type="number"
-              id="discount"
-              min="0"
-              [max]="subtotal()"
-              step="0.01"
-              placeholder="0.00"
-              [value]="discount()"
-              (input)="setDiscount($any($event.target).valueAsNumber)"
-            />
-          </div>
-        </div>
-
-        <div class="totals">
-          <div class="total-line">
-            <span>Subtotal:</span>
-            <span>{{ formatPrice(subtotal()) }}</span>
-          </div>
-          <div class="total-line" *ngIf="discount() > 0">
-            <span>Desconto:</span>
-            <span>- {{ formatPrice(discount()) }}</span>
-          </div>
-          <div class="total-line final">
-            <span>Total:</span>
-            <span><strong>{{ formatPrice(total()) }}</strong></span>
-          </div>
-        </div>
-
-        <button class="finalize-btn" (click)="finalizeSale()">
-  <mat-icon>point_of_sale</mat-icon>
-  Finalizar Venda
-</button>
-
-        <button class="clear-cart-btn" (click)="clearCart()">
-          <mat-icon>clear_all</mat-icon>
-          Limpar Carrinho
+      <div class="detail-actions">
+        <button class="btn-secondary" (click)="closeDetails()">VOLTAR</button>
+        <button class="btn-primary" (click)="addToCart(emb); closeDetails()">
+          <mat-icon>add_shopping_cart</mat-icon>
+          ADICIONAR AO CARRINHO
         </button>
       </div>
     </div>
   </div>
-</div>
+}
 
-<div class="header-main">
-  <div class="cash-status" [class.open]="isCashRegisterOpen()" [class.closed]="!isCashRegisterOpen()" (click)="!isCashRegisterOpen() ? openCashModal() : null">
-     <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
-     <span>{{ isCashRegisterOpen() ? 'Caixa Aberto' : 'Caixa Fechado' }}</span>
-  </div>
-</div>
+<payment-modal 
+  [isOpen]="isPaymentModalOpen()" 
+  [paymentData]="paymentData()" 
+  (close)="closePaymentModal()"
+  (paymentProcessed)="handlePaymentProcessed($event)">
+</payment-modal>
 
-<app-cash-modal
-  [isOpen]="isCashModalOpen()"
-  (close)="closeCashModal()"
-  (confirm)="onCashOpenConfirm($event)"
-></app-cash-modal>
-
-<payment-modal
-  [isOpen]="isPaymentModalOpen()"
-  [paymentData]="paymentData()"
-  (paymentProcessed)="onPaymentProcessed($event)"
-  (close)="closePaymentModal()"  
-></payment-modal>
-
-  
+<customer-modal
+  [isOpen]="isModalOpen()"
+  (save)="handleSaveCustomer($event)"
+  (close)="onCloseCustomerModal()">
+</customer-modal>

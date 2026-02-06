@@ -92,38 +92,39 @@ export class ProductService {
   }
 
   // Busca paginada
-   searchPaged(search: string = '', page: number = 0, size: number = 10): Observable<Page<ProductResponse>> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
+   searchPaged(
+  term: string, 
+  page: number = 0, 
+  size: number = 10, 
+  category: string = '' 
+): Observable<Page<ProductResponse>> {
+  
+  let params = new HttpParams()
+    .set('search', term)
+    .set('page', page.toString())
+    .set('size', size.toString());
 
-    if (search.trim()) {
-      params = params.set('search', search.trim());
-    }
-
-    console.log('🔍 Fazendo requisição paginada:', { search, page, size });
-
-    return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, { params })
-      .pipe(
-        map(springPage => {
-          console.log('📦 Resposta do Spring:', springPage);
-          
-          // Mapeia para o formato que o Angular espera
-          const mappedPage: Page<ProductResponse> = {
-            content: springPage.content,
-            totalElements: springPage.totalElements,
-            totalPages: springPage.totalPages,
-            size: springPage.size,
-            number: springPage.number,
-            first: springPage.first,
-            last: springPage.last
-          };
-          
-          console.log('🔄 Página mapeada:', mappedPage);
-          return mappedPage;
-        })
-      );
+  // Se a categoria for passada e não for 'all', adicionamos ao parâmetro 'search' que o seu back-end espera
+  if (category && category !== 'all') {
+    params = params.set('search', category.trim());
   }
+
+  return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, { params })
+    .pipe(
+      map(springPage => {
+        const mappedPage: Page<ProductResponse> = {
+          content: springPage.content,
+          totalElements: springPage.totalElements,
+          totalPages: springPage.totalPages,
+          size: springPage.size,
+          number: springPage.number,
+          first: springPage.first,
+          last: springPage.last
+        };
+        return mappedPage;
+      })
+    );
+}
 
   searchProducts(search: string = ''): Observable<ProductResponse[]> {
   let params = new HttpParams().set('size', '50');

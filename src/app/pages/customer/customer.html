@@ -9,7 +9,7 @@
           </h1>
           <p class="subtitle">Gerencie o cadastro de clientes</p>
         </div>
-        <button class="btn-new-sale" (click)="showModal.set(true)">
+        <button class="btn-new-sale" (click)="openCreateModal()">
           <mat-icon>person_add</mat-icon>
           Novo Cliente
         </button>
@@ -57,24 +57,26 @@
         </div>
 
         <div class="filter-buttons">
+         <button 
+    (click)="applyFilter('all')"
+    [class.bg-blue-600]="statusFilter() === 'all'"
+    class="px-4 py-2 border rounded shadow-sm transition-colors">
+    Todos
+  </button>
           <button 
-            [class.active]="statusFilter() === 'all'"
-            (click)="applyFilter('all')">
-            <mat-icon>apps</mat-icon>
-            Todos ({{ totalClientes() }})
-          </button>
+    (click)="applyFilter('active')"
+    [class.bg-green-600]="statusFilter() === 'active'"
+    [class.text-white]="statusFilter() === 'active'"
+    class="px-4 py-2 border rounded shadow-sm transition-colors">
+    Ativos
+  </button>
           <button 
-            [class.active]="statusFilter() === 'active'"
-            (click)="applyFilter('active')">
-            <mat-icon>check_circle</mat-icon>
-            Ativos ({{ clientesAtivos() }})
-          </button>
-          <button 
-            [class.active]="statusFilter() === 'inactive'"
-            (click)="applyFilter('inactive')">
-            <mat-icon>cancel</mat-icon>
-            Inativos ({{ clientesInativos() }})
-          </button>
+    (click)="applyFilter('inactive')"
+    [class.bg-red-600]="statusFilter() === 'inactive'"
+    [class.text-white]="statusFilter() === 'inactive'"
+    class="px-4 py-2 border rounded shadow-sm transition-colors">
+    Inativos
+  </button>
         </div>
       </div>
 
@@ -184,14 +186,13 @@
                       </span>
                     </td>
                     <td class="client-actions">
-                      <button 
+                     <button 
                         class="mini-btn edit-btn" 
-                        title="Editar cliente"
-                        [routerLink]="['/clientes/editar', client.id]"
-                        [disabled]="!client.id">
+                        (click)="openEditModal(client)"> 
                         <mat-icon>edit</mat-icon>
                         Editar
                       </button>
+
                       <button 
                         class="mini-btn toggle-btn" 
                         title="{{ client.active ? 'Inativar' : 'Ativar' }} cliente"
@@ -245,6 +246,6 @@
 <!-- Modal de cliente -->
 <customer-modal
   [isOpen]="showModal()"
-  (save)="createCustomer($event)"
-  (close)="showModal.set(false)">
+  (save)="handleSave($event)" 
+  (close)="closeModal()">
 </customer-modal>

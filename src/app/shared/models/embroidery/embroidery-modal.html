@@ -1,102 +1,180 @@
-<h2 mat-dialog-title>Novo Pedido de Bordado</h2>
+<div mat-dialog-title class="modal-header">
+  <h2>{{ isEditMode ? 'Editar Bordado' : 'Novo Bordado' }}</h2>
+</div>
 
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <mat-dialog-content>
+<mat-dialog-content class="modal-container">
+  <form [formGroup]="form">
+
+    <div class="customer-section">
+      
+      <div class="customer-search-row" *ngIf="!selectedCustomer()">
+  <div class="search-with-action">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Buscar Cliente</mat-label>
+      <input matInput type="text" 
+             [value]="customerSearchTerm()"
+             (input)="onSearchInputChange($event)"
+             (focus)="showCustomerResults.set(true)">
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
     
-   <div class="customer-select-group">
-    <div class="customer-select-wrapper">
-        <mat-form-field appearance="outline" class="full-width search-input-field">
-            <mat-label>Buscar Cliente</mat-label>
-            <input matInput 
-                   type="text" 
-                   (keyup)="onCustomerSearchInput($event)" 
-                   [value]="customerSearchTerm()"
-                   placeholder="Nome, Telefone ou ID">
-            <mat-icon matSuffix *ngIf="isSearchingCustomer()" class="loading-spinner">autorenew</mat-icon>
-        </mat-form-field>
+    <button type="button" 
+        class="quick-add-btn" 
+        (click)="openNewCustomerModal()" 
+        mat-fab 
+        color="primary"
+        matTooltip="Cadastrar Novo Cliente">
+  <mat-icon>person_add</mat-icon>
+</button>
+  </div>
+</div>
 
-        <mat-form-field appearance="outline" class="full-width select-field">
-            <mat-label>Selecionar Cliente</mat-label>
-            <mat-select formControlName="customerId" required>
-                <mat-option *ngIf="customerSearchResults().length === 0" disabled>
-                    Nenhum cliente encontrado.
-                </mat-option>
-                <mat-option *ngFor="let customer of customerSearchResults()" [value]="customer.id">
-                    {{ customer.name }} (ID: {{ customer.id }})
-                </mat-option>
-            </mat-select>
-            <mat-error *ngIf="form.controls['customerId'].hasError('required')">
-                O cliente é obrigatório.
-            </mat-error>
-        </mat-form-field>
+      <div class="customer-dropdown" *ngIf="showCustomerResults() && !selectedCustomer()">
+        <div class="loading-spinner" *ngIf="isSearchingCustomer()">
+          <mat-icon class="spinning">autorenew</mat-icon>
+          <span>Buscando...</span>
+        </div>
+
+        <div class="no-results" *ngIf="!isSearchingCustomer() && customerSearchResults().length === 0 && customerSearchTerm().length >= 2">
+          <mat-icon>search_off</mat-icon>
+          <span>Nenhum cliente encontrado.</span>
+        </div>
+
+        <mat-list *ngIf="customerSearchResults().length > 0">
+          <mat-list-item
+            *ngFor="let customer of customerSearchResults(); trackBy: trackByCustomerId"
+            (click)="selectCustomer(customer)"
+            class="customer-result-item"
+          >
+            <mat-icon matListItemIcon>person</mat-icon>
+            <div matListItemTitle>{{ customer.name }}</div>
+            <div matListItemLine>{{ customer.phone || 'Sem telefone' }}</div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+
+      <mat-card *ngIf="selectedCustomer()" class="customer-card">
+        <mat-card-header>
+          <div mat-card-avatar class="customer-avatar">
+            <mat-icon>person</mat-icon>
+          </div>
+          <mat-card-title>{{ selectedCustomer()?.name }}</mat-card-title>
+          <mat-card-subtitle>
+            <mat-icon>call</mat-icon>
+            {{ selectedCustomer()?.phone || 'Sem telefone' }}
+          </mat-card-subtitle>
+          
+          <button 
+            *ngIf="!isEditMode"
+            mat-icon-button
+            class="clear-button" 
+            (click)="clearCustomer()"
+            matTooltip="Trocar cliente">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-card-header>
+        
+        <div class="customer-info">
+          <mat-chip-set>
+            <mat-chip [class.inactive]="!selectedCustomer()?.active">
+              <mat-icon matChipAvatar>
+                {{ selectedCustomer()?.active ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              {{ selectedCustomer()?.active ? 'Ativo' : 'Inativo' }}
+            </mat-chip>
+            <mat-chip>
+              <mat-icon matChipAvatar>tag</mat-icon>
+              ID: {{ selectedCustomer()?.id }}
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </mat-card>
     </div>
 
-    <button mat-flat-button color="accent" type="button" (click)="openCustomerModal()" class="add-customer-btn">
-        <mat-icon>person_add</mat-icon>
-        Novo
-    </button>
-</div>
-    
+    <div class="section-divider"></div>
+
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Descrição do Bordado</mat-label>
-      <textarea matInput formControlName="description" rows="3" required></textarea>
-      <mat-error *ngIf="form.controls['description'].hasError('required')">
-        A descrição é obrigatória.
-      </mat-error>
+      <textarea 
+        matInput 
+        formControlName="description" 
+        rows="3"
+        placeholder="Detalhes do desenho, cores das linhas, etc."
+        required></textarea>
+      <mat-icon matPrefix>description</mat-icon>
+      <mat-error *ngIf="form.get('description')?.hasError('required')">Descrição obrigatória</mat-error>
     </mat-form-field>
 
-    <div class="row">
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Preço</mat-label>
-          <input matInput type="number" formControlName="price" required min="0.01">
-          <mat-icon matSuffix>attach_money</mat-icon>
-          <mat-error *ngIf="form.controls['price'].hasError('required')">O preço é obrigatório.</mat-error>
-          <mat-error *ngIf="form.controls['price'].hasError('min')">O valor deve ser positivo.</mat-error>
-        </mat-form-field>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="form-field-half">
+        <mat-label>Valor</mat-label>
+        <input matInput type="number" formControlName="price" placeholder="0,00" required>
+        <span matTextPrefix>R$&nbsp;</span>
+        <mat-icon matSuffix>payments</mat-icon>
+      </mat-form-field>
 
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Data de Entrega</mat-label>
-          <input matInput [matDatepicker]="picker" formControlName="deliveryDate">
-          <mat-hint>Opcional</mat-hint>
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
+      <mat-form-field appearance="outline" class="form-field-half">
+        <mat-label>Data de Entrega</mat-label>
+        <input 
+          matInput 
+          [matDatepicker]="picker" 
+          formControlName="deliveryDate"
+          [min]="minDate"
+          [max]="maxDate"
+          placeholder="Ex: 31/12/2024"
+          required>
+        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
     </div>
 
-    <div class="file-upload-container">
-      <input type="file" #fileInput (change)="onFileSelected($event)" style="display: none;">
-      
-      <button mat-stroked-button type="button" (click)="fileInput.click()">
-        <mat-icon>attach_file</mat-icon>
-        {{ selectedFile ? selectedFile.name : 'Anexar Arquivo (.dst, .emb, etc.)' }}
-      </button>
+    <div class="file-section">
+      <label class="input-label">Arquivo de Matriz / Imagem</label>
 
-      <div *ngIf="selectedFile" class="file-info">
-        <span>{{ selectedFile.name }} ({{ (selectedFile.size / 1024 / 1024) | number:'1.0-2' }} MB)</span>
-        <button mat-icon-button type="button" (click)="selectedFile = null; fileInput.value = '';">
-          <mat-icon color="warn">close</mat-icon>
+      <div class="file-preview-card" *ngIf="form.get('fileName')?.value || selectedFile">
+        <div class="file-info">
+          <mat-icon class="file-icon">insert_drive_file</mat-icon>
+          <div class="file-details">
+            <span class="file-name">{{ selectedFile ? selectedFile.name : form.get('fileName')?.value }}</span>
+            <small class="file-size">
+              {{ selectedFile ? (selectedFile.size / 1024 | number:'1.0-0') + ' KB' : 'Arquivo salvo' }}
+            </small>
+          </div>
+        </div>
+        
+        <div class="file-actions">
+          <button *ngIf="isEditMode && !selectedFile" type="button" mat-icon-button (click)="downloadCurrentFile()" matTooltip="Baixar matriz">
+            <mat-icon>download</mat-icon>
+          </button>
+          <button type="button" class="remove-file-btn" (click)="removeCurrentFile()" matTooltip="Remover arquivo">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="upload-area" *ngIf="!form.get('fileName')?.value && !selectedFile">
+        <input type="file" id="fileUpload" (change)="onFileSelected($event)" hidden #fileInput>
+        <button type="button" class="upload-btn" (click)="fileInput.click()">
+          <mat-icon>cloud_upload</mat-icon>
+          <span>Clique para anexar o arquivo</span>
         </button>
       </div>
     </div>
-    
-  </mat-dialog-content>
 
-  <mat-dialog-actions align="end">
-    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
-    <button 
-        mat-raised-button 
-        color="primary" 
-        type="submit" 
-        [disabled]="form.invalid || loading">
-        <mat-icon *ngIf="!loading">save</mat-icon>
-        <mat-icon *ngIf="loading" class="loading-spinner">autorenew</mat-icon>
-        {{ loading ? 'Salvando...' : 'Salvar Bordado' }}
-    </button>
-  </mat-dialog-actions>
-</form>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="loading()">Cancelar</button>
+  <button 
+    mat-flat-button 
+    color="primary" 
+    (click)="save()"
+    [disabled]="form.invalid || loading() || !selectedCustomer()?.id">
+    <mat-icon *ngIf="loading()" class="spinning-btn">autorenew</mat-icon>
+    {{ isEditMode ? 'Atualizar Bordado' : 'Salvar Bordado' }}
+  </button>
+</mat-dialog-actions>
 
-<customer-modal
-  [isOpen]="isCustomerModalOpen()"
-  (save)="saveNewCustomer($event)"
-  (close)="closeCustomerModal()"
-></customer-modal>
+<customer-modal 
+  [isOpen]="isCustomerModalOpen"
+  (close)="isCustomerModalOpen = false"
+  (save)="onQuickCustomerSave($event)">
+</customer-modal>

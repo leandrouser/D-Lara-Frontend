@@ -1,29 +1,45 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable, of, forkJoin, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environments';
+import { CategoryEnum } from './product.service';
 
-export interface SaleItem {
-  id: number;
-  productId: number;
-  productName: string;
-  productPrice: number;
-  quantity: number;
-  total: number;
+export enum DiscountType {
+  PERCENTAGE = 'PERCENTAGE',
+  FIXED = 'FIXED'
 }
 
-export interface Sale {
-  
-  id: number;
-  dateSale: string;
-  customerId: string;
-  customerName: string;
-  customerPhone?: string;
-  items: SaleItem[];
+export enum SaleStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'PAID',
+  CANCELLED = 'CANCELLED'
+}
+
+export interface SaleItemRequest {
+  productId: number | null;
+  quantity: number;
+  manualPrice?: number | null;
+  description?: string;
+  embroideryId?: number | null;
+}
+
+export interface SaleItemResponse {
+  productId?: number;
+  embroideryId?: number;
+  unitPrice: number;
+  description?: string;
+  manualPrice?: number;
+  quantity: number;
   subtotal: number;
-  discount: number;
-  total: number;
-  saleStatus: 'PENDING' | 'PAID' | 'CANCELLED'; // Ajustado para PAID
+  category?: CategoryEnum;
+}
+
+export interface SaleRequest {
+  customerId: number | null;
+  cashSessionId: number | null;
+  discountType: 'FIXED' | 'PERCENTAGE';
+  discountValue: number;
+  items: SaleItemRequest[];
 }
 
 export interface CustomerRequest {
@@ -37,7 +53,7 @@ export interface CustomerRequest {
 export interface CustomerResponse {
   id: number;
   name: string;
-  contact: string;
+  phone: string;
   cpf: string;
   city: string;
   active: boolean;
@@ -45,15 +61,26 @@ export interface CustomerResponse {
   updatedAt?: string;
 }
 
+export interface SaleResponse {
+  id: number;
+  customerName: string;
+  customerPhone?: string;
+  status: SaleStatus;
+  subtotal: number;
+  discountType: DiscountType;
+  discountValue: number;
+  discountAmount: number;
+  total: number;
+  createdAt: string;
+  items: SaleItemResponse[];
+}
+
 export interface Page<T> {
   content: T[];
   totalPages: number;
   totalElements: number;
   size: number;
-  number: number; // número da página atual
-  first: boolean;
-  last: boolean;
-  empty: boolean;
+  number: number;
 }
 
 @Injectable({
@@ -63,20 +90,30 @@ export class SaleService {
   private http = inject(HttpClient);
 private apiUrl = `${environment.apiUrl}/sales`;
 
-  getSales(): Observable<Sale[]> {
-    return this.http.get<Sale[]>(`${this.apiUrl}/sales`);
+  getSales(page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<Page<SaleResponse>>(this.apiUrl, { params });
   }
 
-  getSaleById(id: number): Observable<Sale> {
-    return this.http.get<Sale>(`${this.apiUrl}/sales/${id}`);
+  getSaleById(id: number): Observable<SaleResponse> {
+    return this.http.get<SaleResponse>(`${this.apiUrl}/${id}`);
   }
 
-  createSale(saleData: any): Observable<Sale> {
-    return this.http.post<Sale>(`${this.apiUrl}/sales`, saleData);
+  createSale(saleData: SaleRequest): Observable<SaleResponse> {
+    return this.http.post<SaleResponse>(this.apiUrl, saleData);
   }
 
-  updateSaleStatus(id: number, status: Sale['saleStatus']): Observable<Sale> {
-    return this.http.patch<Sale>(`${this.apiUrl}/sales/${id}/status`, { status });
-  }
+  update(id: number, saleData: SaleRequest): Observable<SaleResponse> {
+    return this.http.put<SaleResponse>(`${this.apiUrl}/${id}`, saleData);
+}
+
+  // sale.service.ts
+searchSales(term: string, page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
+  return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, {
+    params: { q: term, page: page.toString(), size: size.toString() }
+  });
+}
   
 }

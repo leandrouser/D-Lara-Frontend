@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subject, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Observable, Subject, switchMap, tap } from 'rxjs';
 
 import { MatIconModule } from '@angular/material/icon';
 
@@ -28,6 +28,8 @@ export class Customer implements OnInit {
 
   showModal = signal(false);
   private api = inject(CustomerService);
+
+  selectedCustomer = signal<CustomerResponse | null>(null);
 
   customerStats = signal<CustomerStats>({ total: 0, active: 0, inactive: 0 });
 
@@ -100,7 +102,7 @@ export class Customer implements OnInit {
   ngOnInit() {
     this.setupSearch();
     this.loadCustomers();
-    this.loadCustomerStats(); // ✅ CORRIGIDO: chamar o método, não a signal
+    this.loadCustomerStats();
   }
 
   // ---------------- CARREGAR ESTATÍSTICAS ----------------
@@ -156,52 +158,62 @@ private loadStatsFromExistingEndpoint() {
   }
 
   // ---------------- SEARCH SETUP ----------------
-  private setupSearch() {
+ private setupSearch() {
     this.searchSubject.pipe(
       debounceTime(500),
       distinctUntilChanged(),
-      tap(() => this.state.set('loading')),
       switchMap(term => {
-        if (term.trim().length >= 1) {
-          return this.api.searchPaged(term, this.page(), this.pageSize);
-        } else {
-          return this.api.searchPaged('', this.page(), this.pageSize);
-        }
+        this.state.set('loading');
+        return this.getRequestObservable(term, this.statusFilter(), this.page(), this.pageSize);
       })
     ).subscribe({
       next: (result) => {
         this.paged.set(result);
-        this.customers.set(Array.isArray(result.content) ? result.content : []);
+        this.customers.set(result.content || []);
         this.state.set('success');
-      },
-      error: (err) => {
-        this.state.set('error');
-        this.errorMessage.set('Erro ao buscar clientes');
-        console.error('Search error:', err);
       }
     });
   }
 
   // ---------------- LOAD DATA ----------------
-  loadCustomers() {
-    this.state.set('loading');
-    this.api.searchPaged('', this.page(), this.pageSize).subscribe({
-      next: (pagedResult) => {
-        this.paged.set(pagedResult);
-        this.customers.set(Array.isArray(pagedResult.content) ? pagedResult.content : []);
-        this.state.set('success');
-        
-        // Se não conseguiu carregar stats do backend, calcular localmente
-        if (this.customerStats().total === 0) {
-          this.calculateLocalStats();
-        }
-      },
-      error: err => {
-        this.state.set('error');
-        this.errorMessage.set('Erro ao carregar clientes');
-      }
-    });
+ loadCustomers() {
+  this.state.set('loading');
+  
+  const query = this.search() || ''; // Garante que é string
+  const page = this.page();          // number
+  const size = this.pageSize;        // number
+  const status = this.statusFilter();
+
+  let request$: Observable<Page<CustomerResponse>>;
+
+  // Se houver texto na busca, usamos o searchPaged
+  if (query.trim().length > 0) {
+    request$ = this.api.searchPaged(query, page, size);
+  } 
+  // Se não houver busca, decidimos pelo filtro de status
+  else {
+    if (status === 'active') {
+      request$ = this.api.getActiveCustomers(page, size);
+    } else if (status === 'inactive') {
+      request$ = this.api.getInactiveCustomers(page, size);
+    } else {
+      // Para "Todos" sem busca, enviamos string vazia no primeiro parâmetro
+      request$ = this.api.searchPaged('', page, size);
+    }
   }
+
+  request$.subscribe({
+    next: (response) => {
+      this.paged.set(response);
+      this.customers.set(response.content || []);
+      this.state.set('success');
+    },
+    error: (err) => {
+      this.state.set('error');
+      console.error(err);
+    }
+  });
+}
 
   // ---------------- SEARCH HANDLERS ----------------
   onSearchInput(event: Event) {
@@ -231,12 +243,7 @@ private loadStatsFromExistingEndpoint() {
   applyFilter(filter: 'all' | 'active' | 'inactive') {
     this.statusFilter.set(filter);
     this.page.set(0);
-    
-    if (this.search().trim().length >= 1) {
-      this.searchSubject.next(this.search());
-    } else {
-      this.loadCustomers();
-    }
+    this.loadCustomers();
   }
 
   // ---------------- STATUS ----------------
@@ -329,5 +336,85 @@ private loadStatsFromExistingEndpoint() {
 
   isCurrentPage(pageNum: number): boolean {
     return this.page() === pageNum;
+  }
+
+  openEditModal(customer: CustomerResponse) {
+  this.selectedCustomer.set(customer);
+  this.showModal.set(true);
+}
+
+openCreateModal() {
+  this.selectedCustomer.set(null);
+  this.showModal.set(true);
+}
+
+saveCustomer(formData: any) {
+  const customerToEdit = this.selectedCustomer();
+
+  if (customerToEdit) {
+    // Se tem um cliente selecionado, faz o PUT (EDITAR)
+    this.api.update(customerToEdit.id, formData).subscribe({
+      next: () => {
+        alert("Cliente atualizado com sucesso!");
+        this.closeModal();
+        this.loadCustomers(); // Recarrega a lista
+      },
+      error: (err) => alert("Erro ao atualizar")
+    });
+  } else {
+    // Se não tem nada selecionado, faz o POST (CRIAR)
+    this.createCustomer(formData);
+  }
+}
+
+closeModal() {
+  this.showModal.set(false);
+  this.selectedCustomer.set(null);
+}
+
+// ✅ Função unificada que decide entre Criar (POST) ou Atualizar (PUT)
+handleSave(formData: any) {
+  const customerToEdit = this.selectedCustomer();
+
+  if (customerToEdit && customerToEdit.id) {
+    // MODO EDIÇÃO: Executa o PUT http://localhost:8080/api/customers/{id}
+    this.api.update(customerToEdit.id, formData).subscribe({
+      next: () => {
+        alert('Cliente atualizado com sucesso!');
+        this.closeModal();
+        this.loadCustomers();     // Atualiza a lista na tabela
+        this.loadCustomerStats(); // Atualiza os cards (Total/Ativos/Inativos)
+      },
+      error: (err) => {
+        console.error('Erro ao editar:', err);
+        alert('Erro ao atualizar cliente.');
+      }
+    });
+  } else {
+    // MODO CRIAÇÃO: Executa o POST http://localhost:8080/api/customers
+    this.api.create(formData).subscribe({
+      next: () => {
+        alert('Cliente cadastrado com sucesso!');
+        this.closeModal();
+        this.loadCustomers();
+        this.loadCustomerStats();
+      },
+      error: (err) => {
+        console.error('Erro ao criar:', err);
+        alert('Erro ao cadastrar cliente.');
+      }
+    });
+  }
+
+}
+
+private getRequestObservable(query: string, status: string, page: number, size: number): Observable<Page<CustomerResponse>> {
+    if (query.trim().length > 0) {
+      return this.api.searchPaged(query, page, size);
+    } else {
+      if (status === 'active') return this.api.getActiveCustomers(page, size);
+      if (status === 'inactive') return this.api.getInactiveCustomers(page, size);
+      return this.api.searchPaged('', page, size);
+    }
   }
 }

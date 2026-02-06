@@ -1,139 +1,153 @@
 <div class="products-container">
-  
   <div class="page-header">
     <h1>
-      <mat-icon>inventory_2</mat-icon>
-      Gerenciamento de Bordados
+      <mat-icon>palette</mat-icon>
+      Bordados
     </h1>
-    <p class="subtitle">Gerencie os pedidos de bordado, clientes e arquivos digitais.</p>
+    <p class="subtitle">Gerencie as ordens de serviço e prazos de entrega</p>
   </div>
-  
+
+  <div class="cards">
+    <div class="card blue">
+      <div class="info">
+        <span>Total</span>
+        <strong>{{ totalElements() }}</strong>
+        <small>Bordados</small>
+      </div>
+      <mat-icon class="icon">format_list_bulleted</mat-icon>
+    </div>
+
+    <div class="card orange">
+      <div class="info">
+        <span>Atrasados</span>
+        <strong>{{ overdueCount() }}</strong>
+      </div>
+      <mat-icon class="icon">priority_high</mat-icon>
+    </div>
+
+    <div class="card green">
+      <div class="info">
+        <span>Para Hoje</span>
+        <strong>{{ todayCount() }}</strong>
+      </div>
+      <mat-icon class="icon">event_available</mat-icon>
+    </div>
+
+    <div class="card purple"> <div class="info">
+    <span>A Entregar</span>
+    <strong>{{ pendingCount() }}</strong>
+    <small>Bordados Pendentes</small>
+  </div>
+  <mat-icon class="icon">pending_actions</mat-icon>
+</div>
+  </div>
+
   <div class="search-filters">
-    
-    <div class="search-box">
-      <div class="input-box">
-        <mat-icon>search</mat-icon>
-        <input 
-          type="text" 
-          placeholder="Buscar bordado por {{ getSearchLabel(searchField()) }}" 
-          [ngModel]="searchText()" 
-          (ngModelChange)="searchText.set($event); onSearchChange()">
-      </div>
-    </div>
-    
-    <div class="filter-buttons">
-      <button 
-        *ngFor="let field of searchFields"
-        [class.active]="searchField() === field" 
-        (click)="searchField.set(field); onSearchChange()">
-        {{ getSearchLabel(field) }}
-      </button>
-    </div>
-
-    <div class="new-product-btn">
-      <button (click)="openCreateDialog()">
-        <mat-icon>add</mat-icon>
-        Novo Bordado
-      </button>
+  <div class="search-box">
+    <div class="input-box">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        placeholder="Buscar por cliente, descrição ou ID..."
+        [formControl]="searchControl"
+      >
     </div>
   </div>
-  
+
+  <div class="filter-actions">
+    <button (click)="toggleDelivered()" 
+            class="btn-filter" 
+            [class.active]="showDelivered()">
+      <mat-icon>{{ showDelivered() ? 'assignment_turned_in' : 'history' }}</mat-icon>
+      {{ showDelivered() ? 'Ver Tudo' : 'Ver Entregues' }}
+    </button>
+  </div>
+
+  <div class="new-product-btn">
+    <button (click)="openModal()" class="btn-primary">
+      <mat-icon>add</mat-icon>
+      Novo Bordado
+    </button>
+  </div>
+</div>
+
   <div *ngIf="loading()" class="search-loading">
-    <mat-icon class="loading-spinner">autorenew</mat-icon>
-    Carregando bordados...
+    <mat-icon class="loading-spinner">refresh</mat-icon>
+    Buscando bordados...
   </div>
 
-  <div *ngIf="!loading() && embroideries().length === 0" class="search-info">
-    <mat-icon>info</mat-icon>
-    Nenhum bordado encontrado com os critérios atuais.
-  </div>
+ <div class="table-container">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-id center">CÓDIGO</th>
+          <th class="col-name">👤 Cliente</th>
+          <th class="col-description">📝 Descrição</th>
+          <th class="col-price center">💰 Preço</th>
+          <th class="col-date center">📅 Entrega</th>
+          <th class="col-status center">📌 Status</th>
+          <th class="col-actions center">⚙️ Ações</th>
+        </tr>
+      </thead>
 
-  <div *ngIf="!loading() && embroideries().length > 0" class="table-container">
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-id">ID</th>
-            <th class="col-customer">Cliente</th>
-            <th class="col-description">Descrição</th>
-            <th class="col-price">Preço</th>
-            <th class="col-filename">Arquivo</th>
-            <th class="col-delivery">Entrega</th>
-            <th class="col-created">Criado Em</th>
-            <th class="col-actions center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-    <tr *ngFor="let item of embroideries()">
-        <td data-label="ID">{{ item.id }}</td>
-        <td class="product-name" data-label="Cliente" title="{{ item.customerName }} (ID: {{ item.customerId }})">
-            {{ item.customerName }}
-            <small class="barcode">(ID: {{ item.customerId }})</small>
-        </td>
-        <td class="product-description" data-label="Descrição">{{ item.description }}</td>
-        <td class="price" data-label="Preço">{{ formatCurrency(item.price) }}</td>
-        <td data-label="Arquivo">
-            <span *ngIf="item.fileName" class="tag active">
-                <mat-icon>attach_file</mat-icon>
-                {{ item.fileName }}
+      <tbody>
+        <tr *ngIf="!loading() && dataSource().length === 0">
+          <td colspan="7" class="empty-state">
+            <mat-icon>search_off</mat-icon>
+            <p>Nenhum bordado encontrado</p>
+          </td>
+        </tr>
+
+        <tr *ngFor="let e of dataSource()" [class.late-row]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
+          <td class="col-id center">#{{ e.id }}</td>
+          <td class="col-name"><strong>{{ e.customerName }}</strong></td>
+          <td class="col-description">{{ e.description }}</td>
+          <td class="col-price center">R$ {{ e.price | number:'1.2-2' }}</td>
+          <td class="col-date center">
+            <span class="delivery-badge" [class.late]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
+              {{ e.deliveryDate | date:'dd/MM/yyyy' }}
             </span>
-            <span *ngIf="!item.fileName" class="tag inactive">
-                <mat-icon>close</mat-icon>
-                N/A
+          </td>
+          <td class="col-status center">
+            <span class="status-badge" [class.delivered]="e.status === 'DELIVERED'">
+              {{ e.status === 'DELIVERED' ? 'Entregue' : 'Pendente' }}
             </span>
-        </td>
-        <td data-label="Entrega">{{ formatDate(item.deliveryDate) }}</td>
-        <td data-label="Criado Em">{{ formatDate(item.createdAt) }}</td>
-        
-        <td class="actions-col center">
-            <button class="mini-btn" (click)="edit(item)">
+          </td>
+          <td class="col-actions center">
+            <div class="action-buttons">
+              <button mat-icon-button *ngIf="e.status !== 'DELIVERED'" (click)="markAsDelivered(e)" matTooltip="Entregar">
+                <mat-icon color="primary">check_circle</mat-icon>
+              </button>
+              <button mat-icon-button (click)="openModal(e)" matTooltip="Editar">
                 <mat-icon>edit</mat-icon>
-                Editar
-            </button>
-            <button class="mini-btn danger" (click)="delete(item.id)">
-                <mat-icon>delete</mat-icon>
-                Excluir
-            </button>
-        </td>
-    </tr>
-</tbody>
-      </table>
+              </button>
+              <button mat-icon-button (click)="delete(e.id)" matTooltip="Excluir">
+                <mat-icon color="warn">delete</mat-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+   <div class="pagination-container" *ngIf="totalElements() > 0">
+    <div class="pagination-info">
+      Mostrando {{ getStartIndex() }} - {{ getEndIndex() }} de {{ totalElements() }}
     </div>
-    
-    <div class="pagination-container">
-      <div class="pagination-info">
-        Mostrando {{ embroideries().length }} de {{ totalEmbroideryCount() }} bordados.
-      </div>
-
-      <div class="pagination-controls">
-        <div class="items-per-page">
-          <span>Itens por página:</span>
-          <select [ngModel]="pageSize()" 
-          #pageSizeSelect (change)="onPageSizeChange(pageSizeSelect.value)">
-            <option [value]="10">10</option>
-            <option [value]="20">20</option>
-            <option [value]="50">50</option>
-          </select>
-        </div>
-
-        <div class="pagination-buttons">
-          <button 
-            class="pagination-btn" 
-            [disabled]="currentPage() === 0" 
-            (click)="goToPage(currentPage() - 1)">
-            <mat-icon>chevron_left</mat-icon>
-          </button>
-          
-          <span class="pagination-ellipsis">Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
-
-          <button 
-            class="pagination-btn" 
-            [disabled]="currentPage() >= totalPages() - 1 || totalPages() === 0" 
-            (click)="goToPage(currentPage() + 1)">
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
-      </div>
+    <div class="pagination-buttons">
+      <button class="pagination-btn" (click)="changePage(-1)" [disabled]="currentPage() === 0">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <button class="pagination-btn active">{{ currentPage() + 1 }}</button>
+      <button class="pagination-btn" (click)="changePage(1)" [disabled]="(currentPage() + 1) * pageSize() >= totalElements()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
     </div>
   </div>
+</div>
+ 
+  <div class="table-stats">
+    Total: <strong>{{ totalElements() }}</strong> bordados
 </div>

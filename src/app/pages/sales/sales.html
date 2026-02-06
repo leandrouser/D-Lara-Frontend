@@ -11,7 +11,6 @@
         </div>
       </div>
 
-      <!-- Cards com dados da API - CORRIGIDO -->
       <!-- Cards com dados da API - LAYOUT RESPONSIVO -->
 <div class="cards-container">
   <div class="cards-grid">
@@ -132,8 +131,7 @@
       <button 
         class="pagination-btn" 
         (click)="prevPage()"
-        [disabled]="currentPage() === 1">
-        <mat-icon>chevron_left</mat-icon>
+        [disabled]="currentPage() === 0"> <mat-icon>chevron_left</mat-icon>
         <span class="text">Anterior</span>
       </button>
 
@@ -144,7 +142,7 @@
           } @else {
             <button 
               class="page-number"
-              [class.active]="currentPage() === page"
+              [class.active]="currentPage() === ($any(page) - 1)" 
               (click)="goToPage($any(page))">
               {{ page }}
             </button>
@@ -155,14 +153,12 @@
       <button 
         class="pagination-btn" 
         (click)="nextPage()"
-        [disabled]="currentPage() === totalPages()">
-        <span class="text">Próxima</span>
+        [disabled]="currentPage() >= totalPages() - 1"> <span class="text">Próxima</span>
         <mat-icon>chevron_right</mat-icon>
       </button>
     </div>
   </div>
 </div>
-
 
         <!-- TABELA ATUALIZADA -->
       <div class="table-container">
@@ -233,14 +229,14 @@
                 </tr>
               } @else if (!error()) {
                 @for (sale of filteredSales(); track sale.id) {
-                  <tr [class.paid]="sale.saleStatus === 'PAID'" 
-                      [class.pending]="sale.saleStatus === 'PENDING'"
-                      [class.cancelled]="sale.saleStatus === 'CANCELLED'">
+                  <tr [class.paid]="sale.status === 'PAID'" 
+                      [class.pending]="sale.status === 'PENDING'"
+                      [class.cancelled]="sale.status === 'CANCELLED'">
                     <td class="sale-id">
                       <strong>#{{ sale.id }}</strong>
                     </td>
                     <td class="sale-date">
-                      {{ formatDate(sale.dateSale) }}
+                      {{ formatDate(sale.createdAt) }}
                     </td>
                     <td class="sale-customer">
                       <div class="customer-info">
@@ -257,15 +253,15 @@
                       {{ formatCurrency(sale.subtotal) }}
                     </td>
                     <td class="sale-discount">
-                      {{ formatCurrency(sale.discount) }}
+                      {{ formatCurrency(sale.discountAmount) }}
                     </td>
                     <td class="sale-total">
                       <strong>{{ formatCurrency(sale.total) }}</strong>
                     </td>
                     <td class="sale-status">
-                      <span [class]="'status-tag ' + getStatusClass(sale.saleStatus)">
-                        <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
-                        {{ getStatusText(sale.saleStatus) }}
+                      <span [class]="'status-tag ' + getStatusClass(sale.status)">
+                        <mat-icon class="status-icon">{{ getStatusIcon(sale.status) }}</mat-icon>
+                        {{ getStatusText(sale.status) }}
                       </span>
                     </td>
                     <td class="sale-actions">

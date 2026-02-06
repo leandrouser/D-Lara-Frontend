@@ -1,9 +1,13 @@
 import { Component, EventEmitter, Input, Output, inject, signal, computed, OnChanges, OnInit } from '@angular/core';
-import { PdvService } from '../../../../core/service/pdv.service';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { PaymentMethodResponse, PaymentResponse, PaymentService } from '../../../../core/service/payment.service';
+import { 
+  PaymentMethodResponse, 
+  PaymentResponse, 
+  PaymentService, 
+  PaymentMultiRequest 
+} from '../../../../core/service/payment.service';
 
 // Dados que o PDV envia para o modal
 export interface PaymentData {
@@ -23,11 +27,10 @@ export interface PaymentItemSummary {
 
 // Controle interno de split de pagamento
 export interface PaymentMethodSplit {
-  method: 'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX';
+  method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
   amount: number;
-  isChange: boolean; // true = troco
+  isChange: boolean;
 }
-
 
 @Component({
   selector: 'payment-modal',
@@ -37,12 +40,11 @@ export interface PaymentMethodSplit {
   styleUrls: ['./payment-modal.scss']
 })
 export class PaymentModal implements OnChanges, OnInit {
-  private pvdService = inject(PdvService);
-  private methodService = inject(PaymentService);
-
+  private paymentService = inject(PaymentService);
 
   // Armazena os métodos reais do banco
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
+paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const;
 
   @Input() paymentData: PaymentData | null = null;
   @Input() isOpen: boolean = false;   
@@ -54,7 +56,7 @@ export class PaymentModal implements OnChanges, OnInit {
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
   
   // Método atual sendo configurado
-  currentPaymentMethod = signal<'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX'>('CASH');
+currentPaymentMethod = signal<'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX'>('DINHEIRO');
   currentAmount = signal<number>(0);
   
   // Estados
@@ -62,72 +64,46 @@ export class PaymentModal implements OnChanges, OnInit {
   paymentSuccess = signal<PaymentResponse | null>(null);
   paymentResponses = signal<PaymentResponse[]>([]);
 
-  // Array de métodos disponíveis
-  readonly paymentMethods = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX'] as const;
-
   // Computed values
-  totalPaid = computed(() => {
-    return this.selectedPaymentMethods()
+  totalPaid = computed(() => 
+    this.selectedPaymentMethods()
       .filter(pm => !pm.isChange)
-      .reduce((sum, pm) => sum + pm.amount, 0);
-  });
+      .reduce((sum, pm) => sum + pm.amount, 0)
+  );
 
-  totalChange = computed(() => {
-    return this.selectedPaymentMethods()
+  totalChange = computed(() => 
+    this.selectedPaymentMethods()
       .filter(pm => pm.isChange)
-      .reduce((sum, pm) => sum + Math.abs(pm.amount), 0);
-  });
-
-  netAmount = computed(() => {
-    return this.totalPaid() - this.totalChange();
-  });
+      .reduce((sum, pm) => sum + Math.abs(pm.amount), 0)
+  );
 
   remainingAmount = computed(() => {
     if (!this.paymentData) return 0;
     return Math.max(0, this.paymentData.totalAmount - this.totalPaid());
   });
 
-  isFullyPaid = computed(() => {
-    return this.totalPaid() >= (this.paymentData?.totalAmount || 0);
-  });
+  isFullyPaid = computed(() => 
+    this.totalPaid() >= (this.paymentData?.totalAmount || 0)
+  );
 
   canAddMorePayments = computed(() => {
-    // Permite adicionar se ainda falta pagar OU se quer adicionar dinheiro para gerar troco
     if (this.isProcessing()) return false;
     if (this.remainingAmount() > 0) return true;
-    // Se já está pago, só permite se o método atual for dinheiro (para calcular troco)
-    return this.currentPaymentMethod() === 'CASH'; 
+    return this.currentPaymentMethod() === 'DINHEIRO';
   });
 
-  // Troco necessário para pagamentos em dinheiro
   requiredChange = computed(() => {
     if (!this.paymentData) return 0;
-    
-    const cashPayments = this.selectedPaymentMethods()
-      .filter(pm => pm.method === 'CASH' && !pm.isChange)
+    const cashPaid = this.selectedPaymentMethods()
+      .filter(pm => pm.method === 'DINHEIRO' && !pm.isChange)
       .reduce((sum, pm) => sum + pm.amount, 0);
-    
-    const totalCashPaid = cashPayments;
-    const totalNonCashPaid = this.totalPaid() - cashPayments;
-    const remainingAfterNonCash = Math.max(0, this.paymentData.totalAmount - totalNonCashPaid);
-    
-    return Math.max(0, totalCashPaid - remainingAfterNonCash);
+    const nonCashPaid = this.totalPaid() - cashPaid;
+    return Math.max(0, cashPaid - (this.paymentData.totalAmount - nonCashPaid));
   });
 
   ngOnInit() {
     this.loadPaymentMethods();
   }
-
-  loadPaymentMethods() {
-    this.methodService.listAll().subscribe({
-      next: (methods) => {
-        console.log("Métodos carregados:", methods); // Debug para conferir os IDs
-        this.dbPaymentMethods.set(methods);
-      },
-      error: (err) => console.error("Erro ao carregar métodos", err)
-    });
-  }
-
 
   ngOnChanges() {
     if (this.isOpen && this.paymentData) {
@@ -136,95 +112,63 @@ export class PaymentModal implements OnChanges, OnInit {
     }
   }
 
+  loadPaymentMethods() {
+    this.paymentService.listPaymentMethods().subscribe({
+      next: methods => this.dbPaymentMethods.set(methods),
+      error: err => console.error('Erro ao carregar métodos', err)
+    });
+  }
+
   addPaymentMethod() {
     if (this.currentAmount() <= 0) return;
 
-    const amountToAdd = this.currentAmount();
-    
-    // Para métodos não em dinheiro, limita ao valor restante
-    if (this.currentPaymentMethod() !== 'CASH') {
-      const adjustedAmount = Math.min(amountToAdd, this.remainingAmount());
-      if (adjustedAmount <= 0) {
-        alert('Valor deve ser maior que zero e não pode exceder o faltante');
-        return;
-      }
-    }
+    const amountToAdd = this.currentPaymentMethod() !== 'DINHEIRO' 
+      ? Math.min(this.currentAmount(), this.remainingAmount())
+      : this.currentAmount();
 
-    // Adiciona o pagamento
+    if (amountToAdd <= 0) return;
+
     this.selectedPaymentMethods.update(methods => [
       ...methods,
-      {
-        method: this.currentPaymentMethod(),
-        amount: amountToAdd,
-        isChange: false
-      }
+      { method: this.currentPaymentMethod(), amount: amountToAdd, isChange: false }
     ]);
-    
-    // Se for dinheiro e pagou a mais, calcula e adiciona troco
-    if (this.currentPaymentMethod() === 'CASH' && this.requiredChange() > 0) {
-      // Remove troco antigo se existir
-      this.selectedPaymentMethods.update(methods => 
-        methods.filter(pm => !pm.isChange)
-      );
-      
-      // Adiciona novo troco
+
+    // Troco
+    if (this.currentPaymentMethod() === 'DINHEIRO' && this.requiredChange() > 0) {
+      this.selectedPaymentMethods.update(methods => methods.filter(pm => !pm.isChange));
       this.addChangePayment(this.requiredChange());
     }
 
-    // Atualiza o input com o valor que ainda falta (se faltar)
     this.currentAmount.set(this.remainingAmount());
   }
 
   addChangePayment(amount: number) {
     if (amount <= 0) return;
-
     this.selectedPaymentMethods.update(methods => [
       ...methods,
-      {
-        method: 'CASH',
-        amount: -amount, // Negativo visualmente ou tratado no display
-        isChange: true
-      }
+      { method: 'DINHEIRO', amount: -amount, isChange: true }
     ]);
   }
 
   removePaymentMethod(index: number) {
-    const payment = this.selectedPaymentMethods()[index];
-    
-    this.selectedPaymentMethods.update(methods => 
-      methods.filter((_, i) => i !== index)
-    );
-    
-    // Se removeu dinheiro, remove trocos e recalcula
-    if (payment.method === 'CASH' && !payment.isChange) {
-       // Remove trocos antigos
-       this.selectedPaymentMethods.update(methods => methods.filter(pm => !pm.isChange));
-       
-       // Recalcula troco se necessário com o que sobrou
-       if (this.requiredChange() > 0) {
-         this.addChangePayment(this.requiredChange());
-       }
+    const removed = this.selectedPaymentMethods()[index];
+    this.selectedPaymentMethods.update(methods => methods.filter((_, i) => i !== index));
+
+    if (removed.method === 'DINHEIRO' && !removed.isChange) {
+      this.selectedPaymentMethods.update(methods => methods.filter(pm => !pm.isChange));
+      if (this.requiredChange() > 0) this.addChangePayment(this.requiredChange());
     }
-      
-    // Recalcula o valor sugerido no input
+
     this.currentAmount.set(this.remainingAmount());
   }
 
-  selectCurrentPaymentMethod(method: 'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX') {
+  selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX') {
     this.currentPaymentMethod.set(method);
-    
-    if (method !== 'CASH') {
-      this.currentAmount.set(this.remainingAmount());
-    } else {
-      if (this.currentAmount() === 0) {
-        this.currentAmount.set(this.remainingAmount());
-      }
-    }
+    this.currentAmount.set(this.remainingAmount());
   }
 
   updateCurrentAmount(amount: number) {
-    const newAmount = Math.max(0, amount || 0);
-    this.currentAmount.set(newAmount);
+    this.currentAmount.set(Math.max(0, amount || 0));
   }
 
   async processPayments() {
@@ -232,73 +176,97 @@ export class PaymentModal implements OnChanges, OnInit {
 
     this.isProcessing.set(true);
 
+    const requestBody: PaymentMultiRequest = {
+    saleId: this.paymentData.saleId,
+    totalAmount: this.paymentData.totalAmount,
+    changeAmount: this.totalChange(),
+    payments: this.selectedPaymentMethods()
+      .filter(pm => !pm.isChange)
+      .map(pm => ({
+        paymentMethodId: this.getPaymentMethodId(pm.method),
+        amountPaid: pm.amount
+      }))
+  };
+
     try {
-      const paymentsToSend = this.selectedPaymentMethods()
-        .filter(pm => !pm.isChange)
-        .map(pm => ({
-          paymentMethodId: this.getPaymentMethodId(pm.method),
-          amountPaid: pm.amount
-        }));
-
-     const requestBody = {
-        saleId: Number(this.paymentData!.saleId),
-        payments: this.selectedPaymentMethods()
-          .filter(pm => !pm.isChange)
-          .map(pm => ({
-            paymentMethodId: Number(this.getPaymentMethodId(pm.method)),
-            amountPaid: Number(pm.amount)
-          }))
-     };
-
-      console.log("Enviando para o Back:", requestBody);
-
       const response = await new Promise<any>((resolve, reject) => {
-        this.pvdService.processMultiPayment(requestBody).subscribe({
-          next: resolve,
-          error: reject
-        });
+        this.paymentService.processMultiPayment(requestBody).subscribe({ next: resolve, error: reject });
       });
 
       this.paymentProcessed.emit(response);
       this.paymentSuccess.set(response);
-      
-      // Fechar modal após 2 segundos
       setTimeout(() => this.closeModal(), 2000);
 
     } catch (e) {
-      console.error("Erro ao processar pagamento múltiplo:", e);
-      alert("Erro ao processar pagamento.");
+      console.error('Erro ao processar pagamento múltiplo:', e);
+      alert('Erro ao processar pagamento.');
     } finally {
       this.isProcessing.set(false);
     }
   }
 
-  private getPaymentMethodId(code: string): number {
-    const method = this.dbPaymentMethods().find(m => m.code === code);
-    if (!method) {
-      console.warn(`Aviso: Método ${code} não encontrado no banco. Usando ID 1.`);
-      return 1;
-    }
-    return method.id;
+  canProcessPayment = computed(() => {
+  if (this.isProcessing()) return false;
+  if (!this.isFullyPaid()) return false;
+  
+  // Validar que métodos que não permitem troco não gerem troco
+  const hasCashWithChange = this.selectedPaymentMethods().some(pm => 
+    pm.method !== 'DINHEIRO' && pm.isChange
+  );
+  
+  return !hasCashWithChange;
+});
+
+validatePayments(): { valid: boolean; error?: string } {
+  // Validar duplicatas de método
+  const methods = this.selectedPaymentMethods()
+    .filter(pm => !pm.isChange)
+    .map(pm => pm.method);
+  
+  const hasDuplicates = methods.length !== new Set(methods).size;
+  if (hasDuplicates) {
+    return { valid: false, error: 'Não é permitido adicionar o mesmo método de pagamento duas vezes' };
   }
 
-
-  getPaymentMethodText(method: string): string {
-    const methods = {
-      'CASH': 'Dinheiro',
-      'CREDIT_CARD': 'Crédito',
-      'DEBIT_CARD': 'Débito',
-      'PIX': 'PIX'
-    };
-    return methods[method as keyof typeof methods] || method;
+  // Validar que crédito/débito/PIX não geram troco
+  const nonCashMethods = this.selectedPaymentMethods()
+    .filter(pm => pm.method !== 'DINHEIRO' && pm.isChange);
+  
+  if (nonCashMethods.length > 0) {
+    return { valid: false, error: 'Apenas dinheiro pode gerar troco' };
   }
 
-  formatPrice(price: number): string {
-    if (isNaN(price)) return 'R$ 0,00';
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(Math.abs(price));
+  return { valid: true };
+}
+
+  private getPaymentMethodId(methodCode: string): number {
+  const manualMap: Record<string, number> = {
+    'DINHEIRO': 1,
+    'PIX': 2,
+    'CARTAO_CREDITO': 3,
+    'CARTAO_DEBITO': 4
+  };
+  const id = manualMap[methodCode];
+  if (!id) {
+    console.error(`Método ${methodCode} não mapeado no frontend!`);
+    return 1;
+  }
+  return id;
+}
+
+  getPaymentMethodText(method: string) {
+  const map: Record<string, string> = { 
+    'DINHEIRO': 'Dinheiro', 
+    'CARTAO_CREDITO': 'Crédito', 
+    'CARTAO_DEBITO': 'Débito', 
+    'PIX': 'PIX' 
+  };
+  return map[method] || method;
+}
+
+  formatPrice(price: number) {
+    return isNaN(price) ? 'R$ 0,00' :
+      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(price));
   }
 
   closeModal() {
@@ -308,7 +276,7 @@ export class PaymentModal implements OnChanges, OnInit {
 
   private resetForm() {
     this.selectedPaymentMethods.set([]);
-    this.currentPaymentMethod.set('CASH');
+    this.currentPaymentMethod.set('DINHEIRO');
     this.currentAmount.set(0);
     this.isProcessing.set(false);
     this.paymentSuccess.set(null);

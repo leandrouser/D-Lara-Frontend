@@ -1,642 +1,633 @@
-import { Component, signal, OnInit, inject, computed, WritableSignal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Subject, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, tap } from 'rxjs/operators';
-import { CustomerModal } from "../../shared/models/customer/customer-modal";
-import { CustomerResponse } from '../../core/service/customer.service';
-import { PdvService, ProductResponse, Sale } from '../../core/service/pdv.service';
-import { PaymentData, PaymentModal } from '../../shared/models/payment/payment-modal/payment-modal';
-import { AuthService } from '../../core/service/auth.service';
-import { CashModalComponent } from '../../shared/models/cash/cash-movement.model';
-import { MatIconModule } from '@angular/material/icon';
+import { Component, computed, inject, OnDestroy, OnInit, signal, HostListener, ViewChild, ElementRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PaymentResponse } from '../../core/service/payment.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs';
 
-interface CartItem {
-  id: number;
-  productId: number;
-  productName: string;
-  productPrice: number;
-  barcode?: string;
-  quantity: number;
-  total: number;
-}
+// Services e Interfaces
+import { CartItem } from '../../core/service/pdv.service';
+import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
+import { ProductService, CategoryEnum } from '../../core/service/product.service';
+import { SaleService, SaleResponse, SaleRequest, DiscountType } from '../../core/service/sale.service';
+import { CustomerModal } from "../../shared/models/customer/customer-modal";
+import { CashModalComponent } from "../../shared/models/cash/cash-movement.model";
+import { EmbroideryService } from '../../core/service/embroidery.service';
+import { PaymentData, PaymentModal } from "../../shared/models/payment/payment-modal/payment-modal";
+import { CashService, OpenSessionRequest } from '../../core/service/cash.service';
 
 @Component({
-  selector: 'app-pvd',
+  selector: 'app-pdv',
   standalone: true,
-  imports: [CommonModule, MatIconModule, PaymentModal, CustomerModal, CashModalComponent],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    CustomerModal,
+    CashModalComponent,
+    PaymentModal
+],
   templateUrl: './pdv.html',
   styleUrls: ['./pdv.scss']
 })
-export class Pdv implements OnInit {
-
-  private http = inject(HttpClient);
-  private customerService = inject(PdvService);
-  private pvdService = inject(PdvService);
-  private authService = inject(AuthService);
-  
-  // Subjects para busca
-  private customerSearch$ = new Subject<string>();
-  private productSearch$ = new Subject<string>();
-
-  // Signals para Clientes
-  customerSearchTerm = signal('');
-  customerSearchResults = signal<CustomerResponse[]>([]);
-  showCustomerResults = signal<boolean>(false);
-  isSearchingCustomer = signal<boolean>(false);
-  selectedCustomer = signal<CustomerResponse | null>(null);
-  isCustomerModalOpen = signal(false);
-
-  // Signal computado ou direto para pegar o nome
-userName = computed(() => this.authService.currentUser()?.name || 'Vendedor');
-
-  // BUSCA DE VENDAS
-  saleSearchTerm = signal('');
-  saleSearchResults = signal<Sale[]>([]);
-  saleSearching = signal(false);
-  saleSearch$ = new Subject<string>();
-  currentSaleId = signal<number | null>(null);
-
-  // CONTROLE DO CAIXA
-  isCashModalOpen = signal(false);
-  isCashRegisterOpen = signal(false);
-
-
-  // ✅ NOVOS SIGNALS PARA PRODUTOS
-  productSearchTerm = signal('');
-  productSearchResults = signal<ProductResponse[]>([]);
-  isSearchingProduct = signal<boolean>(false);
-  hasSearchedProducts = signal<boolean>(false);
-  showProductResults = signal<boolean>(true);
-  topSellingProducts = signal<ProductResponse[]>([]);
-  cartItems = signal<CartItem[]>([]);
-  discount = signal<number>(0);
-  subtotal = computed(() => {
-    return this.cartItems().reduce((sum, item) => sum + item.total, 0);
-  });
-
-  total = computed(() => {
-    const subtotalValue = this.subtotal();
-    const discountValue = this.discount();
-    return Math.max(0, subtotalValue - discountValue);
-  });
-
-   // ====================== NOVOS SIGNALS PARA PAGAMENTO ======================
-  isPaymentModalOpen = signal(false);
-  paymentData = signal<any>(null);
-  currentSale = signal({ saleCode: 10, total: 150.00, productsInSale: [], discountTotal: 0 });
-  // ====================== MÉTODOS PARA O MODAL DE PAGAMENTO ======================
-
-   // ✅ COMPUTED VALUES para totais do carrinho
-  cartItemCount = computed(() => 
-    this.cartItems().reduce((total, item) => total + item.quantity, 0)
-  );
-
-   // ✅ NOVO SIGNAL para estado de carregamento
-  isProcessingSale = signal(false);
-  salesResults: WritableSignal<Sale[]> = signal([]);
-  isSearchingSales = signal(false);
-  showSalesResults = signal(false);
-  selectedSale: WritableSignal<Sale | null> = signal(null);
-
-  constructor() {
-    this.setupCustomerSearch();
-    this.setupProductSearch(); 
-    this.saleSearch$
-
-  .pipe(
-  debounceTime(300),
-  distinctUntilChanged((a, b) => a.trim() === b.trim()),
-  tap(() => this.saleSearching.set(true)),
-  switchMap(term =>
-    this.pvdService.searchSales(term).pipe(
-      catchError(() => of([]))
-    )
-  )
-)
-.subscribe(results => {
-
-  let sales: Sale[] = [];
-
-  if (Array.isArray(results)) {
-    // Caso o backend retorne lista simples
-    sales = results;
-  } else if (results && 'content' in results) {
-    // Caso retorne PageResponse
-    sales = results.content ?? [];
-  }
-
-  this.saleSearchResults.set(sales);
-  this.saleSearching.set(false);
-});
-  }
-
-  ngOnInit() {
-    this.loadInitialProducts();
-    this.loadTopSellingProducts();
-    this.setupSalesSearch();
-    this.setupProductSearch(); 
-    this.checkCashStatus();
-  }
-
-  // ✅ NOVO: Configurar busca de produtos
- setupProductSearch() {
-  this.productSearch$
-    .pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      tap(() => this.isSearchingProduct.set(true)),
-      switchMap(term =>
-        this.pvdService.searchProducts(term).pipe(
-          catchError(() => of({ content: [] }))
-        )
-      )
-    )
-    .subscribe(result => {
-      this.productSearchResults.set(result.content ?? []);
-      this.isSearchingProduct.set(false);
-      this.hasSearchedProducts.set(true);
-    });
+export class Pdv implements OnInit, OnDestroy {
+paymentDataForModal() {
+throw new Error('Method not implemented.');
 }
 
-checkCashStatus() {
-    this.pvdService.getCashRegisterStatus().subscribe({
-      next: (status) => {
-        this.isCashRegisterOpen.set(status.isOpen);
-        if (!status.isOpen) {
-          // Opcional: Abrir modal automaticamente ao entrar na tela se estiver fechado
-          // this.isCashModalOpen.set(true); 
+  // Injeções
+  private saleService = inject(SaleService);
+  private customerService = inject(CustomerService);
+  private snackBar = inject(MatSnackBar);
+  private embroideryService = inject(EmbroideryService);
+  private productSearchSubject = new Subject<string>();
+  private productService = inject(ProductService);
+  private cashService = inject(CashService);
+
+  // Controle de Memória e Busca
+  private destroy$ = new Subject<void>();
+  private customerSearchSubject = new Subject<string>();
+
+  searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  
+  // --- Estados de UI ---
+  pageTitle = signal('Frente de Caixa');
+  pageSubtitle = signal('Vendas e Ordens de Serviço');
+  isLoading = signal(false);
+  isOpeningModalOpen = signal(false);
+  isPaymentModalOpen = signal(false);
+  isModalOpen = signal(false); 
+  isDetailVisible = signal(false);
+  CategoryEnum = CategoryEnum;
+  showDelivered = signal<boolean>(false);
+  selectedEmbroideryDetail = signal<any | null>(null);
+
+  // --- Filtros e Busca de Cliente ---
+  customerSearchValue = signal('');
+  suggestedCustomers = signal<CustomerResponse[]>([]);
+  selectedCustomer = signal<CustomerResponse | null>(null);
+  showCustomerDropdown = signal(false);
+
+  // --- Produtos ---
+  productCategoryFilter = signal<'all' | CategoryEnum>('all');
+  filteredProducts = signal<any[]>([]); 
+  totalElements = signal(0);
+  currentPage = signal(0);
+  totalPages = signal(1);
+  pageSize = signal(10);
+
+  // --- Recuperação de Vendas ---
+  saleSuggestions = signal<SaleResponse[]>([]);
+  showSaleSuggestions = signal(false);
+  activeSaleId = signal<number | null>(null);
+
+  // --- Carrinho e Desconto ---
+  cart = signal<CartItem[]>([]);
+  discountType = signal<'value' | 'percent'>('value');
+  discountInput = signal(0);
+
+  paymentData = signal<PaymentData | null>(null);
+
+  // --- Lógica de Negócio (Calculada) ---
+  subtotal = computed(() => 
+    this.cart().reduce((acc, item) => acc + item.total, 0)
+  );
+
+  isCashRegisterOpen = computed(() => !!this.cashService.activeSession());
+
+  activeSessionId = this.cashService.activeSessionId;
+
+  calculatedDiscount = computed(() => {
+    const total = this.subtotal();
+    const val = this.discountInput();
+    return this.discountType() === 'percent' ? (total * val) / 100 : val;
+  });
+
+  totalWithDiscount = computed(() => {
+    const res = this.subtotal() - this.calculatedDiscount();
+    return res > 0 ? res : 0;
+  });
+
+  ngOnInit() {
+    this.setupCustomerSearch();
+    this.setupProductSearch();
+    this.productSearchSubject.next('');
+    
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  refreshSearch() {
+  const currentTerm = (document.querySelector('.search-input-wrapper input') as HTMLInputElement)?.value || '';
+  this.productSearchSubject.next(currentTerm);
+}
+
+  // --- Busca Dinâmica de Clientes ---
+  private setupCustomerSearch() {
+    this.customerSearchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (term.trim().length < 2) {
+          this.showCustomerDropdown.set(false);
+          return of({ content: [] });
         }
-      },
-      error: () => console.log('Não foi possível verificar status do caixa (Endpoint pode não existir ainda)')
-    });
-  }
-
-  // ✅ NOVO: Lógica para abrir o modal
-  openCashModal() {
-    this.isCashModalOpen.set(true);
-  }
-
-  closeCashModal() {
-    this.isCashModalOpen.set(false);
-  }
-
-  // ✅ NOVO: Salvar abertura do caixa
-  onCashOpenConfirm(value: number) {
-    this.pvdService.openCashRegister(value).subscribe({
-      next: (res) => {
-        alert('Caixa aberto com sucesso!');
-        this.isCashRegisterOpen.set(true);
-        this.isCashModalOpen.set(false);
+        return this.customerService.searchPaged(term, 0, 8);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (result: any) => {
+        this.suggestedCustomers.set(result.content || []);
+        this.showCustomerDropdown.set(this.suggestedCustomers().length > 0);
       },
       error: (err) => {
-        alert('Erro ao abrir caixa: ' + (err.error?.message || err.message));
+        console.error('Erro na busca:', err);
+        this.showCustomerDropdown.set(false);
       }
     });
   }
 
-  setupSalesSearch() {
-    this.saleSearch$
-      .pipe(
-        debounceTime(400),
-        distinctUntilChanged(),
-        tap(() => {
-          this.isSearchingSales.set(true);
-          // Opcional: limpar resultados anteriores enquanto busca
-          // this.saleSearchResults.set([]); 
-        }),
-        switchMap(term => {
-          if (!term || term.trim() === '') {
-            return of(null); // Retorna null para saber que limpou
-          }
-          
-          // Chama o serviço passando página 0 e tamanho 10 (padrão)
-          return this.pvdService.searchSales(term, 0, 10).pipe(
-            catchError(err => {
-              console.error('Erro na busca de vendas', err);
-              return of({ content: [] } as any); // Retorna objeto vazio seguro
-            })
-          );
-        })
-      )
-      .subscribe(result => {
-        this.isSearchingSales.set(false);
-
-        if (result === null) {
-          // Se o termo foi limpo
-          this.saleSearchResults.set([]);
-          this.showSalesResults.set(false);
-          return;
-        }
-
-        // ✅ AQUI MUDOU: A lista está dentro de result.content
-        const sales = result.content || [];
-        
-        this.saleSearchResults.set(sales);
-        
-        // Lógica visual para mostrar/esconder dropdown
-        if (sales.length > 0) {
-           this.showSalesResults.set(true);
-        } else if (this.saleSearchTerm().length > 0) {
-           // Mostra "nenhum resultado" se tiver termo digitado
-           this.showSalesResults.set(true); 
-        } else {
-           this.showSalesResults.set(false);
-        }
-      });
+  onCustomerSearchInput(event: any) {
+    const val = event.target.value;
+    this.customerSearchValue.set(val);
+    this.customerSearchSubject.next(val);
   }
 
-loadInitialProducts() {
-  this.isSearchingProduct.set(true);
+  selectCustomer(c: CustomerResponse) {
+    this.selectedCustomer.set(c);
+    this.showCustomerDropdown.set(false);
+    this.customerSearchValue.set('');
+  }
 
-  this.pvdService.getProductsPaged(0, 30)
-    .pipe(catchError(() => of({ content: [] })))
-    .subscribe(result => {
-      this.productSearchResults.set(result.content ?? []);
-      this.hasSearchedProducts.set(true);
-      this.showProductResults.set(true);
-      this.isSearchingProduct.set(false);
+  clearCustomer() {
+    this.selectedCustomer.set(null);
+  }
+
+  // --- Ações do Carrinho ---
+  addToCart(p: any) {
+    const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
+    this.cart.update(items => {
+      const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
+      if (existing) {
+        return items.map(i => i === existing 
+          ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price } 
+          : i
+        );
+      }
+      return [...items, {
+        product: { id: p.id, name: p.name, price: p.price, barcode: p.barcode },
+        quantity: 1,
+        total: p.price,
+        isEmbroidery: isEmb,
+        embroideryId: isEmb ? p.id : null
+      }];
     });
+    this.snackBar.open('Item adicionado!', '', { duration: 1000 });
+  }
+
+  updateQuantity(item: CartItem, change: number) {
+    this.cart.update(prev => prev.map(i => {
+      if (i === item) {
+        const newQty = Math.max(1, i.quantity + change);
+        return { ...i, quantity: newQty, total: newQty * i.product.price };
+      }
+      return i;
+    }));
+  }
+
+  removeFromCart(index: number) {
+  this.cart.update(items => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    return newItems;
+  });
 }
 
-
-  // ✅ NOVO: Handler para input de busca de produtos
- onProductSearchInput(value: string) {
-  this.productSearchTerm.set(value);
-
-  if (value.trim().length === 0) {
-    // volta a mostrar todos os produtos
-    this.loadInitialProducts();
+  // --- Recuperação de Vendas ---
+  onSearchSale(query: string) {
+  console.log('--- Digitou na busca de vendas:', query); // LOG DE TESTE
+  
+  const term = query.trim();
+  if (term.length < 1) {
+    console.log('Termo muito curto, ignorando...');
+    this.saleSuggestions.set([]);
+    this.showSaleSuggestions.set(false);
     return;
   }
 
-  this.productSearch$.next(value);
-}
-
-
-   onSaleSearchInput(value: string) {
-  this.saleSearchTerm.set(value);
-
-  if (value.trim().length < 1) {
-    this.salesResults.set([]);
-    this.showSalesResults.set(false);
-    return;
-  }
-
-  this.showSalesResults.set(true);
-  this.saleSearch$.next(value);
-}
-
-
-   selectSale(sale: Sale) {
-    this.selectedSale.set(sale);
-    this.showSalesResults.set(false);
-    this.loadSale(sale);
-    this.saleSearchTerm.set('');
-  }
-
-  // ✅ NOVO: Limpar busca de produtos
-  clearProductSearch() {
-    this.productSearchTerm.set('');
-    this.productSearchResults.set([]);
-    this.hasSearchedProducts.set(false);
-    this.isSearchingProduct.set(false);
-  }
-
-  loadTopSellingProducts() {
-    this.pvdService.getTopSellingProducts(9)
-      .pipe(catchError(() => of([])))
-      .subscribe(products => {
-        this.topSellingProducts.set(products.slice(0, 9));
-      });
-  }
-
-  // ==== MODAL DE CLIENTE ====
-
-// abrir modal
-openCustomerModal() {
-  this.isCustomerModalOpen.set(true);
-}
-
-// fechar modal
-closeCustomerModal() {
-  this.isCustomerModalOpen.set(false);
-}
-
-// salvar novo cliente
-saveNewCustomer(data: any) {
-  this.customerService.createCustomer(data).subscribe({
-    next: (saved) => {
-      console.log("Cliente salvo:", saved);
-
-      // Seleciona automaticamente o cliente recém-criado
-      this.selectedCustomer.set(saved);
-
-      // Fecha modal
-      this.isCustomerModalOpen.set(false);
-
-      // Atualiza input de busca com o nome cadastrado
-      this.customerSearchTerm.set(saved.name);
-      this.customerSearchResults.set([saved]);
-      this.showCustomerResults.set(false);
+  console.log('Fazendo chamada para o serviço com o termo:', term);
+  this.saleService.searchSales(term, 0, 10).subscribe({
+    next: (response) => {
+      console.log('Sucesso! Dados recebidos:', response);
+      this.saleSuggestions.set(response.content || response);
+      this.showSaleSuggestions.set(true);
     },
     error: (err) => {
-      console.error("Erro ao salvar cliente", err);
-      alert("Erro ao salvar cliente.");
+      console.error('ERRO NA CHAMADA API:', err);
     }
   });
 }
 
-loadSale(sale: Sale) {
-    // 1. Seleciona o cliente
+@HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+
+    if (event.key === 'F2') {
+    event.preventDefault();
+    this.searchInput()?.nativeElement.focus();
+  }
+    // Atalho F10 - Finalizar Venda
+    if (event.key === 'F10') {
+      event.preventDefault(); // Impede o comportamento padrão do navegador
+      this.handleF10Press();
+    }
+
+    // Atalho ESC - Limpar Carrinho ou Fechar Modais (Opcional)
+    if (event.key === 'Escape') {
+      if (this.isPaymentModalOpen()) {
+        this.closePaymentModal();
+      } else if (this.isModalOpen()) {
+        this.onCloseCustomerModal();
+      }
+    }
+  }
+
+  // Lógica dedicada para o atalho F10
+  private handleF10Press() {
+    if (this.isCashRegisterOpen() && this.cart().length > 0 && !this.isLoading()) {
+      this.preparePayment();
+    } else if (!this.isCashRegisterOpen()) {
+      this.showWarning('Abra o caixa antes de finalizar uma venda.');
+    } else if (this.cart().length === 0) {
+      this.showWarning('O carrinho está vazio.');
+    }
+  }
+
+  selectSaleToEdit(sale: SaleResponse) {
+  this.showSaleSuggestions.set(false);
+  this.activeSaleId.set(sale.id);
+
+  // 1. Mapeia o cliente (IMPORTANTE: usar o ID real para o update funcionar)
+  if (sale.customerName) {
     this.selectedCustomer.set({
-      id: Number(sale.customerId),
+      id: (sale as any).customerId || 0, // Garanta que o DTO do back envie o customerId
       name: sale.customerName,
-      phone: sale.customerPhone || '',
+      phone: (sale as any).customerPhone || 'Não informado',
       active: true
-    });
-
-    // 2. Limpa carrinho atual
-    this.cartItems.set([]);
-
-    // 3. Carrega itens da venda (mapeia de volta para CartItem)
-    const mappedItems = sale.items.map(it => ({
-      id: Date.now() + Math.random(),
-      productId: it.productId,
-      productName: it.productName,
-      productPrice: it.productPrice,
-      quantity: it.quantity,
-      total: it.total,
-      barcode: '' // Assumindo que o barcode pode não vir no item de venda
-    }));
-
-    this.cartItems.set(mappedItems);
-    this.discount.set(sale.discount ?? 0);
-    
-    // 4. Limpa estados de busca
-    this.saleSearchTerm.set('');
-    this.saleSearchResults.set([]);
-    this.showSalesResults.set(false);
-}
-
-  trackByProductId(index: number, product: ProductResponse) {
-    return product.id;
+    } as any);
   }
 
-  getStockClass(qty: number) {
-    if (qty <= 0) return 'out-of-stock';
-    if (qty <= 5) return 'low-stock';
-    return 'in-stock';
-  }
+  // 2. Mapeia os descontos para os sinais (para o PDV recalcular o total na tela)
+  this.discountInput.set(sale.discountValue || 0);
+  this.discountType.set(sale.discountType === 'PERCENTAGE' ? 'percent' : 'value');
 
-  formatPrice(price: number) {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price);
-  }
-
-   addToCart(product: ProductResponse) {
-    console.log("Adicionando ao carrinho:", product);
-    
-    const existingItem = this.cartItems().find(item => item.productId === product.id);
-    
-    if (existingItem) {
-      // Se o produto já está no carrinho, aumenta a quantidade
-      this.updateQuantity(existingItem.id, existingItem.quantity + 1);
-    } else {
-      // Adiciona novo item ao carrinho
-      const newItem: CartItem = {
-        id: Date.now(), // ID temporário
-        productId: product.id,
-        productName: product.name,
-        productPrice: product.price,
-        barcode: product.barcode,
-        quantity: 1,
-        total: product.price
-      };
+  // 3. Mapeia os itens da venda para o formato do carrinho
+  if (sale.items && sale.items.length > 0) {
+    const mappedItems: CartItem[] = sale.items.map(item => {
+      const isEmbroidery = !!item.embroideryId;
       
-      this.cartItems.update(items => [...items, newItem]);
-    }
-  }
+      const price = item.unitPrice || 0; 
 
-  updateQuantity(itemId: number, newQuantity: number) {
-    if (newQuantity < 1) {
-      this.removeFromCart(itemId);
-      return;
-    }
-
-    this.cartItems.update(items => 
-      items.map(item => 
-        item.id === itemId 
-          ? { 
-              ...item, 
-              quantity: newQuantity, 
-              total: item.productPrice * newQuantity 
-            }
-          : item
-      )
-    );
-  }
-
-  trackByCartItemId(index: number, item: CartItem): number {
-    return item.id;
-  }
-
-  removeFromCart(itemId: number) {
-    this.cartItems.update(items => items.filter(item => item.id !== itemId));
-  }
-
-  setDiscount(value: number) {
-    
-    const validValue = isNaN(value) ? 0 : Math.max(0, value);
-    
-    this.discount.set(validValue);
-  }
-
-  clearCart() {
-    this.cartItems.set([]);
-    this.discount.set(0);
-    this.currentSaleId.set(null);
-  }
-
-  setupCustomerSearch() {
-  this.customerSearch$
-    .pipe(
-      debounceTime(350),
-      distinctUntilChanged(),
-      tap(() => this.isSearchingCustomer.set(true)),
-      switchMap(term =>
-        this.customerService.searchCustomers(term, 0, 5).pipe(
-          catchError(err => {
-            console.error("Erro ao buscar clientes:", err);
-
-            return of({
-              content: [],
-              totalElements: 0,
-              totalPages: 0,
-              size: 5,
-              number: 0,
-            });
-          })
-        )
-      )
-    )
-    .subscribe(result => {
-      this.customerSearchResults.set(result.content);
-      this.isSearchingCustomer.set(false);
+      return {
+        product: {
+          id: item.productId || item.embroideryId || 0,
+          name: item.description,
+          price: price, // Preço unitário
+          stockQty: 999  // Valor fictício para não bloquear por falta de estoque na edição
+        } as any,
+        quantity: item.quantity,
+        isEmbroidery: isEmbroidery,
+        // Campos extras que seu carrinho pode usar para exibir totais
+        total: price * item.quantity 
+      };
     });
+
+    this.cart.set(mappedItems);
+    this.showSuccess(`Venda #${sale.id} carregada com sucesso!`);
+  } else {
+    this.showError('Esta venda não possui itens.');
+  }
 }
 
-  onCustomerSearchInput(value: string) {
-  this.customerSearchTerm.set(value);
+  // --- Finalização ---
+  finalizeSale(status: 'PAID' | 'PENDING') {
+    if (this.cart().length === 0) return;
 
-  if (value.trim().length < 1) {
-    this.customerSearchResults.set([]);
-    this.showCustomerResults.set(false);
+    const sessionId = this.activeSessionId();
+
+    if (!sessionId) {
+    this.showError('Nenhum caixa aberto encontrado!');
     return;
   }
 
-  this.showCustomerResults.set(true);
-  this.customerSearch$.next(value);
-}
-
-
-  selectCustomer(customer: CustomerResponse) {
-  this.selectedCustomer.set(customer);
-  this.showCustomerResults.set(false);
-}
-
-  clearCustomer() {
-    this.selectedCustomer.set(null);
-    this.customerSearchTerm.set('');
-    this.customerSearchResults.set([]);
-  }
-
-  trackByCustomerId(index: number, customer: CustomerResponse) {
-    return customer.id;
-  }
-
-   // Abrir modal de pagamento
-  openPaymentModal() {
-    if (this.cartItems().length === 0) {
-      alert('Adicione produtos ao carrinho antes de finalizar a venda.');
-      return;
-    }
-
-    const paymentData = {
-      saleId: 0, // Será preenchido após criar a venda
-      totalAmount: this.total(),
-      customerName: this.selectedCustomer()?.name || 'Cliente não identificado'
+    const saleRequest: SaleRequest = {
+      customerId: this.selectedCustomer()?.id || null,
+      cashSessionId: 1, 
+      discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
+      discountValue: this.discountInput(),
+      items: this.cart().map(item => ({
+        productId: item.isEmbroidery ? null : item.product.id,
+        embroideryId: item.isEmbroidery ? item.product.id : null,
+        quantity: item.quantity,
+        unitPrice: item.product.price,
+        description: item.product.name
+      }))
     };
 
-    this.paymentData.set(paymentData);
-    this.isPaymentModalOpen.set(true);
-  }
+    this.isLoading.set(true);
+    const action$ = this.activeSaleId() 
+      ? this.saleService.update(this.activeSaleId()!, saleRequest)
+      : this.saleService.createSale(saleRequest);
 
-  // Fechar modal de pagamento
-  closePaymentModal() {
-    this.isPaymentModalOpen.set(false);
-    this.paymentData.set(null);
-  }
-
-  // Processar pagamento concluído
- onPaymentProcessed(response: PaymentResponse) {
-  this.isPaymentModalOpen.set(false);
-  this.clearCart();
-  this.clearCustomer();
-  this.closePaymentModal();
-
-  alert(`Venda finalizada com sucesso! Troco: ${this.formatPrice(response.changeAmount)}`);
-}
-
-   // ====================== MÉTODO FINALIZAR VENDA ATUALIZADO ======================
-finalizeSale() {
-    if (this.cartItems().length === 0) {
-        alert('Adicione produtos ao carrinho antes de finalizar a venda.');
-        return;
-    }
-
-    const saleRequest = {
-        customerId: this.selectedCustomer()?.id?.toString() || '',
-        discount: this.discount(),
-        saleStatus: 'PENDING' as const,
-        items: this.cartItems().map(item => ({
-            productId: item.productId,
-            quantity: item.quantity
-        }))
-    };
-
-    // ✅ CENÁRIO A: VENDA EXISTENTE (ATUALIZAR)
-    if (this.currentSaleId() !== null) {
-        const saleId = this.currentSaleId()!;
-
-        // 💡 Ajuste: Tipagem do subscribe para <Sale>
-        this.pvdService.updateSale(saleId, saleRequest).subscribe({
-            next: (updatedSale: Sale) => {
-                this.openPaymentModalWithData(updatedSale);
-            },
-            error: (err) => {
-                console.error("Erro ao atualizar venda", err);
-                alert("Erro ao atualizar itens da venda: " + (err.error?.message || err.message));
-            }
-        });
-        return;
-    }
-
-    // ✅ CENÁRIO B: VENDA NOVA (CRIAR)
-    // 💡 Ajuste: Tipagem do subscribe para <Sale>
-    this.pvdService.createSale(saleRequest).subscribe({
-        next: (newSale: Sale) => {
-            this.currentSaleId.set(newSale.id);
-            this.openPaymentModalWithData(newSale);
-        },
-        error: (err) => {
-            // ... (A Lógica de tratamento de erro de caixa e estoque está perfeita) ...
-            
-            let msg = '';
-            // Sua lógica de extração de erro é excelente e robusta
-            if (err.error && typeof err.error === 'object' && err.error.message) {
-                 msg = err.error.message;
-            } else if (typeof err.error === 'string') {
-                 msg = err.error;
-            } else {
-                 msg = err.message || 'Erro desconhecido';
-            }
-
-            if (msg.toLowerCase().includes('abrir o caixa')) {
-                 if(confirm('⚠️ O Caixa está FECHADO. Deseja abrir agora?')) {
-                     this.openCashModal();
-                 }
-            } else if (msg.toLowerCase().includes('estoque')) {
-                 alert('⚠️ ESTOQUE: ' + msg);
-            } else {
-                 alert('❌ Erro: ' + msg);
-            }
-        }
+    action$.pipe(take(1)).subscribe({
+      next: (res) => {
+        this.snackBar.open(`Venda #${res.id} processada!`, 'OK', { duration: 3000 });
+        this.resetPDV();
+      },
+      error: (err) => {
+        this.snackBar.open('Erro ao salvar venda.', 'Erro');
+      },
+      complete: () => this.isLoading.set(false)
     });
-}
-logout() {
-  this.authService.logout();
+  }
+
+  resetPDV() {
+    this.cart.set([]);
+    this.activeSaleId.set(null);
+    this.discountInput.set(0);
+    this.selectedCustomer.set(null);
+  }
+
+  // --- UI Auxiliares ---
+  changeDiscountType(type: 'value' | 'percent') {
+    this.discountType.set(type);
+  }
+
+  updateDiscountValue(event: any) {
+    this.discountInput.set(Number(event.target.value) || 0);
+  }
+
+  handleButtonClick() {
+    if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+  }
+
+  // Agora o método aceita diretamente o número que o modal envia
+onConfirmCashOpen(value: number) {
+  // Montamos o objeto que o serviço espera aqui dentro
+  const request: OpenSessionRequest = { initialValue: value };
+
+  this.cashService.openCashRegister(request).subscribe({
+    next: (session) => {
+      this.isOpeningModalOpen.set(false);
+      this.showSuccess('Caixa aberto com sucesso!');
+    },
+    error: (err) => {
+      console.error('Erro ao abrir caixa:', err);
+      this.showError('Não foi possível abrir o caixa.');
+    }
+  });
 }
 
-openPaymentModalWithData(sale: any) {
-    // 💡 Ajuste: Use a interface PaymentData importada para tipagem mais segura
-    const paymentData: PaymentData = { 
+  changePage(delta: number) {
+    this.currentPage.update(p => p + delta);
+    this.refreshSearch();
+  }
+
+  setProductFilter(filter: 'all' | CategoryEnum) {
+  console.log('Filtro alterado para:', filter);
+  this.productCategoryFilter.set(filter);
+  this.currentPage.set(0);
+    const currentTerm = (document.querySelector('.search-input-wrapper input') as HTMLInputElement)?.value || '';
+    this.productSearchSubject.next(currentTerm); 
+}
+
+  private lastSearchTerm = '';
+
+  openCustomerModal() {
+  this.isModalOpen.set(true);
+}
+
+// Método para fechar o modal
+onCloseCustomerModal() {
+  this.isModalOpen.set(false);
+}
+
+// Método que recebe os dados do modal e envia para o servidor
+handleSaveCustomer(newCustomerData: CustomerRequest) {
+  this.isLoading.set(true);
+
+  this.customerService.create(newCustomerData).pipe(
+    take(1)
+  ).subscribe({
+    next: (customer: CustomerResponse) => {
+      this.snackBar.open('Cliente cadastrado com sucesso!', 'OK', { duration: 3000 });
+      
+      // LOGICA DE CONVENIÊNCIA: 
+      // Já seleciona o cliente criado para a venda atual automaticamente
+      this.selectedCustomer.set(customer);
+      
+      this.isModalOpen.set(false); // Fecha o modal
+      this.isLoading.set(false);
+    },
+    error: (err) => {
+      console.error('Erro ao cadastrar cliente:', err);
+      this.snackBar.open('Erro ao cadastrar cliente. Verifique os dados.', 'Erro');
+      this.isLoading.set(false);
+    }
+  });
+}
+
+
+onProductSearchInput(event: any) {
+  const val = event.target.value;
+  this.lastSearchTerm = val;
+  this.productSearchSubject.next(val);
+}
+
+private setupProductSearch() {
+  this.productSearchSubject.pipe(
+    debounceTime(400),
+    // Removemos o distinctUntilChanged para que a troca de categoria dispare a busca
+    switchMap(term => {
+      this.isLoading.set(true);
+      
+      if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
+        console.log('Buscando Bordados para:', term);
+        const status = this.showDelivered() ? 'DELIVERED' : 'PENDING';
+        
+        return this.embroideryService.search(term, status, this.currentPage(), this.pageSize()).pipe(
+          map(res => ({
+            ...res,
+            content: res.content.map(emb => ({
+              ...emb,
+              name: emb.customerName, 
+              description: emb.description, 
+              deliveryDate: emb.deliveryDate,
+              categoryEnum: CategoryEnum.BORDADO,
+              price: emb.price,
+              stockQty: 0
+            }))
+          }))
+        );
+      } else {
+        console.log('Buscando Produtos para:', term);
+        return this.productService.findAll().pipe(
+          map(products => {
+            const termLower = term.toLowerCase();
+            let filtered = products.filter(p => 
+              p.name.toLowerCase().includes(termLower) || 
+              (p.barcode && p.barcode.includes(term))
+            );
+            
+            const catFilter = this.productCategoryFilter();
+            if (catFilter !== 'all') {
+              filtered = filtered.filter(p => p.categoryEnum === catFilter);
+            }
+
+            return {
+              content: filtered,
+              totalElements: filtered.length,
+              totalPages: Math.ceil(filtered.length / this.pageSize())
+            };
+          })
+        );
+      }
+    }),
+    takeUntil(this.destroy$)
+  ).subscribe({
+    next: (response) => {
+      console.log('Resultados encontrados:', response.content.length);
+      this.filteredProducts.set(response.content || []);
+      this.totalElements.set(response.totalElements || 0);
+      this.totalPages.set(response.totalPages || 1);
+      this.isLoading.set(false);
+    },
+    error: (err) => {
+      console.error('Erro na busca:', err);
+      this.isLoading.set(false);
+      this.filteredProducts.set([]);
+    }
+  });
+}
+
+showDetails(emb: any) {
+  this.selectedEmbroideryDetail.set(emb);
+  this.isDetailVisible.set(true);
+}
+
+closeDetails() {
+  this.isDetailVisible.set(false);
+  setTimeout(() => this.selectedEmbroideryDetail.set(null), 200);
+}
+
+preparePayment() {
+  if (!this.selectedCustomer()) {
+    this.showWarning('Por favor, selecione um cliente antes de finalizar a venda.');
+    return;
+  }
+
+  if (this.cart().length === 0) {
+    this.snackBar.open('Carrinho vazio!', 'Aviso', { duration: 2000 });
+    return;
+  }
+
+  const sessionId = this.activeSessionId();
+
+  if (!sessionId) {
+    this.showError('Nenhum caixa aberto encontrado!');
+    return;
+  }
+
+  const saleRequest: SaleRequest = {
+  customerId: this.selectedCustomer()?.id || null,
+  cashSessionId: sessionId,
+  discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
+  discountValue: this.discountInput(),
+  // REPRODUZINDO A LÓGICA DO BACK: Enviamos apenas os dados base
+  items: this.cart().map(item => ({
+    productId: item.isEmbroidery ? null : item.product.id,
+    embroideryId: item.isEmbroidery ? item.product.id : null,
+    quantity: item.quantity,
+    // Se for o "Bordado Manual", enviamos o preço. Se for produto comum, o back busca.
+    manualPrice: item.isEmbroidery ? item.product.price : null, 
+    description: item.product.name
+  }))
+};
+
+  this.isLoading.set(true);
+
+  // Se já estamos editando uma venda, usamos ela. Se não, criamos uma nova.
+  const action$ = this.activeSaleId() 
+    ? this.saleService.update(this.activeSaleId()!, saleRequest)
+    : this.saleService.createSale(saleRequest);
+
+  action$.pipe(take(1)).subscribe({
+    next: (sale: SaleResponse) => {
+      // Monta o objeto que o Modal de Pagamento espera
+      const data: PaymentData = {
         saleId: sale.id,
-        totalAmount: sale.total, // Usa o total calculado pelo Backend!
-        customerName: sale.customerName || this.selectedCustomer()?.name || 'Cliente',
-        items: this.cartItems().map(item => ({
-            name: item.productName,
-            qty: item.quantity,
-            price: item.productPrice,
-            total: item.total
+        totalAmount: this.totalWithDiscount(),
+        customerName: this.selectedCustomer()?.name || 'Consumidor Final',
+        items: this.cart().map(i => ({
+          name: i.product.name,
+          qty: i.quantity,
+          price: i.product.price,
+          total: i.total
         }))
-    };
+      };
 
-    this.paymentData.set(paymentData);
-    this.isPaymentModalOpen.set(true);
+      this.paymentData.set(data);
+      this.isPaymentModalOpen.set(true);
+      this.isLoading.set(false);
+    },
+    error: (err) => {
+      this.isLoading.set(false);
+      this.snackBar.open('Erro ao gerar venda para pagamento.', 'Erro');
+    }
+  });
 }
 
+handlePaymentProcessed(response: any) {
+  this.snackBar.open('Venda finalizada e paga com sucesso!', 'OK', { duration: 3000 });
+  this.resetPDV();
+  this.isPaymentModalOpen.set(false);
+}
+
+closePaymentModal() {
+  this.isPaymentModalOpen.set(false);
+  this.paymentData.set(null);
+}
+
+isOverdue(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const delivery = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return delivery < today;
+}
+
+showSuccess(message: string) {
+  this.snackBar.open(message, 'Fechar', {
+    duration: 3000,
+    panelClass: ['success-snackbar'], // Você pode estilizar no CSS
+    horizontalPosition: 'end',
+    verticalPosition: 'top'
+  });
+}
+
+showError(message: string) {
+  this.snackBar.open(message, 'Fechar', {
+    duration: 5000,
+    panelClass: ['error-snackbar']
+  });
+}
+
+showWarning(message: string) {
+  this.snackBar.open(message, 'Fechar', {
+    duration: 4000
+  });
+}
 }

@@ -16,7 +16,7 @@ export const routes: Routes = [
   },
   { 
     path: 'cash', 
-    loadComponent: () => import('./pages/cash/cash-movement').then((m: any) => m.CashMovement)
+    loadComponent: () => import('./pages/cash/cash-management').then((m: any) => m.CashManagement)
   },
   { 
     path: 'sales', 

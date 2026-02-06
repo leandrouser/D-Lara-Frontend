@@ -59,6 +59,7 @@ export class Dashboard implements OnInit {
   loadingToday = signal(true);
   monthSalesTotal = signal(0);
   monthSalesCount = signal(0);
+  todaySalesTotal = signal(0);
 
   totalProducts = signal(0);
   totalProductsValue = signal(0);
@@ -217,23 +218,36 @@ export class Dashboard implements OnInit {
   // VENDAS DO DIA
   // ==============================
   loadTodaySales() {
-    this.loadingToday.set(true);
-    this.http.get<SaleResponse[]>('http://localhost:8080/api/sales/today').subscribe({
-      next: (sales) => {
-        console.log('Vendas carregadas:', sales); // DEBUG
-        this.todaySales.set(sales);
-        this.loadingToday.set(false);
-      },
-      error: (err) => {
-        console.error('Erro ao carregar vendas do dia:', err);
-        this.loadingToday.set(false);
-      },
-    });
-  }
+  this.loadingToday.set(true);
 
-  refreshTodaySales() {
-    this.loadTodaySales();
-  }
+  this.http.get<SaleResponse[]>('http://localhost:8080/api/sales/today').subscribe({
+    next: (sales) => {
+      console.log('Vendas carregadas:', sales);
+
+      // Lista para a tabela
+      this.todaySales.set(sales);
+
+      // Soma apenas vendas PAGAS
+      const totalPaidToday = sales
+        .filter(sale => this.getNormalizedStatus(sale.saleStatus) === 'paid')
+        .reduce((sum, sale) => sum + (sale.total || 0), 0);
+
+      // Atualiza o card "Vendas Hoje"
+      this.todaySalesTotal.set(totalPaidToday);
+
+      this.loadingToday.set(false);
+    },
+    error: (err) => {
+      console.error('Erro ao carregar vendas do dia:', err);
+
+      // Segurança para não deixar valor antigo no card
+      this.todaySalesTotal.set(0);
+
+      this.loadingToday.set(false);
+    },
+  });
+}
+
 
   loadMonthSales() {
     this.http.get<number>('http://localhost:8080/api/sales/month/total').subscribe({
@@ -250,4 +264,8 @@ export class Dashboard implements OnInit {
   refreshMonthSales() {
     this.loadMonthSales();
   }
+
+  refreshTodaySales() {
+  this.loadTodaySales();
+}
 }

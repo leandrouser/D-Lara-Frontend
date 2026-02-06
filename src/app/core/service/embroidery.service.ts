@@ -1,14 +1,20 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
 // Define o enum para os campos de busca, seguindo o padrão que você usou em outros services
 export enum EmbroiderySearchField {
   ID = 'ID',
   CUSTOMER_ID = 'CUSTOMER_ID',
   CUSTOMER_NAME = 'CUSTOMER_NAME',
   PHONE = 'PHONE',
+  DELIVERY_DATE = 'DELIVERY_DATE',
 }
 
 // 🎯 Resposta do Servidor (Baseada no seu Record EmbroideryResponse)
 export interface EmbroideryResponse {
   id: number;
+  status: EmbroideryStatus;
   customerId: number;
   customerName: string;
   description: string;
@@ -28,47 +34,32 @@ export interface EmbroideryRequest {
   fileData?: string; 
 }
 
-// Service para Interação com a API de Bordados
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environments';
+export interface SpringPage<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
 
-@Injectable({
-  providedIn: 'root'
-})
+export type EmbroideryStatus = 'PENDING' | 'DELIVERED';
+@Injectable({ providedIn: 'root' })
+
 export class EmbroideryService {
-  private http = inject(HttpClient);
-private apiUrl = `${environment.apiUrl}/embroidery`;
+ 
+  private readonly apiUrl = 'http://localhost:8080/api/embroidery';
+  
+  constructor(private http: HttpClient) {}
+ 
   // 🔎 Método de Busca
-  searchEmbroidery(
-    term: string,
-    page: number = 0,
-    size: number = 10,
-    searchField: EmbroiderySearchField | null = null
-  ): Observable<{ content: EmbroideryResponse[], totalElements: number }> {
-    let params = new HttpParams()
+  // Busca paginada com termo (o backend ordena por data no repositório)
+  search(term: string, status: string, page: number, size: number): Observable<SpringPage<EmbroideryResponse>> {
+    const params = new HttpParams()
+      .set('term', term)
+      .set('status', status)
       .set('page', page.toString())
       .set('size', size.toString());
-
-    if (term && term.trim() !== '') {
-      params = params.set('term', term);
-    }
-    
-    if (searchField){
-      params = params.set('searchField', searchField);
-    }
-
-    // ✅ O endpoint correto é /api/embroidery/search
-    return this.http.get<{ content: EmbroideryResponse[], totalElements: number }>(
-      `${this.apiUrl}/search`,
-      { params }
-    );
-  }
-
-  // 📥 Método para Deletar
-  deleteEmbroidery(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/search`, { params });
   }
 
   // Se você tiver o endpoint que só recebe JSON:
@@ -80,12 +71,14 @@ private apiUrl = `${environment.apiUrl}/embroidery`;
     return this.http.get<EmbroideryResponse>(`${this.apiUrl}/${id}`);
   }
 
-   createWithFile(formData: FormData): Observable<EmbroideryResponse> {
-    return this.http.post<EmbroideryResponse>(
-      `${this.apiUrl}/multipart`,
-      formData
-    );
+  createWithFile(formData: FormData): Observable<EmbroideryResponse> {
+    return this.http.post<EmbroideryResponse>(`${this.apiUrl}/multipart`, formData);
   }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
 
 downloadFile(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/file`, {
@@ -93,12 +86,14 @@ downloadFile(id: number): Observable<Blob> {
     });
   }
 
-  updateWithFile(id: number, formData: FormData): Observable<EmbroideryResponse> {
-    return this.http.put<EmbroideryResponse>(
-      '${this.apiUrl}/${id}',
-      formData
-    );
-  }
+  updateWithFile(id: number, formData: FormData) {
+  return this.http.put<EmbroideryResponse>(`${this.apiUrl}/${id}`, formData);
+}
 
+updateStatus(id: number, status: string): Observable<void> {
+  return this.http.patch<void>(`${this.apiUrl}/${id}/status`, null, {
+    params: { status }
+  });
+}
   // ... (outros métodos como create, update, get)
 }

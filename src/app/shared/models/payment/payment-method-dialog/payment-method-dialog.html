@@ -1,33 +1,101 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Alterar' : 'Cadastrar' }} Método</h2>
-
-<mat-dialog-content>
-  <div class="form-grid" style="display: flex; flex-direction: column; gap: 1rem; padding-top: 10px;">
+<div class="modal-overlay" *ngIf="true" (click)="onCancel()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
     
-    <mat-form-field appearance="outline">
-      <mat-label>Nome para exibição</mat-label>
-      <input matInput [(ngModel)]="method.displayName" placeholder="Ex: Cartão de Crédito" required>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Código</mat-label>
-      <input matInput [(ngModel)]="method.code" [disabled]="isEdit" placeholder="Ex: CARD_V_1">
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Descrição (opcional)</mat-label>
-      <textarea matInput [(ngModel)]="method.description"></textarea>
-    </mat-form-field>
-
-    <div style="display: flex; gap: 20px;">
-      <mat-checkbox [(ngModel)]="method.active" color="primary">Ativo</mat-checkbox>
-      <mat-checkbox [(ngModel)]="method.allowsChange" color="primary">Permite Troco</mat-checkbox>
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h2>{{ isEdit ? 'Editar Método de Pagamento' : 'Novo Método de Pagamento' }}</h2>
+      <button type="button" class="close-btn" (click)="onCancel()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
-  </div>
-</mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">CANCELAR</button>
-  <button mat-raised-button color="primary" [disabled]="!method.displayName" (click)="onSave()">
-    {{ isEdit ? 'SALVAR ALTERAÇÕES' : 'CRIAR' }}
-  </button>
-</mat-dialog-actions>
+    <!-- FORMULÁRIO -->
+    <form (ngSubmit)="onSave()" class="modal-form">
+      
+      <!-- NOME DO MÉTODO -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nome do Método *</mat-label>
+        <input 
+          matInput 
+          [(ngModel)]="method().displayName" 
+          (ngModelChange)="updateField('displayName', $event)"
+          name="displayName"
+          placeholder="Ex: Cartão de Crédito"
+          required>
+      </mat-form-field>
+
+      <!-- CÓDIGO -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Código *</mat-label>
+        <input 
+          matInput 
+          [(ngModel)]="method().code" 
+          (ngModelChange)="updateField('code', $event)"
+          name="code"
+          [disabled]="isEdit"
+          placeholder="Ex: CREDIT_CARD"
+          required>
+        <mat-hint *ngIf="!isEdit">Código não pode ser alterado após criação</mat-hint>
+      </mat-form-field>
+
+      <!-- DESCRIÇÃO -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descrição</mat-label>
+        <textarea 
+          matInput 
+          [(ngModel)]="method().description"
+          (ngModelChange)="updateField('description', $event)"
+          name="description"
+          placeholder="Descreva o método de pagamento"
+          rows="3"></textarea>
+      </mat-form-field>
+
+      <!-- CHECKBOXES -->
+      <div class="checkboxes-group">
+        <mat-checkbox 
+          [(ngModel)]="method().active"
+          (ngModelChange)="updateField('active', $event)"
+          name="active"
+          color="primary">
+          Ativo
+        </mat-checkbox>
+        
+        <mat-checkbox 
+          [(ngModel)]="method().allowsChange"
+          (ngModelChange)="updateField('allowsChange', $event)"
+          name="allowsChange"
+          color="primary">
+          Permite Troco
+        </mat-checkbox>
+
+        <mat-checkbox 
+          [(ngModel)]="method().allowsInstallments"
+          (ngModelChange)="updateField('allowsInstallments', $event)"
+          name="allowsInstallments"
+          color="primary">
+          Permite Parcelamento
+        </mat-checkbox>
+      </div>
+
+      <!-- FOOTER COM BOTÕES -->
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          mat-button 
+          (click)="onCancel()"
+          [disabled]="isLoading()">
+          Cancelar
+        </button>
+        <button 
+          type="submit" 
+          mat-raised-button 
+          color="primary"
+          [disabled]="!method().displayName || !method().code || isLoading()">
+          <mat-icon *ngIf="!isLoading()">{{ isEdit ? 'edit' : 'add' }}</mat-icon>
+          <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
+          {{ isLoading() ? 'Salvando...' : (isEdit ? 'Atualizar' : 'Criar') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

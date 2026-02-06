@@ -62,8 +62,8 @@
 // No seu product.scss
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); // ✅ Diminuído de 280px para 200px
-  gap: 1rem; // ✅ Gap reduzido
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); // ✅ Diminuído de 280px para 200px
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
@@ -162,11 +162,6 @@
 .card.pink {
   background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
   color: #be185d;
-}
-
-.card.brown {
-  background: linear-gradient(135deg, #fffbeb 0%, #fde68a 100%); 
-  color: #b45309;
 }
 
 /* ✅ VERSÃO AINDA MAIS COMPACTA */

@@ -1,56 +1,88 @@
-<div class="modal-overlay" *ngIf="open()" (click)="closeModal()">
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     
     <!-- HEADER -->
     <div class="modal-header">
-      <h2>{{ title }}</h2>
-      <button class="close-btn" (click)="closeModal()">×</button>
+      <h2>Novo Cliente</h2>
+      <button type="button" class="close-btn" (click)="closeModal()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
 
     <!-- FORMULÁRIO -->
-    <form (ngSubmit)="submit()" class="modal-form">
+    <form (ngSubmit)="saveCustomer()" class="modal-form">
+      
+      <!-- NOME -->
       <div class="form-group">
         <label for="name">Nome *</label>
         <input
           type="text"
           id="name"
-          [(ngModel)]="form.name"
+          [(ngModel)]="formData().name"
           name="name"
           placeholder="Digite o nome do cliente"
           required
+          [disabled]="isLoading()"
         >
+        <small class="error" *ngIf="!formData().name && errorMessage()">
+          {{ errorMessage() }}
+        </small>
       </div>
 
+      <!-- TELEFONE -->
       <div class="form-group">
-        <label for="phone">Telefone</label>
+        <label for="phone">Telefone *</label>
         <input
-          type="text"
+          type="tel"
           id="phone"
-          [(ngModel)]="form.phone"
+          [(ngModel)]="formData().phone"
+          (ngModelChange)="updateField('phone', $event)"
           name="phone"
-          placeholder="Digite o telefone"
+          placeholder="(00) 00000-0000"
+          maxlength="15"
+          required
+          [disabled]="isLoading()"
         >
+        <small class="hint">Formato: (00) 00000-0000</small>
       </div>
 
+      <!-- STATUS ATIVO -->
       <div class="form-group checkbox-group">
         <label class="checkbox-label">
           <input
             type="checkbox"
-            [(ngModel)]="form.active"
+            [(ngModel)]="formData().active"
+            (ngModelChange)="updateField('active', $event)"
             name="active"
+            [disabled]="isLoading()"
           >
           <span class="checkmark"></span>
-          Cliente ativo
+          <span class="label-text">Cliente ativo</span>
         </label>
+      </div>
+
+      <!-- MENSAGEM DE ERRO -->
+      <div class="error-message" *ngIf="errorMessage()">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage() }}
       </div>
 
       <!-- FOOTER COM BOTÕES -->
       <div class="modal-footer">
-        <button type="button" class="btn-cancel" (click)="closeModal()">
+        <button 
+          type="button" 
+          class="btn-cancel" 
+          (click)="closeModal()"
+          [disabled]="isLoading()">
           Cancelar
         </button>
-        <button type="submit" class="btn-save">
-          Salvar Cliente
+        <button 
+          type="submit" 
+          class="btn-save"
+          [disabled]="!formData().name || !formData().phone || isLoading()">
+          <mat-icon *ngIf="!isLoading()">person_add</mat-icon>
+          <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
+          {{ isLoading() ? 'Salvando...' : 'Salvar Cliente' }}
         </button>
       </div>
     </form>

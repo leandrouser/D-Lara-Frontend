@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators'; // ✅ Importar o map
+import { Observable, throwError } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environments';
 
 export interface CustomerRequest {
@@ -33,101 +33,67 @@ export interface CustomerStats {
   inactive: number;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CustomerService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/customers`;
 
-  // ✅ IMPLEMENTADO: Estatísticas de clientes
-  getCustomerStats(): Observable<CustomerStats> {
-    return this.http.get<CustomerStats>(`${this.apiUrl}/stats`);
+  // --- CRUD ---
+  getById(id: number): Observable<CustomerResponse> {
+    return this.http.get<CustomerResponse>(`${this.apiUrl}/${id}`).pipe(catchError(this.handleError));
   }
 
-  // ✅ IMPLEMENTADO: Contar clientes ativos
-  countActiveCustomers(): Observable<number> {
-    return this.http.get<CustomerResponse[]>(`${this.apiUrl}/status/true`).pipe(
-      map(customers => customers.length)
-    );
-  }
-
-  // ✅ IMPLEMENTADO: Contar clientes inativos
-  countInactiveCustomers(): Observable<number> {
-    return this.http.get<CustomerResponse[]>(`${this.apiUrl}/status/false`).pipe(
-      map(customers => customers.length)
-    );
-  }
-
-  // ✅ IMPLEMENTADO: Buscar todos os clientes (alternativa)
-  getCustomers(): Observable<CustomerResponse[]> {
-    return this.http.get<CustomerResponse[]>(this.apiUrl);
-  }
-
-  // ✅ IMPLEMENTADO: Buscar clientes por termo
-  searchCustomers(
-        searchTerm: string = '', 
-        page: number = 0, 
-        size: number = 10
-    ): Observable<Page<CustomerResponse>> {
-        // Redireciona a chamada para o método de busca paginada que já está correto
-        return this.searchPaged(searchTerm, page, size);
-    }
-
-  // ✅ IMPLEMENTADO: Criar cliente (alternativa)
-  createCustomer(customerData: any): Observable<CustomerResponse> {
-    return this.http.post<CustomerResponse>(this.apiUrl, customerData);
-  }
-
-  // --- MÉTODOS EXISTENTES (já funcionam) ---
-  
-  // Criar cliente
   create(data: CustomerRequest): Observable<CustomerResponse> {
-    return this.http.post<CustomerResponse>(this.apiUrl, data);
+    return this.http.post<CustomerResponse>(this.apiUrl, data).pipe(catchError(this.handleError));
   }
 
-  // Atualizar cliente
   update(id: number, data: CustomerRequest): Observable<CustomerResponse> {
-    return this.http.put<CustomerResponse>(`${this.apiUrl}/${id}`, data);
+    return this.http.put<CustomerResponse>(`${this.apiUrl}/${id}`, data).pipe(catchError(this.handleError));
   }
 
-  // Busca paginada
-  searchPaged(
-  query: string = '',
-  page: number = 0,
-  size: number = 10
-): Observable<Page<CustomerResponse>> {
-  const params = new HttpParams()
-    .set('q', query)
-    .set('page', page)
-    .set('size', size);
-
-  return this.http.get<Page<CustomerResponse>>(`${this.apiUrl}/search`, { params });
-}
-
-
-  // Buscar todos (não paginado)
-  findAll(): Observable<CustomerResponse[]> {
-    return this.http.get<CustomerResponse[]>(this.apiUrl);
+  // --- LISTAGEM E FILTROS PAGINADOS ---
+  // Este método é usado apenas para a busca por TEXTO
+  searchPaged(term: string, page: number, size: number): Observable<Page<CustomerResponse>> {
+    const params = new HttpParams()
+      .set('q', term || '')
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<Page<CustomerResponse>>(`${this.apiUrl}/search`, { params });
   }
 
-  // Buscar por status
-  findByStatus(active: boolean): Observable<CustomerResponse[]> {
-    return this.http.get<CustomerResponse[]>(`${this.apiUrl}/status/${active}`);
+  getActiveCustomers(page: number, size: number): Observable<Page<CustomerResponse>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<Page<CustomerResponse>>(`${this.apiUrl}/status/true`, { params });
   }
 
-  // Alternar status
+  getInactiveCustomers(page: number, size: number): Observable<Page<CustomerResponse>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<Page<CustomerResponse>>(`${this.apiUrl}/status/false`, { params });
+  }
+
+  // --- STATUS E ESTATÍSTICAS ---
   toggleStatus(id: number): Observable<CustomerResponse> {
     return this.http.patch<CustomerResponse>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
 
-  // Ativar
-  activate(id: number): Observable<CustomerResponse> {
-    return this.http.patch<CustomerResponse>(`${this.apiUrl}/${id}/activate`, {});
+  getCustomerStats(): Observable<CustomerStats> {
+    return this.http.get<CustomerStats>(`${this.apiUrl}/stats`);
   }
 
-  // Desativar
-  deactivate(id: number): Observable<CustomerResponse> {
-    return this.http.patch<CustomerResponse>(`${this.apiUrl}/${id}/deactivate`, {});
+  countActiveCustomers(): Observable<number> {
+    return this.http.get<CustomerResponse[]>(`${this.apiUrl}/status/true`).pipe(map(c => c.length));
   }
+
+  countInactiveCustomers(): Observable<number> {
+    return this.http.get<CustomerResponse[]>(`${this.apiUrl}/status/false`).pipe(map(c => c.length));
+  }
+
+  private handleError(error: any) {
+    return throwError(() => new Error(error.message || 'Erro no servidor'));
+  }
+
+  searchCustomers(term: string, page: number, size: number): Observable<Page<CustomerResponse>> {
+  // Ele apenas redireciona para o searchPaged que criamos
+  return this.searchPaged(term, page, size);
+}
 }

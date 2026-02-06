@@ -1,88 +1,444 @@
+// ==================== ESTILOS SEGUINDO MATERIAL DESIGN OFICIAL ====================
+
+// Remove estilos customizados do host
+:host {
+  display: block;
+}
+
+// ==================== TÍTULO DO DIALOG ====================
+[mat-dialog-title] {
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 32px;
+  }
+}
+
+// ==================== CONTEÚDO DO DIALOG ====================
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+// ==================== FORM FIELDS ====================
 .full-width {
-    width: 100%;
+  width: 100%;
 }
 
-.row {
+.form-row {
+  display: flex;
+  gap: 16px;
+  
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
+}
+
+.form-field-half {
+  flex: 1;
+  
+  @media (max-width: 600px) {
+    width: 100%;
+  }
+}
+
+// ==================== SEÇÃO DE CLIENTE ====================
+.customer-section {
+  position: relative;
+  padding-top: 10px; 
+  margin-bottom: 8px;
+}
+
+.customer-search-row {
+  width: 100%;
+}
+
+// Dropdown de resultados
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2),
+              0 4px 5px 0 rgba(0, 0, 0, 0.14),
+              0 1px 10px 0 rgba(0, 0, 0, 0.12);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  
+  .loading-spinner,
+  .no-results {
     display: flex;
-    gap: 16px;
-    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: rgba(0, 0, 0, 0.6);
+    
+    mat-icon {
+      &.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+  
+  mat-list {
+    padding: 0;
+  }
+  
+  .customer-result-item {
+    cursor: pointer;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
 }
 
-.half-width {
-    flex: 1;
-}
+// Card do cliente selecionado
+.customer-card {
+  /* Aplica o gradiente blue das métricas */
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
+  color: #0369a1 !important;
+  
+  /* Ajustes de estrutura e sombra */
+  margin: 0 0 1.5rem 0;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.05) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  transition: transform 0.3s ease;
 
-// Estilo para o campo de upload de arquivo
-.file-upload-container {
-    padding: 10px 0 20px 0;
+  &:hover { transform: translateY(-2px); }
 
-    button[mat-stroked-button] {
-        margin-bottom: 8px;
-        min-width: 250px;
-        border-color: #90caf9; // Levemente azul
-        color: #1976d2;
+  mat-card-header {
+    position: relative;
+    padding: 8px;
+    
+    .customer-avatar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      /* Avatar branco com ícone na cor do texto do card */
+      background-color: #ffffff; 
+      color: #0369a1;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
     }
     
-    .file-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        color: #555;
-        background: #f0f4f7;
-        padding: 6px 10px;
-        border-radius: 4px;
-        border: 1px solid #e0e0e0;
-
-        button {
-            margin-left: auto;
-            height: 20px;
-            width: 20px;
-        }
+    mat-card-title {
+      font-size: 1.1rem !important;
+      font-weight: 700 !important;
+      color: #0369a1;
+      margin-bottom: 2px;
     }
-}
-
-.loading-spinner {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Estilos para o grupo de seleção de cliente e botão "Novo" */
-// src/app/shared/models/embroidery/embroidery-modal.scss
-
-.customer-select-group {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    width: 100%;
-    margin-bottom: 8px;
-
-    .customer-select-wrapper {
-        flex: 1; /* Permite que o wrapper dos campos ocupe o espaço */
-        
-        .search-input-field,
-        .select-field {
-            margin-bottom: 10px;
-        }
+    
+    mat-card-subtitle {
+      color: #0369a1;
+      opacity: 0.8;
+      font-weight: 500;
+      font-size: 0.85rem;
     }
-
-    .add-customer-btn {
-        margin-top: 5px; 
-        padding: 10px 15px;
-        min-width: 100px;
-        height: 56px; 
+    
+    .clear-button {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      color: #0369a1 !important;
+    }
+  }
+  
+  .customer-info {
+    padding: 0 16px 12px 16px;
+    margin-top: 4px;
+    
+    mat-chip-set {
+      mat-chip {
+        /* Chips discretos que combinam com o fundo blue */
+        --mdc-chip-elevated-container-color: rgba(255, 255, 255, 0.5);
+        --mdc-chip-label-text-color: #0369a1;
         font-weight: 600;
+        font-size: 0.75rem;
+
+        &.inactive {
+          --mdc-chip-elevated-container-color: #ffedd5;
+          --mdc-chip-label-text-color: #c2410c;
+        }
+      }
     }
+  }
 }
 
-.loading-spinner {
-    animation: spin 1s linear infinite;
+// ==================== SEÇÃO DE ARQUIVO ====================
+.file-section {
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px dashed #d1d5db; // Estilo "dropzone"
+  border-radius: 12px;
+  background-color: #f9fafb;
+
+  .input-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+  
+  .upload-button {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+  
+  .file-chip-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    mat-chip-option {
+      pointer-events: none;
+    }
+    
+    button {
+      margin-left: auto;
+    }
+  }
+  
+  .file-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+// ==================== AÇÕES DO DIALOG ====================
+mat-dialog-actions {
+  padding: 8px;
+  
+  button {
+    margin-left: 8px;
+    
+    &:first-child {
+      margin-left: 0;
+    }
+    
+    mat-icon {
+      margin-right: 4px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
 }
+
+/* Garante que o modal de cliente (z-index) fique acima do modal de bordado */
+customer-modal {
+  position: relative;
+  z-index: 9999;
+}
+
+// ==================== ANIMAÇÕES ====================
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// ==================== RESPONSIVIDADE ====================
+@media (max-width: 600px) {
+  mat-dialog-content {
+    padding: 16px;
+  }
+  
+  mat-dialog-actions {
+    flex-direction: column-reverse;
+    
+    button {
+      width: 100%;
+      margin: 4px 0;
+    }
+  }
+}
+
+// ==================== AJUSTES GLOBAIS ====================
+::ng-deep {
+  // Ajusta o container do dialog para largura adequada
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    max-width: 600px;
+    width: 100%;
+  }
+  
+  // Snackbar customizado
+  .error-snackbar {
+    --mdc-snackbar-container-color: #d32f2f;
+    --mat-snack-bar-button-color: #fff;
+  }
+  
+  .success-snackbar {
+    --mdc-snackbar-container-color: #388e3c;
+    --mat-snack-bar-button-color: #fff;
+  }
+}
+
+.file-preview-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f3f4f6;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .file-icon {
+      color: #3b82f6;
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .file-details {
+      display: flex;
+      flex-direction: column;
+      
+      .file-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1f2937;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .file-size {
+        font-size: 11px;
+        color: #6b7280;
+      }
+    }
+  }
+
+  .remove-file-btn {
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #fecaca;
+      transform: scale(1.05);
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.upload-btn {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed #d1d5db;
+  background: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #4b5563;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+    color: #3b82f6;
+  }
+}
+}
+
+// Container que agrupa o campo de busca e o botão "+"
+// ... (outros estilos acima)
+
+// CERTIFIQUE-SE DE QUE ESTE BLOCO NÃO ESTÁ DENTRO DE OUTRA CLASSE
+.search-with-action {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center; // Mudei para center para alinhar melhor o botão com o input
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 10px;
+
+  mat-form-field {
+    flex: 1 !important; // Força o input a ocupar o espaço e empurrar o botão
+    width: auto !important;
+    
+    // Remove margens nativas que podem quebrar o flex
+    .mat-mdc-form-field-wrapper {
+        padding-bottom: 0 !important;
+    }
+  }
+
+  .quick-add-btn {
+  flex-shrink: 0 !important;
+  margin-top: -20px; 
+  
+  // Aumentando o botão
+  width: 56px !important;
+  height: 56px !important;
+  
+  // Aumentando o ícone internamente
+  mat-icon {
+    font-size: 32px !important; 
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Efeito de hover para dar profundidade
+  &:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease-in-out;
+  }
+}
 }

@@ -30,6 +30,7 @@ export class Product implements OnInit {
   showModal = signal(false);
   private api = inject(ProductService);
   private dialog = inject(MatDialog);
+  
 
   // ---------------- STATE ----------------
   products = signal<ProductResponse[]>([]);
@@ -147,10 +148,6 @@ export class Product implements OnInit {
             console.log('Modal fechado sem salvar.');
         }
     });
-  }
-
-  closeModal() {
-    // Não é mais necessário, MatDialog lida com o fechamento
   }
 
   // ---------------- SEARCH SETUP ----------------
