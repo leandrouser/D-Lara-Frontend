@@ -177,8 +177,8 @@
                       {{ client.name }}
                     </td>
                     <td class="client-phone">
-                      {{ client.phone || 'Não informado' }}
-                    </td>
+                        {{ client.phone | phoneFormat }}
+                      </td>
                     <td class="client-status">
                       <span [class]="'status-tag ' + (client.active ? 'active' : 'inactive')">
                         <mat-icon class="status-icon">{{ client.active ? 'check_circle' : 'cancel' }}</mat-icon>

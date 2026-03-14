@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { CustomerService, CustomerResponse, Page, CustomerStats } from '../../core/service/customer.service';
 import { CustomerModal } from '../../shared/models/customer/customer-modal';
+import { PhoneFormatPipe } from "../../shared/pipes/phone-pipe";
 
 type CustomerState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -15,12 +16,13 @@ type CustomerState = 'idle' | 'loading' | 'success' | 'error';
   selector: 'app-clientes',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    RouterModule, 
+    CommonModule,
+    FormsModule,
+    RouterModule,
     CustomerModal,
-    MatIconModule
-  ],
+    MatIconModule,
+    PhoneFormatPipe
+],
   templateUrl: './customer.html',
   styleUrls: ['./customer.scss']
 })
@@ -44,17 +46,14 @@ export class Customer implements OnInit {
   statusFilter = signal<'all' | 'active' | 'inactive'>('all');
 
   page = signal(0);
-  readonly pageSize = 6;
-  pageSizeOptions = [6, 12, 24, 48];
+  readonly pageSize = 5;
+  pageSizeOptions = [5, 10, 15, 20];
 
-  // Subject para busca com debounce
   private searchSubject = new Subject<string>();
 
-  // -------------- COMPUTEDS --------------
   isLoading = computed(() => this.state() === 'loading');
   hasError = computed(() => this.state() === 'error');
 
-  // ✅ CORREÇÃO: Garantir que sempre retorna array
   currentPageData = computed(() => {
     const pagedData = this.paged();
     if (pagedData && Array.isArray(pagedData.content)) {
@@ -64,12 +63,10 @@ export class Customer implements OnInit {
     return Array.isArray(customersData) ? customersData : [];
   });
 
-  // ✅ CORREÇÃO: Métricas vindas do backend
   totalClientes = computed(() => this.customerStats().total);
   clientesAtivos = computed(() => this.customerStats().active);
   clientesInativos = computed(() => this.customerStats().inactive);
 
-  // ✅ PAGINATION COMPUTEDS - CORRIGIDAS
   showPagination = computed(() => {
     const totalPages = this.getTotalPages();
     return totalPages > 1;
@@ -105,7 +102,6 @@ export class Customer implements OnInit {
     this.loadCustomerStats();
   }
 
-  // ---------------- CARREGAR ESTATÍSTICAS ----------------
   private loadCustomerStats() {
     this.api.getCustomerStats().subscribe({
       next: (stats) => {
@@ -113,18 +109,14 @@ export class Customer implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao carregar estatísticas:', err);
-        // Fallback: usar o endpoint existente
         this.loadStatsFromExistingEndpoint();
       }
     });
   }
 
-  // No método loadStatsFromExistingEndpoint, atualize para:
 private loadStatsFromExistingEndpoint() {
-  // Carregar clientes ativos
   this.api.countActiveCustomers().subscribe({
     next: (activeCount) => {
-      // Carregar clientes inativos
       this.api.countInactiveCustomers().subscribe({
         next: (inactiveCount) => {
           this.customerStats.set({
@@ -145,8 +137,6 @@ private loadStatsFromExistingEndpoint() {
     }
   });
 }
-
-  // Fallback final: calcular localmente
   private calculateLocalStats() {
     const customers = this.customers();
     const stats = {
@@ -157,7 +147,6 @@ private loadStatsFromExistingEndpoint() {
     this.customerStats.set(stats);
   }
 
-  // ---------------- SEARCH SETUP ----------------
  private setupSearch() {
     this.searchSubject.pipe(
       debounceTime(500),
@@ -175,29 +164,25 @@ private loadStatsFromExistingEndpoint() {
     });
   }
 
-  // ---------------- LOAD DATA ----------------
  loadCustomers() {
   this.state.set('loading');
   
-  const query = this.search() || ''; // Garante que é string
-  const page = this.page();          // number
-  const size = this.pageSize;        // number
+  const query = this.search() || '';
+  const page = this.page();
+  const size = this.pageSize;
   const status = this.statusFilter();
 
   let request$: Observable<Page<CustomerResponse>>;
 
-  // Se houver texto na busca, usamos o searchPaged
   if (query.trim().length > 0) {
     request$ = this.api.searchPaged(query, page, size);
   } 
-  // Se não houver busca, decidimos pelo filtro de status
   else {
     if (status === 'active') {
       request$ = this.api.getActiveCustomers(page, size);
     } else if (status === 'inactive') {
       request$ = this.api.getInactiveCustomers(page, size);
     } else {
-      // Para "Todos" sem busca, enviamos string vazia no primeiro parâmetro
       request$ = this.api.searchPaged('', page, size);
     }
   }
@@ -215,7 +200,6 @@ private loadStatsFromExistingEndpoint() {
   });
 }
 
-  // ---------------- SEARCH HANDLERS ----------------
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     this.search.set(value);
@@ -223,12 +207,11 @@ private loadStatsFromExistingEndpoint() {
     this.searchSubject.next(value);
   }
 
-  // ---------------- CREATE CUSTOMER ----------------
   createCustomer(data: any) {
     this.api.create(data).subscribe({
       next: (newCustomer) => {
         this.loadCustomers();
-        this.loadCustomerStats(); // ✅ Recarregar estatísticas
+        this.loadCustomerStats();
         this.showModal.set(false);
         alert("Cliente criado com sucesso!");
       },
@@ -239,14 +222,12 @@ private loadStatsFromExistingEndpoint() {
     });
   }
 
-  // ---------------- FILTERS ----------------
   applyFilter(filter: 'all' | 'active' | 'inactive') {
     this.statusFilter.set(filter);
     this.page.set(0);
     this.loadCustomers();
   }
 
-  // ---------------- STATUS ----------------
   toggleStatus(customer: CustomerResponse) {
     if (!customer?.id) {
       console.error('ID do cliente não encontrado');
@@ -260,7 +241,7 @@ private loadStatsFromExistingEndpoint() {
         } else {
           this.loadCustomers();
         }
-        this.loadCustomerStats(); // ✅ Recarregar estatísticas
+        this.loadCustomerStats();
       },
       error: (err) => {
         alert("Erro ao alterar status do cliente");
@@ -269,7 +250,6 @@ private loadStatsFromExistingEndpoint() {
     });
   }
 
-  // ---------------- PAGINATION ----------------
   nextPage() {
     const pagedData = this.paged();
     if (pagedData && !pagedData.last) {
@@ -298,7 +278,6 @@ private loadStatsFromExistingEndpoint() {
     }
   }
 
-  // ---------------- PAGINATION HELPERS ----------------
   getPageNumbers(): number[] {
     const pagedData = this.paged();
     if (!pagedData || typeof pagedData.totalPages !== 'number') {
@@ -326,12 +305,14 @@ private loadStatsFromExistingEndpoint() {
 
   getTotalPages(): number {
     const pagedData = this.paged();
-    return pagedData && typeof pagedData.totalPages === 'number' ? pagedData.totalPages : 0;
+    return pagedData && typeof pagedData.totalPages === 'number' ? 
+    pagedData.totalPages : 0;
   }
 
   getTotalElements(): number {
     const pagedData = this.paged();
-    return pagedData && typeof pagedData.totalElements === 'number' ? pagedData.totalElements : this.customers().length;
+    return pagedData && typeof pagedData.totalElements === 'number' ? 
+    pagedData.totalElements : this.customers().length;
   }
 
   isCurrentPage(pageNum: number): boolean {
@@ -352,17 +333,15 @@ saveCustomer(formData: any) {
   const customerToEdit = this.selectedCustomer();
 
   if (customerToEdit) {
-    // Se tem um cliente selecionado, faz o PUT (EDITAR)
     this.api.update(customerToEdit.id, formData).subscribe({
       next: () => {
         alert("Cliente atualizado com sucesso!");
         this.closeModal();
-        this.loadCustomers(); // Recarrega a lista
+        this.loadCustomers();
       },
       error: (err) => alert("Erro ao atualizar")
     });
   } else {
-    // Se não tem nada selecionado, faz o POST (CRIAR)
     this.createCustomer(formData);
   }
 }
@@ -372,18 +351,16 @@ closeModal() {
   this.selectedCustomer.set(null);
 }
 
-// ✅ Função unificada que decide entre Criar (POST) ou Atualizar (PUT)
 handleSave(formData: any) {
   const customerToEdit = this.selectedCustomer();
 
   if (customerToEdit && customerToEdit.id) {
-    // MODO EDIÇÃO: Executa o PUT http://localhost:8080/api/customers/{id}
     this.api.update(customerToEdit.id, formData).subscribe({
       next: () => {
         alert('Cliente atualizado com sucesso!');
         this.closeModal();
-        this.loadCustomers();     // Atualiza a lista na tabela
-        this.loadCustomerStats(); // Atualiza os cards (Total/Ativos/Inativos)
+        this.loadCustomers();
+        this.loadCustomerStats();
       },
       error: (err) => {
         console.error('Erro ao editar:', err);
@@ -391,7 +368,6 @@ handleSave(formData: any) {
       }
     });
   } else {
-    // MODO CRIAÇÃO: Executa o POST http://localhost:8080/api/customers
     this.api.create(formData).subscribe({
       next: () => {
         alert('Cliente cadastrado com sucesso!');
@@ -408,7 +384,8 @@ handleSave(formData: any) {
 
 }
 
-private getRequestObservable(query: string, status: string, page: number, size: number): Observable<Page<CustomerResponse>> {
+private getRequestObservable(query: string, status: string, page: number, size: number): 
+Observable<Page<CustomerResponse>> {
     if (query.trim().length > 0) {
       return this.api.searchPaged(query, page, size);
     } else {

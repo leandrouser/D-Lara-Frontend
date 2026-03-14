@@ -123,6 +123,7 @@
           <tr>
             <th><mat-icon>schedule</mat-icon> Data/Hora</th>
             <th><mat-icon>category</mat-icon> Tipo</th>
+            <th><mat-icon>description</mat-icon> Observação</th>
             <th><mat-icon>payments</mat-icon> Valor</th>
           </tr>
         </thead>
@@ -151,20 +152,23 @@
                 <td class="type-cell">
                   <span [class]="'type-badge ' + item.type.toLowerCase()">
                     <mat-icon>
-                      {{ item.type === 'SALE' ? 'shopping_cart' : 
-                         item.type === 'SUPPLEMENT' ? 'add_circle' : 
-                         item.type === 'SANGRIA' ? 'remove_circle' : 
-                         'sync_alt' }}
-                    </mat-icon>
+                    {{ item.type === 'SALE' ? 'shopping_cart' : 
+                       item.type === 'SUPPLEMENT' ? 'add_circle' : 
+                       item.type === 'SANGRIA' ? 'remove_circle' : 
+                       item.type === 'OPENING' ? 'vpn_key' : 'sync_alt' }}
+                  </mat-icon>
                     {{ getTypeLabel(item.type) }}
                   </span>
                 </td>
-                <td class="value-cell" 
-                    [class.positive]="item.type === 'SALE' || item.type === 'SUPPLEMENT'"
-                    [class.negative]="item.type === 'SANGRIA'">
-                  {{ item.type === 'SANGRIA' ? '- ' : '+ ' }}
-                  {{ item.value | currency: 'BRL' }}
-                </td>
+                <td class="description-cell">
+                {{ item.description || '---' }}
+              </td>
+               <td class="value-cell" 
+                  [class.positive]="item.type === 'SALE' || item.type === 'SUPPLEMENT' || item.type === 'OPENING'"
+                  [class.negative]="item.type === 'SANGRIA' || item.type === 'CHANGE'">
+                {{ (item.type === 'SANGRIA' || item.type === 'CHANGE') ? '- ' : '+ ' }}
+                {{ item.value | currency: 'BRL' }}
+              </td>
               </tr>
             }
           }
@@ -175,34 +179,11 @@
 
   <!-- MODAL: ABERTURA DE CAIXA -->
  <app-cash-modal 
-    [isOpen]="isOpeningModalOpen()" 
-    (close)="isOpeningModalOpen.set(false)"
-    (confirm)="onConfirmCashOpen($event)">
-  </app-cash-modal>
-
-  <div class="modal-overlay" *ngIf="isClosingModalOpen()">
-    <div class="modal-content large">
-      <div class="modal-header">
-        <h2><mat-icon>account_balance</mat-icon> Fechamento de Caixa</h2>
-        <button (click)="isClosingModalOpen.set(false)"><mat-icon>close</mat-icon></button>
-      </div>
-
-      <div class="modal-body">
-        <p>Informe o valor físico contado para cada método:</p>
-        <div class="payment-inputs">
-          <div *ngFor="let m of paymentMethods()" class="payment-field">
-            <label>{{ m.name }}</label>
-            <input type="number" placeholder="0.00" (change)="updateCount(m.id, $event)">
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button (click)="isClosingModalOpen.set(false)">Cancelar</button>
-        <button class="btn-confirm" (click)="executeCashClosing()">
-          Confirmar Fechamento
-        </button>
-      </div>
-    </div>
-  </div>
+  [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
+  [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
+  [session]="cashService.activeSession()"
+  [paymentMethods]="paymentMethods()"
+  (close)="onModalClose()"
+  (confirm)="onModalConfirm($event)">
+</app-cash-modal>
 </div>

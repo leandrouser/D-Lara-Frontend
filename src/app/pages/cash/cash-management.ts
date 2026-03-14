@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, effect, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,7 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize, catchError, of } from 'rxjs';
 import { CashService, OpenSessionRequest, CashTransactionRequestDTO, CloseSessionRequest, Transaction } from '../../core/service/cash.service';
-import { CashModalComponent } from "../../shared/models/cash/cash-movement.model";
+import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
 import { PaymentService } from '../../core/service/payment.service';
 
 @Component({
@@ -25,8 +25,9 @@ export class CashManagement implements OnInit {
   private paymentService = inject(PaymentService);
   private snackBar = inject(MatSnackBar);
 
+   @ViewChild(CashModalComponent) cashModal!: CashModalComponent;
+
   // ===== ESTADOS SINCRONIZADOS COM O SERVICE =====
-  // O status do caixa agora é derivado do ID ativo no serviço
   isCashOpen = computed(() => this.cashService.activeSessionId() !== null);
   isLoading = signal(false);
   isOpeningModalOpen = signal(false);
@@ -43,8 +44,18 @@ export class CashManagement implements OnInit {
   paymentMethods = signal<{id: number, name: string}[]>([]);
   reportedPayments = signal<{paymentMethodId: number, physicalAmount: number}[]>([]);
 
+  constructor() {
+    effect(() => {
+      const id = this.cashService.activeSessionId();
+      if (id) {
+        this.loadTransactions();
+      } else {
+        this.transactions.set([]);
+      }
+    });
+  }
+
   ngOnInit(): void {
-    // Busca métodos de pagamento do PaymentService
     this.paymentService.listPaymentMethods().subscribe({
       next: (methods) => {
         this.paymentMethods.set(methods.map(m => ({ id: m.id, name: m.displayName })));
@@ -95,14 +106,15 @@ export class CashManagement implements OnInit {
     }
 
     this.isLoading.set(true);
-    const request: CashTransactionRequestDTO = {
+
+    const request = {
       value: this.movementValue(),
       type: this.movementType(),
-      observation: this.movementObservation(),
-      paymentMethodId: 1 // Geralmente Dinheiro para sangria/suprimento
+      description: this.movementObservation() || "Movimentação manual",
+      paymentMethodId: 1
     };
 
-    this.cashService.createManualTransaction(sessionId, request)
+    this.cashService.createManualTransaction(sessionId, request as any)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
@@ -110,58 +122,73 @@ export class CashManagement implements OnInit {
           this.resetMovementForm();
           this.loadTransactions();
         },
-        error: (err) => this.showError(err.error?.message || 'Erro na transação')
+        error: (err) => {
+          console.error('Detalhes do erro:', err.error);
+          this.showError(err.error?.errors?.description || err.error?.message || 'Erro na transação');
+        }
       });
   }
 
-  // ===== FECHAMENTO =====
-
-  executeCashClosing(): void {
+  // ===== FECHAMENTO ======
+onConfirmCashClosing(event: any): void {
   const sessionId = this.cashService.activeSessionId();
   if (!sessionId) {
-    this.snackBar.open('Sessão não encontrada', 'OK');
+    this.showError('Sessão não encontrada');
     return;
   }
 
   this.isLoading.set(true);
 
-  // Pegamos os dados diretamente do sinal/propriedade do componente
   const request: CloseSessionRequest = {
     sessionId: sessionId,
-    counts: this.reportedPayments() // <-- Aqui usamos o que foi digitado no modal
+    counts: event.counts
   };
 
   this.cashService.closeSession(sessionId, request)
     .pipe(finalize(() => this.isLoading.set(false)))
     .subscribe({
       next: (response) => {
-        this.snackBar.open('✅ Caixa fechado com sucesso!', 'OK', { duration: 3000 });
-        this.isClosingModalOpen.set(false);
-        // Opcional: mostrar o relatório de discrepâncias (response.details)
+        this.showSuccess('✅ Caixa fechado com sucesso!');
+        
+        if (this.cashModal) {
+            this.cashModal.setClosingResult(response);
+          }
+        
       },
       error: (err) => {
-        this.snackBar.open(err.error?.message || 'Erro ao fechar caixa', 'Fechar');
+        this.showError(err.error?.message || 'Erro ao fechar caixa');
+        this.isClosingModalOpen.set(false);
       }
     });
 }
 
   // ===== AUXILIARES =====
 
-  private loadTransactions(): void {
-  const sessionId = this.cashService.activeSessionId();
-  if (!sessionId) return;
+  private getPaymentMethodIdByName(name: string): number {
+    const methodMap: { [key: string]: number } = {
+      'Dinheiro': 1,
+      'Cartão de Crédito': 2,
+      'Cartão de Débito': 3,
+      'PIX': 4
+    };
+    return methodMap[name] || 1;
+  }
 
-  this.isLoading.set(true);
-  this.cashService.getTransactionsBySession(sessionId)
-    .pipe(finalize(() => this.isLoading.set(false)))
-    .subscribe({
-      next: (data) => {
-        console.log('Dados carregados na tabela:', data); // Debug para conferência
-        this.transactions.set(data);
-      },
-      error: () => this.showError('Não foi possível carregar as movimentações.')
-    });
-}
+  private loadTransactions(): void {
+    const sessionId = this.cashService.activeSessionId();
+    if (!sessionId) return;
+
+    this.isLoading.set(true);
+    this.cashService.getTransactionsBySession(sessionId)
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (data) => {
+          console.log('Dados carregados na tabela:', data);
+          this.transactions.set(data);
+        },
+        error: () => this.showError('Não foi possível carregar as movimentações.')
+      });
+  }
 
   private resetMovementForm(): void {
     this.movementValue.set(0);
@@ -177,19 +204,23 @@ export class CashManagement implements OnInit {
     this.snackBar.open(msg, 'OK', { duration: 5000, panelClass: ['error-snack'] });
   }
 
-  updateCount(methodId: number, event: any) {
-  const value = Number(event.target.value);
-  this.reportedPayments.update(current => {
-    const index = current.findIndex(p => p.paymentMethodId === methodId);
-    if (index > -1) {
-      current[index].physicalAmount = value;
-      return [...current];
-    }
-    return [...current, { paymentMethodId: methodId, physicalAmount: value }];
-  });
-}
+  private showWarning(msg: string) {
+    this.snackBar.open(msg, 'OK', { duration: 5000, panelClass: ['warning-snack'] });
+  }
 
- formatDate(date: string | Date | undefined): string {
+  updateCount(methodId: number, event: any) {
+    const value = Number(event.target.value);
+    this.reportedPayments.update(current => {
+      const index = current.findIndex(p => p.paymentMethodId === methodId);
+      if (index > -1) {
+        current[index].physicalAmount = value;
+        return [...current];
+      }
+      return [...current, { paymentMethodId: methodId, physicalAmount: value }];
+    });
+  }
+
+  formatDate(date: string | Date | undefined): string {
     if (!date) return '---';
     const d = new Date(date);
     return new Intl.DateTimeFormat('pt-BR', {
@@ -202,12 +233,35 @@ export class CashManagement implements OnInit {
 
   getTypeLabel(type: string): string {
     const labels: { [key: string]: string } = {
-    'SALE': 'Venda',
-    'SUPPLEMENT': 'Suprimento',
-    'SANGRIA': 'Sangria',
-    'CHANGE': 'Troco',
-    'OPENING': 'Abertura'
+      'SALE': 'Venda',
+      'SUPPLEMENT': 'Suprimento',
+      'SANGRIA': 'Sangria',
+      'CHANGE': 'Troco',
+      'OPENING': 'Abertura'
     };
     return labels[type] || type;
+  }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  }
+
+  onModalConfirm(event: any): void {
+  if (typeof event === 'number') {
+    this.onConfirmCashOpen(event);
+  } else if (event.type === 'CLOSING') {
+    this.onConfirmCashClosing(event);
+  }
+}
+
+onModalClose(): void {
+    if (this.isOpeningModalOpen()) {
+      this.isOpeningModalOpen.set(false);
+    } else {
+      this.isClosingModalOpen.set(false);
+    }
   }
 }

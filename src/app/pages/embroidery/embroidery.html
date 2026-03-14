@@ -33,13 +33,23 @@
       <mat-icon class="icon">event_available</mat-icon>
     </div>
 
-    <div class="card purple"> <div class="info">
+    <div class="card purple"> 
+      <div class="info">
     <span>A Entregar</span>
     <strong>{{ pendingCount() }}</strong>
     <small>Bordados Pendentes</small>
   </div>
   <mat-icon class="icon">pending_actions</mat-icon>
 </div>
+
+  <div class="card teal">
+      <div class="info">
+        <span>Valor a Receber</span>
+        <strong>R$ {{ pendingRevenue() | number:'1.2-2' }}</strong>
+        <small>Bordados Pendentes</small>
+      </div>
+      <mat-icon class="icon">payments</mat-icon>
+    </div>
   </div>
 
   <div class="search-filters">
@@ -110,13 +120,13 @@
             </span>
           </td>
           <td class="col-status center">
-            <span class="status-badge" [class.delivered]="e.status === 'DELIVERED'">
-              {{ e.status === 'DELIVERED' ? 'Entregue' : 'Pendente' }}
+            <span class="status-badge" [class.delivered]="e.status === 'COMPLETED'">
+              {{ e.status === 'COMPLETED' ? 'Entregue' : 'Pendente' }}
             </span>
           </td>
           <td class="col-actions center">
             <div class="action-buttons">
-              <button mat-icon-button *ngIf="e.status !== 'DELIVERED'" (click)="markAsDelivered(e)" matTooltip="Entregar">
+              <button mat-icon-button *ngIf="e.status !== 'COMPLETED'" (click)="markAsDelivered(e)" matTooltip="Entregar">
                 <mat-icon color="primary">check_circle</mat-icon>
               </button>
               <button mat-icon-button (click)="openModal(e)" matTooltip="Editar">

@@ -1,0 +1,137 @@
+<div class="modal-backdrop" (click)="handleBackdropClick($event)">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="header-content">
+        <div class="header-title">
+          <mat-icon class="header-icon">receipt_long</mat-icon>
+          <div>
+            <h2>Detalhes da Venda #{{ sale().id }}</h2>
+            <p class="header-subtitle">{{ formatDate(sale().createdAt) }}</p>
+          </div>
+        </div>
+        <button class="close-btn" (click)="closeModal()" title="Fechar">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      
+      <div class="status-badge-container">
+        <span [class]="'status-badge ' + getStatusClass(sale().status)">
+          <mat-icon class="status-icon">{{ getStatusIcon(sale().status) }}</mat-icon>
+          {{ getStatusText(sale().status) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <section class="section customer-section">
+        <div class="section-header">
+          <mat-icon>person</mat-icon>
+          <h3>Informações do Cliente</h3>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Nome</span>
+            <span class="info-value">{{ sale().customerName || 'Consumidor Final' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Telefone</span>
+            <span class="info-value">{{ sale().customerPhone | phoneFormat }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section items-section">
+        <div class="section-header">
+          <mat-icon>shopping_cart</mat-icon>
+          <h3>Itens da Venda</h3>
+          <span class="items-count">{{ getTotalItems() }} {{ getTotalItems() === 1 ? 'item' : 'itens' }}</span>
+        </div>
+        
+        <div class="items-table-container">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th class="text-center">Quantidade</th>
+                <th class="text-right">Preço Unit.</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of sale().items; track item.productId) {
+                <tr>
+                  <td>
+                    <div class="product-info">
+                      <strong>{{ item.productName }}</strong>
+                      @if (item.productBarcode) {
+                        <small class="barcode">Código: {{ item.productBarcode }}</small>
+                      }
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <span class="quantity-badge">{{ item.quantity }}</span>
+                  </td>
+                  <td class="text-right">{{ formatCurrency(item.unitPrice) }}</td>
+                  <td class="text-right">
+                    <strong>{{ formatCurrency(getItemTotal(item)) }}</strong>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section summary-section">
+        <div class="section-header">
+          <mat-icon>calculate</mat-icon>
+          <h3>Resumo Financeiro</h3>
+        </div>
+        
+        <div class="summary-content">
+          <div class="summary-row">
+            <span class="summary-label">Subtotal</span>
+            <span class="summary-value">{{ formatCurrency(sale().subtotal) }}</span>
+          </div>
+          
+          <div class="summary-row discount-row">
+            <span class="summary-label">
+              Desconto
+              @if (sale().discountValue > 0) {
+                <small class="discount-type">
+                  ({{ getDiscountTypeText(sale().discountType) }}:
+                  @if (sale().discountType === 'PERCENTAGE') {
+                    {{ sale().discountValue }}%
+                  } @else {
+                    {{ formatCurrency(sale().discountValue) }}
+                  })
+                </small>
+              }
+            </span>
+            <span class="summary-value discount-value">
+              - {{ formatCurrency(sale().discountAmount) }}
+            </span>
+          </div>
+          
+          <div class="summary-divider"></div>
+          
+          <div class="summary-row total-row">
+            <span class="summary-label">Total</span>
+            <span class="summary-value total-value">{{ formatCurrency(sale().total) }}</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeModal()">
+        <mat-icon>close</mat-icon>
+        Fechar
+      </button>
+      <button class="btn-primary">
+        <mat-icon>print</mat-icon>
+        Imprimir Recibo
+      </button>
+    </div>
+  </div>
+</div>

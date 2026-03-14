@@ -4,14 +4,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs';
-
-// Services e Interfaces
 import { CartItem } from '../../core/service/pdv.service';
 import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
 import { ProductService, CategoryEnum } from '../../core/service/product.service';
 import { SaleService, SaleResponse, SaleRequest, DiscountType } from '../../core/service/sale.service';
 import { CustomerModal } from "../../shared/models/customer/customer-modal";
-import { CashModalComponent } from "../../shared/models/cash/cash-movement.model";
+import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
 import { EmbroideryService } from '../../core/service/embroidery.service';
 import { PaymentData, PaymentModal } from "../../shared/models/payment/payment-modal/payment-modal";
 import { CashService, OpenSessionRequest } from '../../core/service/cash.service';

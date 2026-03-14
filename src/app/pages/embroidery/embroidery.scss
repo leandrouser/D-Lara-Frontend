@@ -616,16 +616,19 @@ td.none .delivery-badge {
   margin-bottom: 2rem;
 
   .card {
-    padding: 1.25rem;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease;
-    border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
 
-    &:hover { transform: translateY(-3px); }
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
 
     .info {
       span { display: block; font-size: 0.8rem; font-weight: 500; opacity: 0.8; margin-bottom: 4px; }
@@ -638,8 +641,10 @@ td.none .delivery-badge {
     /* Cores Pastel seguindo o padrão de Produtos */
     &.blue { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); color: #0369a1; }
     &.green { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); color: #15803d; }
-    &.orange { background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%); color: #c2410c; }
+    &.orange { background: linear-gradient(135deg, #faadad 0%, #fa5252 100%); color: #070707; }
     &.purple { background: linear-gradient(135deg, #f3e8ff 0%, #dbbefa 100%); color: #7e22ce; }
+    &.teal { background: linear-gradient(135deg, #f5f4b4 0%, #ecf384 100%); color: #94920a; }
+  }
   }
   .search-bar-container {
   display: flex;
@@ -691,7 +696,7 @@ td.none .delivery-badge {
   color: #6b7280;
   white-space: nowrap;
 }
-}
+
 
 .status-badge {
   padding: 4px 12px;

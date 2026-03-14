@@ -1,6 +1,4 @@
-<!-- src/app/pages/product/product.html -->
 <div class="products-container">
-  <!-- HEADER -->
   <div class="page-header">
     <h1>
       <mat-icon>inventory_2</mat-icon>
@@ -9,7 +7,6 @@
     <p class="subtitle">Gerencie o catálogo de produtos</p>
   </div>
 
-  <!-- CARDS DE MÉTRICAS - UMA LINHA -->
 <div class="cards">
   <div class="card blue">
     <div class="info">
@@ -64,7 +61,6 @@
   </div>
 </div>
 
-  <!-- BARRA DE BUSCA E FILTROS -->
   <div class="search-filters">
     <div class="search-box">
       <div class="input-box">
@@ -87,11 +83,18 @@
       </button>
       
       <button 
-        *ngFor="let category of categories"
+        *ngFor="let category of categoriesWithoutBordado"
         [class.active]="categoryFilter() === category" 
         (click)="applyCategoryFilter(category)">
         <mat-icon>{{ getCategoryIcon(category) }}</mat-icon>
         {{ getCategoryLabel(category) }}
+      </button>
+
+      <button 
+        [class.active]="lowStockFilter()" 
+        (click)="applyLowStockFilter()">
+        <mat-icon>warning</mat-icon>
+        Estoque Baixo
       </button>
     </div>
     
@@ -104,7 +107,6 @@
         </div>
     </div>
 
-  <!-- INDICADORES DE BUSCA -->
   <div *ngIf="isLoading()" class="search-loading">
     <mat-icon class="loading-spinner">refresh</mat-icon>
     Buscando produtos...
@@ -116,7 +118,6 @@
     <span *ngIf="filteredList().length !== totalProducts()">• {{ filteredList().length }} resultados</span>
   </div>
 
-  <!-- TABELA -->
   <div class="table-container">
     <div class="table-wrapper">
       <table>
@@ -134,7 +135,6 @@
         </thead>
 
         <tbody>
-          <!-- LOADING -->
           <tr *ngIf="isLoading() && filteredList().length === 0">
             <td colspan="8" class="loading">
               <mat-icon class="loading-spinner">refresh</mat-icon>
@@ -142,7 +142,6 @@
             </td>
           </tr>
 
-          <!-- EMPTY -->
           <tr *ngIf="!isLoading() && filteredList().length === 0">
             <td colspan="8" class="empty">
               <mat-icon>search_off</mat-icon>
@@ -155,7 +154,6 @@
             </td>
           </tr>
 
-           <!-- LISTA -->
         <tr *ngFor="let p of filteredList()" 
             [class.low-stock]="isLowStock(p)"
             [class.editing]="editingProductId() === p.id">
@@ -163,12 +161,10 @@
           <td class="product-id">{{ p.id }}</td>
           <td class="barcode">{{ p.barcode || 'N/A' }}</td>
 
-           <!-- COLUNA NOME MAIOR -->
           <td class="product-name">
             <span class="name-text">{{ p.name }}</span>
           </td>
 
-           <!-- COLUNA DESCRIÇÃO MENOR -->
           <td class="product-description">
             <span class="description-text">{{ p.description || 'Sem descrição' }}</span>
           </td>
@@ -180,7 +176,6 @@
             </span>
           </td>
 
-            <!-- COLUNA PREÇO (EDITÁVEL) -->
             <td class="price-cell">
               <div *ngIf="editingProductId() === p.id" class="edit-input">
                 <input
@@ -198,7 +193,6 @@
               </span>
             </td>
 
-            <!-- COLUNA ESTOQUE (EDITÁVEL) -->
             <td class="stock-cell">
               <div *ngIf="editingProductId() === p.id" class="edit-input">
                 <input
@@ -220,7 +214,6 @@
               </span>
             </td>
 
-            <!-- COLUNA AÇÕES -->
             <td class="actions-col">
               <div *ngIf="editingProductId() === p.id" class="edit-actions">
                 <button class="mini-btn success" (click)="saveEditing()">
@@ -247,7 +240,6 @@
 
     
 
-    <!-- ✅ CONTROLES DE PAGINAÇÃO -->
   <div class="pagination-container" *ngIf="totalItems() > 0">
   <div class="pagination-info">
     <span>
@@ -256,7 +248,6 @@
   </div>
 
     <div class="pagination-controls">
-      <!-- Selecionar itens por página -->
       <div class="items-per-page">
         <label>Itens por página:</label>
         <select [value]="itemsPerPage()" (change)="changeItemsPerPage($event)">
@@ -267,7 +258,6 @@
         </select>
       </div>
 
-      <!-- Navegação -->
       <div class="pagination-buttons">
         <button 
           class="pagination-btn" 
@@ -276,7 +266,6 @@
           <mat-icon>chevron_left</mat-icon>
         </button>
 
-        <!-- Números das páginas -->
         <ng-container *ngFor="let page of visiblePages()">
           <button 
             *ngIf="page !== -1"

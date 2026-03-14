@@ -1,0 +1,203 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
+  <div class="modal-content" [class.large]="modalType === 'CLOSING'" (click)="$event.stopPropagation()">
+
+    <div class="modal-header opening" *ngIf="modalType === 'OPENING'">
+      <div class="header-title">
+        <div class="icon-wrapper"><mat-icon>point_of_sale</mat-icon></div>
+        <div>
+          <h2>Abertura de Caixa</h2>
+          <p class="subtitle">Inicie as operações do dia</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="modal-header closing" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
+      <div class="header-title">
+        <div class="icon-wrapper"><mat-icon>lock_clock</mat-icon></div>
+        <div>
+          <h2>Fechamento de Caixa</h2>
+          <p class="subtitle">Informe os valores contados em cada método</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="modal-header closing" *ngIf="modalType === 'CLOSING' && isClosingConfirmed">
+      <div class="header-title">
+        <div class="icon-wrapper"><mat-icon>receipt_long</mat-icon></div>
+        <div>
+          <h2>Relatório de Fechamento</h2>
+          <p class="subtitle">Conferência dos valores</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <div class="modal-body" *ngIf="modalType === 'OPENING'">
+      <div class="info-message">
+        <mat-icon class="info-icon">info</mat-icon>
+        <p>O caixa está fechado. Informe o valor inicial para começar a operar.</p>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <mat-icon>payments</mat-icon>
+          Valor Inicial (Fundo de Troco)
+        </label>
+        <div class="input-wrapper">
+          <span class="currency">R$</span>
+          <input
+            type="number"
+            [(ngModel)]="initialValue"
+            placeholder="0,00"
+            min="0"
+            step="0.01"
+            autofocus
+            (keyup.enter)="confirmOpen()"
+          >
+        </div>
+        <small *ngIf="initialValue === 0" class="hint">
+          Você pode iniciar com R$ 0,00 se não precisar de troco
+        </small>
+      </div>
+    </div>
+
+    <div class="modal-body" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
+
+      <div class="session-info" *ngIf="session">
+        <div class="info-item">
+          <mat-icon>schedule</mat-icon>
+          <span>Abertura: {{ session.openedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="info-item">
+          <mat-icon>person</mat-icon>
+          <span>Operador: {{ session.operatorName || session.userName || 'Não informado' }}</span>
+        </div>
+      </div>
+
+      <div class="instruction-message">
+        <mat-icon>edit_note</mat-icon>
+        <p>Digite abaixo o valor físico contado para cada método de pagamento:</p>
+      </div>
+
+      <div class="payment-inputs">
+        <div *ngFor="let method of closingCounts" class="payment-field">
+          <label>{{ method.name }}</label>
+          <div class="input-wrapper">
+            <span class="currency">R$</span>
+            <input
+              type="number"
+              [value]="method.physicalAmount || ''"
+              (change)="updateCount(method.id, $event)"
+              placeholder="0,00"
+              step="0.01"
+              min="0"
+              autocomplete="off"
+            >
+          </div>
+        </div>
+
+        <div *ngIf="closingCounts.length === 0" class="empty-methods">
+          <mat-icon>info</mat-icon>
+          <p>Nenhum método de pagamento encontrado para esta sessão.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-body" *ngIf="modalType === 'CLOSING' && isClosingConfirmed && closingResult">
+
+      <div class="result-header">
+        <div class="result-date">
+          <mat-icon>event</mat-icon>
+          <span>{{ closingResult.closedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        <div class="result-badge"
+             [class.success]="closingResult.totalDiscrepancy === 0"
+             [class.warning]="closingResult.totalDiscrepancy !== 0">
+          <mat-icon>{{ closingResult.totalDiscrepancy === 0 ? 'check_circle' : 'warning' }}</mat-icon>
+          <span>{{ closingResult.totalDiscrepancy === 0 ? 'Caixa Fechado' : 'Com Diferença' }}</span>
+        </div>
+      </div>
+
+      <div class="reconciliation-table">
+        <div class="table-header">
+          <div>Método</div>
+          <div class="text-right">Sistema</div>
+          <div class="text-right">Informado</div>
+          <div class="text-right">Diferença</div>
+        </div>
+
+        <div
+          class="table-row"
+          *ngFor="let detail of closingResult.details"
+          [class.has-diff]="detail.difference !== 0"
+        >
+          <div class="method-name">{{ detail.methodName }}</div>
+          <div class="value-system">{{ detail.expectedAmount | currency:'BRL' }}</div>
+          <div class="value-reported">{{ detail.reportedAmount | currency:'BRL' }}</div>
+          <div class="value-diff" [ngClass]="diffClass(detail.difference)">
+            <mat-icon *ngIf="detail.difference > 0">arrow_upward</mat-icon>
+            <mat-icon *ngIf="detail.difference < 0">arrow_downward</mat-icon>
+            <span>{{ detail.difference | currency:'BRL' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="total-summary">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Total Sistema:</span>
+            <strong class="value">{{ closingResult.totalSystemExpected | currency:'BRL' }}</strong>
+          </div>
+          <div class="summary-item">
+            <span class="label">Total Informado:</span>
+            <strong class="value">{{ closingResult.totalUserReported | currency:'BRL' }}</strong>
+          </div>
+          <div class="summary-item total-diff"
+               [class.positive]="closingResult.totalDiscrepancy > 0"
+               [class.negative]="closingResult.totalDiscrepancy < 0">
+            <span class="label">Diferença Total:</span>
+            <strong class="value">
+              <mat-icon *ngIf="closingResult.totalDiscrepancy > 0">arrow_upward</mat-icon>
+              <mat-icon *ngIf="closingResult.totalDiscrepancy < 0">arrow_downward</mat-icon>
+              {{ closingResult.totalDiscrepancy | currency:'BRL' }}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="discrepancy-note" *ngIf="closingResult.totalDiscrepancy !== 0">
+        <mat-icon>info</mat-icon>
+        <p>O caixa foi fechado com diferença. Verifique os valores e registre a ocorrência se necessário.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer" *ngIf="modalType === 'OPENING'">
+      <button class="btn-outline" (click)="closeModal()">
+        <mat-icon>close</mat-icon> Cancelar
+      </button>
+      <button class="btn-primary opening" (click)="confirmOpen()" [disabled]="initialValue < 0">
+        <mat-icon>check_circle</mat-icon> Abrir Caixa
+      </button>
+    </div>
+
+    <div class="modal-footer" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
+      <button class="btn-outline" (click)="closeModal()">
+        <mat-icon>close</mat-icon> Cancelar
+      </button>
+      <button class="btn-primary closing" (click)="submitClosing()" [disabled]="isLoading">
+        <mat-icon *ngIf="!isLoading">check_circle</mat-icon>
+        <mat-icon *ngIf="isLoading" class="spin">refresh</mat-icon>
+        {{ isLoading ? 'Processando...' : 'Confirmar Fechamento' }}
+      </button>
+    </div>
+
+    <div class="modal-footer" *ngIf="modalType === 'CLOSING' && isClosingConfirmed">
+      <button class="btn-primary" (click)="closeModal()">
+        <mat-icon>check</mat-icon> Concluir
+      </button>
+    </div>
+
+  </div>
+</div>

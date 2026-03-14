@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-// Define o enum para os campos de busca, seguindo o padrão que você usou em outros services
 export enum EmbroiderySearchField {
   ID = 'ID',
   CUSTOMER_ID = 'CUSTOMER_ID',
@@ -11,7 +10,6 @@ export enum EmbroiderySearchField {
   DELIVERY_DATE = 'DELIVERY_DATE',
 }
 
-// 🎯 Resposta do Servidor (Baseada no seu Record EmbroideryResponse)
 export interface EmbroideryResponse {
   id: number;
   status: EmbroideryStatus;
@@ -24,7 +22,6 @@ export interface EmbroideryResponse {
   deliveryDate: string;
 }
 
-// 🎯 Estrutura da requisição (Baseada no seu Record EmbroideryRequest - se precisar criar)
 export interface EmbroideryRequest {
   customerId: number;
   description: string;
@@ -42,7 +39,19 @@ export interface SpringPage<T> {
   number: number;
 }
 
-export type EmbroideryStatus = 'PENDING' | 'DELIVERED';
+export interface EmbroideryMetrics {
+  totalPending: number;
+  totalCompleted: number;
+  totalProcessing: number;
+  totalCanceled: number;
+  overdueCount: number;
+  todayDeliveries: number;
+  totalRevenue: number;
+  pendingRevenue: number;
+  lastUpdated: string;
+}
+
+export type EmbroideryStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELED';
 @Injectable({ providedIn: 'root' })
 
 export class EmbroideryService {
@@ -51,8 +60,6 @@ export class EmbroideryService {
   
   constructor(private http: HttpClient) {}
  
-  // 🔎 Método de Busca
-  // Busca paginada com termo (o backend ordena por data no repositório)
   search(term: string, status: string, page: number, size: number): Observable<SpringPage<EmbroideryResponse>> {
     const params = new HttpParams()
       .set('term', term)
@@ -62,13 +69,16 @@ export class EmbroideryService {
     return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/search`, { params });
   }
 
-  // Se você tiver o endpoint que só recebe JSON:
   create(dto: EmbroideryRequest): Observable<EmbroideryResponse> {
     return this.http.post<EmbroideryResponse>(this.apiUrl, dto);
   }
 
   getById(id: number): Observable<EmbroideryResponse> {
     return this.http.get<EmbroideryResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  getMetrics(): Observable<EmbroideryMetrics> {
+  return this.http.get<EmbroideryMetrics>(`${this.apiUrl}/metrics`);
   }
 
   createWithFile(formData: FormData): Observable<EmbroideryResponse> {
@@ -80,7 +90,7 @@ export class EmbroideryService {
   }
 
 
-downloadFile(id: number): Observable<Blob> {
+  downloadFile(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/file`, {
       responseType: 'blob'
     });
@@ -88,12 +98,44 @@ downloadFile(id: number): Observable<Blob> {
 
   updateWithFile(id: number, formData: FormData) {
   return this.http.put<EmbroideryResponse>(`${this.apiUrl}/${id}`, formData);
-}
+  }
 
-updateStatus(id: number, status: string): Observable<void> {
-  return this.http.patch<void>(`${this.apiUrl}/${id}/status`, null, {
-    params: { status }
-  });
-}
-  // ... (outros métodos como create, update, get)
+  updateStatus(id: number, status: string): Observable<void> {
+  console.log('📤 Enviando PATCH para:', `${this.apiUrl}/${id}/status`);
+  console.log('📦 Body:', { status });
+  
+  return this.http.patch<void>(
+    `${this.apiUrl}/${id}/status`, 
+    { status }
+  );
+  }
+
+  findAll(page: number = 0, size: number = 5): Observable<SpringPage<EmbroideryResponse>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}`, { params });
+  }
+
+  findByStatus(status: string, page: number = 0, size: number = 10): Observable<SpringPage<EmbroideryResponse>> {
+    const params = new HttpParams()
+      .set('status', status)
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/by-status`, { params });
+  }
+
+  findAllPending(page: number = 0, size: number = 10): Observable<SpringPage<EmbroideryResponse>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/pending`, { params });
+  }
+
+  findAllCompleted(page: number = 0, size: number = 10): Observable<SpringPage<EmbroideryResponse>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/completed`, { params });
+  }
 }

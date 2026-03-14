@@ -97,5 +97,36 @@
         </button>
       </div>
     </form>
+
+    <!-- LISTA DE MÉTODOS (FORA DO FORM) -->
+    <hr />
+
+    <h3>Lista de Métodos</h3>
+
+    <div *ngIf="methods().length === 0">
+      Nenhum método cadastrado.
+    </div>
+
+    <table *ngIf="methods().length > 0" class="methods-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Código</th>
+          <th>Ativo</th>
+          <th>Troco</th>
+          <th>Parcelamento</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of methods()">
+          <td>{{ m.displayName }}</td>
+          <td>{{ m.code }}</td>
+          <td>{{ m.active ? 'Sim' : 'Não' }}</td>
+          <td>{{ m.allowsChange ? 'Sim' : 'Não' }}</td>
+          <td>{{ m.allowsInstallments ? 'Sim' : 'Não' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
   </div>
 </div>

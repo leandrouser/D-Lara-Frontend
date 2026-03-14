@@ -45,4 +45,21 @@
 mat-dialog-actions {
   padding-bottom: 1.5rem !important;
 }
+
+.methods-table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+}
+
+.methods-table th,
+.methods-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.methods-table th {
+  background-color: #f5f5f5;
+}
+
 }

@@ -32,6 +32,8 @@ export interface SaleItemResponse {
   quantity: number;
   subtotal: number;
   category?: CategoryEnum;
+  productName: string;
+  productBarcode: string;
 }
 
 export interface SaleRequest {

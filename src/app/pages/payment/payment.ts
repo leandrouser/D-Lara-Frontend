@@ -146,7 +146,7 @@ export class Payment implements OnInit {
         this.currentPage.set(1);
       }),
       switchMap(term => {
-        return this.service.listAll();
+        return this.service.listPaymentMethods();
       })
     ).subscribe({
       next: (methods) => {
@@ -167,7 +167,7 @@ export class Payment implements OnInit {
     console.log('🔄 loadMethods() chamado');
     this.state.set('loading');
     
-    this.service.listAll().subscribe({
+    this.service.listPaymentMethods().subscribe({
       next: (methods) => {
         console.log('✅ Dados carregados com sucesso:', methods);
         this.methods.set(methods);

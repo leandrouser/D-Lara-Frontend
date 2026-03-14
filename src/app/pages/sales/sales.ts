@@ -4,11 +4,14 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { SaleItemResponse, SaleResponse, SaleService, SaleStatus } from '../../core/service/sale.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PhoneFormatPipe } from "../../shared/pipes/phone-pipe";
+import { SaleDetailsModalComponent } from '../../shared/models/sale/sale-details/sale-details';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [FormsModule, CommonModule, MatIconModule],
+  imports: [FormsModule, CommonModule, MatIconModule, PhoneFormatPipe, 
+    SaleDetailsModalComponent],
   templateUrl: './sales.html',
   styleUrls: ['./sales.scss'],
 })
@@ -16,20 +19,21 @@ export class Sales implements OnInit {
   private saleService = inject(SaleService);
   private snackBar = inject(MatSnackBar);
 
-  // Estados principais
   sales = signal<SaleResponse[]>([]);
   isLoading = signal(true);
   error = signal('');
   search = signal('');
   statusFilter = signal<string>('all');
 
-  // Paginação (Backend 0-based)
   currentPage = signal(0);
-  itemsPerPage = signal(10);
+  itemsPerPage = signal(5);
   totalElements = signal(0);
   totalPages = signal(0);
 
-  // Estatísticas
+  // Modal state
+  showModal = signal(false);
+  selectedSale = signal<SaleResponse | null>(null);
+
   salesStats = signal({
     totalAmount: 0, totalSales: 0, todaySales: 0, todayAmount: 0,
     paidSales: 0, pendingSales: 0, cancelledSales: 0, pendingAmount: 0
@@ -38,8 +42,6 @@ export class Sales implements OnInit {
   ngOnInit() {
     this.loadSales();
   }
-
-  // --- LÓGICA DE DADOS ---
 
   loadSales(): void {
     this.isLoading.set(true);
@@ -50,7 +52,7 @@ export class Sales implements OnInit {
         this.sales.set(page.content);
         this.totalPages.set(page.totalPages);
         this.totalElements.set(page.totalElements);
-        this.calculateSalesStats(page.content); // Em prod, o ideal é vir um endpoint de stats
+        this.calculateSalesStats(page.content);
       },
       error: () => this.error.set('Erro ao carregar vendas. Verifique sua conexão.'),
       complete: () => this.isLoading.set(false)
@@ -81,8 +83,6 @@ export class Sales implements OnInit {
     this.salesStats.set(stats);
   }
 
-  // --- COMPUTED PARA UI ---
-
   paginationInfo = computed(() => {
     const start = this.currentPage() * this.itemsPerPage() + 1;
     const end = Math.min((this.currentPage() + 1) * this.itemsPerPage(), this.totalElements());
@@ -100,8 +100,6 @@ export class Sales implements OnInit {
     });
   });
 
-  // --- HELPERS DE FORMATAÇÃO E UI ---
-
   getAverageTicket(): number {
     const stats = this.salesStats();
     return stats.totalSales > 0 ? stats.totalAmount / stats.totalSales : 0;
@@ -113,7 +111,10 @@ export class Sales implements OnInit {
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '---';
-    return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(dateStr));
+    return new Intl.DateTimeFormat('pt-BR', { 
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+    })
+    .format(new Date(dateStr));
   }
 
   getStatusClass = (status: string) => status?.toLowerCase() || 'pending';
@@ -129,56 +130,57 @@ export class Sales implements OnInit {
   }
 
   getCustomerDisplayName = (sale: any) => sale.customerName || 'Consumidor Final';
+  
   getCustomerPhone = (sale: any) => sale.customerPhone || '(00) 00000-0000';
   
   getTotalItems(items: SaleItemResponse[] | undefined): number {
-  if (!items) return 0;
-  // Soma a quantidade de todos os itens do array
-  return items.reduce((acc, item) => acc + item.quantity, 0);
-}
+    if (!items) return 0;
+    return items.reduce((acc, item) => acc + item.quantity, 0);
+  }
 
-  // --- AÇÕES ---
-
- setFilter(status: string) { 
-  this.statusFilter.set(status); 
-  this.currentPage.set(0);
-  this.loadSales(); 
-}
+  setFilter(status: string) { 
+    this.statusFilter.set(status); 
+    this.currentPage.set(0);
+    this.loadSales(); 
+  }
   
   retryLoadSales() { this.loadSales(); }
 
- goToPage(page: number | string) {
-  if (typeof page === 'number') {
-    this.currentPage.set(page - 1);
-    this.loadSales();
+  goToPage(page: number | string) {
+    if (typeof page === 'number') {
+      this.currentPage.set(page - 1);
+      this.loadSales();
+    }
   }
-}
 
   nextPage() { 
-  if (this.currentPage() < this.totalPages() - 1) {
-    this.goToPage(this.currentPage() + 2); // +2 porque o goToPage subtrai 1
-  } 
-}
+    if (this.currentPage() < this.totalPages() - 1) {
+      this.goToPage(this.currentPage() + 2);
+    } 
+  }
 
-prevPage() { 
-  if (this.currentPage() > 0) {
-    this.goToPage(this.currentPage()); // Chama a página anterior (índice atual na UI)
-  } 
-}
+  prevPage() { 
+    if (this.currentPage() > 0) {
+      this.goToPage(this.currentPage());
+    } 
+  }
 
   getPageNumbers(): (number | string)[] {
     const total = this.totalPages();
     const current = this.currentPage() + 1;
     if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
-    // Lógica básica de reticências
     if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
     if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
     return [1, '...', current - 1, current, current + 1, '...', total];
   }
 
   viewSaleDetails(sale: SaleResponse) {
-    console.log('Ver detalhes da venda:', sale);
-    // Aqui você abriria um modal de detalhes
+    this.selectedSale.set(sale);
+    this.showModal.set(true);
   }
-  
+
+  closeModal() {
+    this.showModal.set(false);
+    this.selectedSale.set(null);
+  }
 }

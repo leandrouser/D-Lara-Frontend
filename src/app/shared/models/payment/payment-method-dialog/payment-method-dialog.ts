@@ -1,4 +1,4 @@
-import { Component, Inject, inject, signal } from '@angular/core';
+import { Component, Inject, inject, OnInit, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -31,11 +31,10 @@ import {
   templateUrl: './payment-method-dialog.html',
   styleUrls: ['./payment-method-dialog.scss']
 })
-export class PaymentMethodDialog {
+export class PaymentMethodDialog implements OnInit {
   private service = inject(PaymentService);
   private dialogRef = inject(MatDialogRef<PaymentMethodDialog>);
 
-  // ✅ Signal para os dados do formulário
   method = signal<PaymentMethodRequest>({
     code: '',
     displayName: '',
@@ -45,16 +44,15 @@ export class PaymentMethodDialog {
     allowsInstallments: false
   });
 
-  // Estados
   isLoading = signal(false);
   isEdit: boolean = false;
   private data?: PaymentMethodResponse;
+  methods = signal<PaymentMethodResponse[]>([]);
 
   constructor(@Inject(MAT_DIALOG_DATA) data?: PaymentMethodResponse) {
     if (data) {
       this.isEdit = true;
       this.data = data;
-      // Preenche o signal com os dados do cliente
       this.method.set({
         code: data.code,
         displayName: data.displayName,
@@ -66,13 +64,13 @@ export class PaymentMethodDialog {
     }
   }
 
-  /**
-   * Salva o método de pagamento (cria ou atualiza)
-   */
+  ngOnInit(): void {
+    this.loadMethods();
+  }
+
   onSave(): void {
     const currentMethod = this.method();
 
-    // Validações
     if (!currentMethod.code?.trim()) {
       alert('Código é obrigatório');
       return;
@@ -90,6 +88,7 @@ export class PaymentMethodDialog {
 
     obs$.subscribe({
       next: () => {
+        this.loadMethods();
         this.dialogRef.close(true);
       },
       error: (err: HttpErrorResponse) => {
@@ -97,25 +96,32 @@ export class PaymentMethodDialog {
         const errorMessage = err.error?.message || 'Erro ao processar operação';
         alert(errorMessage);
         console.error('Erro:', err);
+      },
+      complete: () => {
+        this.isLoading.set(false);
       }
     });
   }
 
-  /**
-   * Cancela e fecha o modal
-   */
   onCancel(): void {
     this.dialogRef.close(false);
   }
 
-  /**
-   * Atualiza um campo específico do formulário
-   * ✅ Este método é essencial para o two-way binding funcionar
-   */
   updateField(key: keyof PaymentMethodRequest, value: any): void {
     this.method.update(current => ({
       ...current,
       [key]: value
     }));
+  }
+
+  loadMethods(): void {
+    this.service.listPaymentMethods().subscribe({
+      next: (methods: PaymentMethodResponse[]) => {
+        this.methods.set(methods);
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('Erro ao carregar métodos', err);
+      }
+    });
   }
 }

@@ -11,7 +11,6 @@
         </div>
       </div>
 
-      <!-- Cards com dados da API - LAYOUT RESPONSIVO -->
 <div class="cards-container">
   <div class="cards-grid">
     <div class="card green">
@@ -41,7 +40,6 @@
       <mat-icon class="icon">check_circle</mat-icon>
     </div>
 
-    <!-- NOVO CARD DE VENDAS PENDENTES -->
     <div class="card red">
       <div class="info">
         <span>Vendas Pendentes</span>
@@ -103,7 +101,6 @@
         </div>
       </div>
 
-      <!-- Estado de erro -->
       @if (error()) {
         <div class="error-state">
           <div class="error-message">
@@ -117,7 +114,6 @@
         </div>
       }
 
-<!-- CONTROLES DE PAGINAÇÃO INFERIOR -->
 <div class="pagination-controls bottom">
   <div class="pagination-info">
     <span>
@@ -160,7 +156,6 @@
   </div>
 </div>
 
-        <!-- TABELA ATUALIZADA -->
       <div class="table-container">
         <div class="table-wrapper">
           <table class="sales-table">
@@ -179,7 +174,7 @@
                   Cliente
                 </th>
                 <th class="col-phone">
-                  <mat-icon>phone</mat-icon>
+                  <mat-icon>customerPhone</mat-icon>
                   Telefone
                 </th>
                 <th class="col-quantity">
@@ -244,7 +239,7 @@
                       </div>
                     </td>
                     <td class="sale-phone">
-                      {{ getCustomerPhone(sale) }}
+                      {{ sale.customerPhone | phoneFormat }}
                     </td>
                     <td class="sale-quantity">
                       <span class="quantity-badge">{{ getTotalItems(sale.items) }}</span>
@@ -283,3 +278,10 @@
     </div>
   </div>
 </div>
+
+@if (showModal() && selectedSale()) {
+  <app-sale-details-modal 
+    [sale]="selectedSale()!" 
+    (onClose)="closeModal()">
+  </app-sale-details-modal>
+}

@@ -31,27 +31,23 @@ export class Product implements OnInit {
   private api = inject(ProductService);
   private dialog = inject(MatDialog);
   
-
-  // ---------------- STATE ----------------
   products = signal<ProductResponse[]>([]);
   state = signal<ProductState>('idle');
   errorMessage = signal('');
 
   search = signal('');
   categoryFilter = signal<CategoryEnum | 'all'>('all');
+  lowStockFilter = signal(false);
 
-  // ✅ Estado para controle de edição
   editingProductId = signal<number | null>(null);
   editForm = signal({
     price: 0,
     stockQty: 0
   });
 
-  // ✅ Estado para paginação NO FRONTEND
   currentPage = signal(1);
   itemsPerPage = signal(10);
 
-  // ✅ Computed para dados paginados NO FRONTEND
   totalItems = computed(() => this.filteredList().length);
   totalPages = computed(() => Math.ceil(this.totalItems() / this.itemsPerPage()));
   
@@ -61,7 +57,6 @@ export class Product implements OnInit {
     return this.filteredList().slice(startIndex, endIndex);
   });
 
-  // ✅ Computed para páginas visíveis
   visiblePages = computed(() => {
     const total = this.totalPages();
     const current = this.currentPage();
@@ -85,43 +80,51 @@ export class Product implements OnInit {
     return pages;
   });
 
-  // Subject para busca com debounce
   private searchSubject = new Subject<string>();
 
-  // -------------- COMPUTEDS --------------
   isLoading = computed(() => this.state() === 'loading');
   hasError = computed(() => this.state() === 'error');
 
-  // Métricas computadas
   totalProducts = computed(() => this.products().length);
   lowStockCount = computed(() => this.products().filter(p => this.isLowStock(p)).length);
   inStockCount = computed(() => this.totalProducts() - this.lowStockCount());
 
-  // Métricas por categoria
   camaCount = computed(() => this.products().filter(p => p.categoryEnum === CategoryEnum.CAMA).length);
   mesaCount = computed(() => this.products().filter(p => p.categoryEnum === CategoryEnum.MESA).length);
   banhoCount = computed(() => this.products().filter(p => p.categoryEnum === CategoryEnum.BANHO).length);
   bordadoCount = computed(() => this.products().filter(p => p.categoryEnum === CategoryEnum.BORDADO).length);
 
-  // Lista filtrada
-  filteredList = computed(() => {
-    const term = this.search().toLowerCase().trim();
-    const filter = this.categoryFilter();
+filteredList = computed(() => {
+  const term = this.search().toLowerCase().trim();
+  const filter = this.categoryFilter();
+  const isLowStockActive = this.lowStockFilter();
 
-    return this.products().filter(p => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term) ||
-        p.barcode?.includes(term);
+  return this.products().filter(p => {
 
-      const matchesCategory = filter === 'all' || p.categoryEnum === filter;
+    const matchesSearch =
+      p.name.toLowerCase().includes(term) ||
+      p.description?.toLowerCase().includes(term) ||
+      p.barcode?.includes(term);
 
-      return matchesSearch && matchesCategory;
-    });
+    const matchesCategory =
+      filter === 'all' || p.categoryEnum === filter;
+
+    const matchesLowStock =
+      !isLowStockActive || this.isLowStock(p);
+
+    return matchesSearch && matchesCategory && matchesLowStock;
   });
+});
 
-  // Categorias disponíveis
-  categories = Object.values(CategoryEnum);
+applyLowStockFilter() {
+  this.lowStockFilter.set(true);
+  this.categoryFilter.set('all');
+  this.currentPage.set(1);
+}
+
+categoriesWithoutBordado = Object
+  .values(CategoryEnum)
+  .filter(cat => cat !== CategoryEnum.BORDADO);
 
   ngOnInit() {
     console.log('🔄 Product Component iniciado');
@@ -129,9 +132,8 @@ export class Product implements OnInit {
     this.loadProducts();
   }
 
-  // ---------------- MODAL HANDLERS ----------------
-  openModal() { // ✅ ATUALIZADO
-    console.log('🔄 Abrindo modal de cadastro via MatDialog');
+  openModal() {
+  console.log('🔄 Abrindo modal de cadastro via MatDialog');
     
     // Abre o diálogo
     const dialogRef = this.dialog.open(ProductCreateDialogComponent, {
@@ -150,7 +152,6 @@ export class Product implements OnInit {
     });
   }
 
-  // ---------------- SEARCH SETUP ----------------
   private setupSearch() {
     this.searchSubject.pipe(
       debounceTime(500),
@@ -176,7 +177,6 @@ export class Product implements OnInit {
     });
   }
 
-  // ---------------- LOAD DATA ----------------
   loadProducts() {
     console.log('🔄 loadProducts() chamado');
     this.state.set('loading');
@@ -196,7 +196,6 @@ export class Product implements OnInit {
     });
   }
 
-  // ---------------- PAGINATION CONTROLS ----------------
   goToPage(page: number) {
     console.log('🎯 Indo para página:', page);
     if (page >= 1 && page <= this.totalPages()) {
@@ -225,7 +224,6 @@ export class Product implements OnInit {
     this.currentPage.set(1); // Reset para primeira página
   }
 
-  // ---------------- SEARCH HANDLERS ----------------
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     console.log('🔍 Buscando:', value);
@@ -233,7 +231,6 @@ export class Product implements OnInit {
     this.searchSubject.next(value);
   }
 
-  // ---------------- CREATE PRODUCT ----------------
   createProduct(data: ProductRequest) {
     this.api.create(data).subscribe({
       next: (newProduct) => {
@@ -247,14 +244,12 @@ export class Product implements OnInit {
     });
   }
 
-  // ---------------- FILTERS ----------------
-  applyCategoryFilter(category: CategoryEnum | 'all') {
-    console.log('🏷️ Aplicando filtro:', category);
-    this.categoryFilter.set(category);
-    this.currentPage.set(1); 
-  }
+applyCategoryFilter(category: CategoryEnum | 'all') {
+  this.lowStockFilter.set(false);
+  this.categoryFilter.set(category);
+  this.currentPage.set(1);
+}
 
-  // ---------------- EDIT PRODUCT (IN-LINE) ----------------
   startEditing(product: ProductResponse) {
     this.editingProductId.set(product.id);
     this.editForm.set({
@@ -314,7 +309,6 @@ export class Product implements OnInit {
     });
   }
 
-  // ---------------- STOCK HELPERS ----------------
   isLowStock(product: ProductResponse): boolean {
     return product.stockQty < 5;
   }
@@ -345,7 +339,6 @@ export class Product implements OnInit {
     return icons[category] || 'category';
   }
 
-  // ✅ Métodos auxiliares para template
   getStartIndex(): number {
     return (this.currentPage() - 1) * this.itemsPerPage() + 1;
   }
@@ -354,7 +347,7 @@ export class Product implements OnInit {
     return Math.min(this.currentPage() * this.itemsPerPage(), this.totalItems());
   }
 
-  handleProductCreated(data: ProductRequest) { // ✅ NOVO MÉTODO
+  handleProductCreated(data: ProductRequest) {
     this.api.create(data).subscribe({
       next: (newProduct) => {
         // Adiciona o novo produto à lista local de signals

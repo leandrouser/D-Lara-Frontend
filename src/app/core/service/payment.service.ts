@@ -106,9 +106,10 @@ export class PaymentService {
     return this.http.get<number>(`${this.baseUrl}/today/total`);
   }
 
-  listAll(): Observable<PaymentMethodResponse[]> {
-    return this.http.get<PaymentMethodResponse[]>(this.baseUrl);
-  }
+  getAllMethods() {
+  return this.http.get<PaymentMethodResponse[]>(`${this.baseUrl}/payment-methods`);
+}
+
 
   createMethod(request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
   return this.http.post<PaymentMethodResponse>(this.baseUrl, request);
