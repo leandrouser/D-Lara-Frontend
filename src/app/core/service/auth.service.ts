@@ -18,18 +18,14 @@ export class AuthService {
   private router = inject(Router);
   private apiUrl = environment.apiUrl;
 
-  // Signal para acesso global ao usuário logado
   currentUser = signal<User | null>(this.getUserFromStorage());
 
   login(credentials: { userName?: string; password?: string }) {
     return this.http.post<any>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
-          // Salva token e usuário
           localStorage.setItem('token', response.token);
           
-          // Assumindo que o back retorna o objeto 'user'
-          // Se o back retornar só token, você precisaria decodificar o JWT aqui
           const user = response.user || { name: 'Usuário', role: 'ADMIN' }; 
           
           localStorage.setItem('user', JSON.stringify(user));
@@ -47,10 +43,8 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  // Método usado pelo Guard
   isAuthenticated(): boolean {
     const token = localStorage.getItem('token');
-    // Aqui você poderia verificar expiração do JWT se quisesse ser mais rigoroso
     return !!token; 
   }
 

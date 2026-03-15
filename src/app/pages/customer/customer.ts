@@ -35,7 +35,6 @@ export class Customer implements OnInit {
 
   customerStats = signal<CustomerStats>({ total: 0, active: 0, inactive: 0 });
 
-  // ---------------- STATE ----------------
   customers = signal<CustomerResponse[]>([]);
   paged = signal<Page<CustomerResponse> | null>(null);
 

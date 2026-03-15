@@ -22,9 +22,7 @@ export class PdvService {
   constructor() { }
 
   processMultiPayment(requestBody: any): Observable<any> {
-    // Retorna o Observable que o seu componente está esperando para o subscribe
     return this.http.post<any>(`${this.apiUrl}/processar`, requestBody);
   }
 
-  // Futuros métodos de API entrarão aqui
 }

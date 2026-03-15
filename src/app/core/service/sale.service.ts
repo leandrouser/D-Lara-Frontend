@@ -111,7 +111,6 @@ private apiUrl = `${environment.apiUrl}/sales`;
     return this.http.put<SaleResponse>(`${this.apiUrl}/${id}`, saleData);
 }
 
-  // sale.service.ts
 searchSales(term: string, page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
   return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, {
     params: { q: term, page: page.toString(), size: size.toString() }

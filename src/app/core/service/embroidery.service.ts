@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environments';
 
 export enum EmbroiderySearchField {
   ID = 'ID',
@@ -56,7 +57,7 @@ export type EmbroideryStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELE
 
 export class EmbroideryService {
  
-  private readonly apiUrl = 'http://localhost:8080/api/embroidery';
+  private readonly apiUrl = `${environment.apiUrl}/embroidery`;
   
   constructor(private http: HttpClient) {}
  

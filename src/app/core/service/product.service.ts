@@ -52,7 +52,6 @@ export interface SpringPage<T> {
   empty: boolean;
 }
 
-// Interface que o Angular espera
 export interface Page<T> {
   content: T[];
   totalElements: number;
@@ -70,28 +69,22 @@ export class ProductService {
   private http = inject(HttpClient);
   private apiUrl=`${environment.apiUrl}/products`;
     
-
-  // Criar produto
   create(data: ProductRequest): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(this.apiUrl, data);
   }
 
-  // Atualizar produto
   update(id: number, data: ProductRequest): Observable<ProductResponse> {
     return this.http.put<ProductResponse>(`${this.apiUrl}/${id}`, data);
   }
 
-  // Buscar produto por ID
   findById(id: number): Observable<ProductResponse> {
     return this.http.get<ProductResponse>(`${this.apiUrl}/${id}`);
   }
 
-  // Buscar todos os produtos
   findAll(): Observable<ProductResponse[]> {
     return this.http.get<ProductResponse[]>(this.apiUrl);
   }
 
-  // Busca paginada
    searchPaged(
   term: string, 
   page: number = 0, 
@@ -104,7 +97,6 @@ export class ProductService {
     .set('page', page.toString())
     .set('size', size.toString());
 
-  // Se a categoria for passada e não for 'all', adicionamos ao parâmetro 'search' que o seu back-end espera
   if (category && category !== 'all') {
     params = params.set('search', category.trim());
   }
@@ -140,17 +132,14 @@ export class ProductService {
     );
 }
 
-  // Contar produtos com estoque baixo
   getLowStockCount(): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/low-stock/count`);
   }
 
-  // Listar produtos com estoque baixo
   getLowStockProducts(): Observable<ProductResponse[]> {
     return this.http.get<ProductResponse[]>(`${this.apiUrl}/low-stock`);
   }
 
-  // Deletar produto
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

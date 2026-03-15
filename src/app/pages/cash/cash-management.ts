@@ -27,20 +27,17 @@ export class CashManagement implements OnInit {
 
    @ViewChild(CashModalComponent) cashModal!: CashModalComponent;
 
-  // ===== ESTADOS SINCRONIZADOS COM O SERVICE =====
   isCashOpen = computed(() => this.cashService.activeSessionId() !== null);
   isLoading = signal(false);
   isOpeningModalOpen = signal(false);
   isClosingModalOpen = signal(false);
 
-  // ===== DADOS DO RESUMO E MOVIMENTAÇÕES =====
   transactions = signal<Transaction[]>([]);
   movementType = signal<'SUPPLEMENT' | 'SANGRIA'>('SUPPLEMENT');
   movementValue = signal<number>(0);
   movementObservation = signal<string>('');
   showMovementForm = signal(false);
 
-  // Adicione este sinal para os métodos de pagamento (usado no modal de fechamento)
   paymentMethods = signal<{id: number, name: string}[]>([]);
   reportedPayments = signal<{paymentMethodId: number, physicalAmount: number}[]>([]);
 
@@ -71,8 +68,6 @@ export class CashManagement implements OnInit {
     this.loadTransactions();
   }
 
-  // ===== AÇÕES DE ABERTURA =====
-
   onConfirmCashOpen(initialValue: number): void {
     if (initialValue < 0) {
       this.showError('O valor inicial não pode ser negativo');
@@ -93,8 +88,6 @@ export class CashManagement implements OnInit {
         error: (err) => this.showError(err.error?.message || 'Erro ao abrir caixa')
       });
   }
-
-  // ===== MOVIMENTAÇÕES (SANGRIA/SUPRIMENTO) =====
 
   addMovement(): void {
     const sessionId = this.cashService.activeSessionId();
@@ -129,7 +122,6 @@ export class CashManagement implements OnInit {
       });
   }
 
-  // ===== FECHAMENTO ======
 onConfirmCashClosing(event: any): void {
   const sessionId = this.cashService.activeSessionId();
   if (!sessionId) {
@@ -161,8 +153,6 @@ onConfirmCashClosing(event: any): void {
       }
     });
 }
-
-  // ===== AUXILIARES =====
 
   private getPaymentMethodIdByName(name: string): number {
     const methodMap: { [key: string]: number } = {

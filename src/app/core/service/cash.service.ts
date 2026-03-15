@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environments';
 
-// --- INTERFACES DE DTO (SINCRONIZADAS COM O BACKEND JAVA) ---
 
 export interface OpenSessionRequest {
   initialValue: number;
@@ -85,15 +84,12 @@ export class CashService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/cash-sessions`;
 
-  // --- GERENCIAMENTO DE ESTADO COM SIGNALS ---
   private _activeSession = signal<CashSessionResponse | null>(null);
   private _isInitializing = signal(true);
 
-  // Exposição pública (Read-only)
   public activeSession = this._activeSession.asReadonly();
   public isInitializing = this._isInitializing.asReadonly();
 
-  // Seletores Computados
   public activeSessionId = computed(() => this._activeSession()?.id || null);
   public isCashOpen = computed(() => this._activeSession()?.status === 'OPEN');
 
@@ -101,10 +97,6 @@ export class CashService {
     this.checkExistingSession();
   }
 
-  /**
-   * 1. Abrir o Caixa
-   * POST /api/cash-sessions/open
-   */
   openCashRegister(request: OpenSessionRequest): Observable<CashSessionResponse> {
     return this.http.post<CashSessionResponse>(`${this.apiUrl}/open`, request).pipe(
       tap(session => {
@@ -114,18 +106,10 @@ export class CashService {
     );
   }
 
-  /**
-   * 2. Registrar Movimentação Manual (Sangria ou Suprimento)
-   * POST /api/cash-sessions/{sessionId}/transactions
-   */
   createManualTransaction(sessionId: number, request: CashTransactionRequestDTO): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/${sessionId}/transactions`, request);
   }
 
-  /**
-   * 3. Buscar Resumo Esperado (Para o Relatório de Conferência)
-   * GET /api/cash-sessions/{id}/summary
-   */
   getExpectedTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
     return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/${sessionId}/summary`);
   }
@@ -140,30 +124,20 @@ export class CashService {
     );
   }
 
-  /**
-   * 4. Fechar o Caixa com Conferência
-   * POST /api/cash-sessions/{sessionId}/close
-   */
+
   closeSession(sessionId: number, request: CloseSessionRequest): Observable<CloseSessionResponse> {
     return this.http.post<CloseSessionResponse>(`${this.apiUrl}/${sessionId}/close`, request).pipe(
       tap(() => this.clearLocalSession())
     );
   }
 
-  /**
-   * 5. Buscar transações da sessão atual
-   * GET /api/cash-sessions/{sessionId}/transactions
-   */
+
   getTransactionsBySession(sessionId: number): Observable<Transaction[]> {
     return this.http.get<Transaction[]>(`${this.apiUrl}/${sessionId}/transactions`);
   }
 
-  /**
-   * 6. Verifica no banco se existe sessão aberta para o usuário
-   * GET /api/cash-sessions/active/{userId}
-   */
   checkExistingSession() {
-    const userId = 1; // TODO: Obter do AuthService
+    const userId = 1;
     this._isInitializing.set(true);
 
     this.http.get<CashSessionResponse>(`${this.apiUrl}/active/${userId}`).subscribe({
@@ -183,17 +157,11 @@ export class CashService {
     });
   }
 
-  /**
-   * Auxiliar: Limpa estado local
-   */
   private clearLocalSession() {
     this._activeSession.set(null);
     localStorage.removeItem('active_cash_id');
   }
 
-  /**
-   * Método de compatibilidade para componentes que usam interface simplificada
-   */
   getOpenCashRegisterStatus(userId: number): Observable<CashRegisterStatus> {
     return this.http.get<CashSessionResponse>(`${this.apiUrl}/active/${userId}`).pipe(
       map(session => ({

@@ -34,8 +34,6 @@ export class SaleSessionService {
 
   public currentSale = this._currentSale.asReadonly();
 
-  // --- GETTERS ---
-
   getSale(): SaleSessionData {
     return this._currentSale();
   }
@@ -43,8 +41,6 @@ export class SaleSessionService {
   getRawSale(): SaleSessionData {
     return this._currentSale();
   }
-
-  // --- COMPUTED VALUES ---
 
   subtotal = computed(() => {
     return this._currentSale().items.reduce((acc, item) => {
@@ -66,8 +62,6 @@ export class SaleSessionService {
   totalCart = computed(() => {
     return Math.max(0, this.subtotal() - this.discountAmount());
   });
-
-  // --- SETTERS ---
 
   setCustomer(id: number | null, name: string = '') {
     this._currentSale.update(state => ({
@@ -91,8 +85,6 @@ export class SaleSessionService {
       discountValue: Math.max(0, value)
     }));
   }
-
-  // --- ITEM MANAGEMENT ---
 
   addItem(item: SaleSessionItem) {
     this._currentSale.update(state => {
@@ -145,8 +137,6 @@ export class SaleSessionService {
       discountValue: 0
     });
   }
-
-  // --- CONVERSION TO API FORMAT ---
 
   convertToSaleRequest(): SaleRequest {
     const sale = this._currentSale();

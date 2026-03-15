@@ -3,10 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
 import { Observable } from 'rxjs';
 
-/* =======================
-   MODELS
-======================= */
-
 export interface PaymentResponse {
   id: number;
   saleId: number;
@@ -55,10 +51,6 @@ export interface PaymentMultiResponse {
   payments: PaymentResponse[];
 }
 
-/* =======================
-   SERVICE
-======================= */
-
 @Injectable({
   providedIn: 'root'
 })
@@ -67,17 +59,9 @@ export class PaymentService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/payments`;
 
-  /* =======================
-     MÉTODOS DE PAGAMENTO
-  ======================= */
-
   listPaymentMethods(): Observable<PaymentMethodResponse[]> {
     return this.http.get<PaymentMethodResponse[]>(`${this.baseUrl}/methods`);
   }
-
-  /* =======================
-     PAGAMENTO MULTIPLO (PDV)
-  ======================= */
 
   processMultiPayment(
     request: PaymentMultiRequest
@@ -87,10 +71,6 @@ export class PaymentService {
       request
     );
   }
-
-  /* =======================
-     CONSULTAS
-  ======================= */
 
   listPaymentsBySale(saleId: number): Observable<PaymentResponse[]> {
     return this.http.get<PaymentResponse[]>(
@@ -109,7 +89,6 @@ export class PaymentService {
   getAllMethods() {
   return this.http.get<PaymentMethodResponse[]>(`${this.baseUrl}/payment-methods`);
 }
-
 
   createMethod(request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
   return this.http.post<PaymentMethodResponse>(this.baseUrl, request);

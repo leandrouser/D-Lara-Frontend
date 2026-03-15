@@ -38,7 +38,6 @@ export class CustomerService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/customers`;
 
-  // --- CRUD ---
   getById(id: number): Observable<CustomerResponse> {
     return this.http.get<CustomerResponse>(`${this.apiUrl}/${id}`).pipe(catchError(this.handleError));
   }
@@ -51,8 +50,6 @@ export class CustomerService {
     return this.http.put<CustomerResponse>(`${this.apiUrl}/${id}`, data).pipe(catchError(this.handleError));
   }
 
-  // --- LISTAGEM E FILTROS PAGINADOS ---
-  // Este método é usado apenas para a busca por TEXTO
   searchPaged(term: string, page: number, size: number): Observable<Page<CustomerResponse>> {
     const params = new HttpParams()
       .set('q', term || '')
@@ -71,7 +68,6 @@ export class CustomerService {
     return this.http.get<Page<CustomerResponse>>(`${this.apiUrl}/status/false`, { params });
   }
 
-  // --- STATUS E ESTATÍSTICAS ---
   toggleStatus(id: number): Observable<CustomerResponse> {
     return this.http.patch<CustomerResponse>(`${this.apiUrl}/${id}/toggle-status`, {});
   }
@@ -93,7 +89,6 @@ export class CustomerService {
   }
 
   searchCustomers(term: string, page: number, size: number): Observable<Page<CustomerResponse>> {
-  // Ele apenas redireciona para o searchPaged que criamos
   return this.searchPaged(term, page, size);
 }
 }
