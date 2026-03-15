@@ -1,0 +1,13 @@
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+      run:|
+        curl -X POST \
+        -H 'Content-Type: application/json' \
+        -H 'X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}' \
+        -d '{"project": "frontend"}' \
+        ${{ secrets.LOCAL_WEBHOOK_URL }}
