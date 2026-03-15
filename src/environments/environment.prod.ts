@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.dlaraenxovais.com.br/api'
+  apiUrl: 'https://192.168.0.10:8080/api'
 };
