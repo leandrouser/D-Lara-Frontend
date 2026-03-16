@@ -87,14 +87,14 @@ export class PaymentService {
   }
 
   getAllMethods() {
-  return this.http.get<PaymentMethodResponse[]>(`${this.baseUrl}/payment-methods`);
+  return this.http.get<PaymentMethodResponse[]>(`${environment.apiUrl}/payment-methods`);
 }
 
-  createMethod(request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
-  return this.http.post<PaymentMethodResponse>(this.baseUrl, request);
+createMethod(request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
+  return this.http.post<PaymentMethodResponse>(`${environment.apiUrl}/payment-methods`, request);
 }
 
 updateMethod(id: number, request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
-  return this.http.put<PaymentMethodResponse>(`${this.baseUrl}/${id}`, request);
+  return this.http.put<PaymentMethodResponse>(`${environment.apiUrl}/payment-methods/${id}`, request);
 }
 }

@@ -82,7 +82,7 @@ createdAt: string|number|Date;
 })
 export class CashService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/cash-sessions`;
+  private apiUrl = `${environment.apiUrl}/cash`;
 
   private _activeSession = signal<CashSessionResponse | null>(null);
   private _isInitializing = signal(true);
@@ -107,8 +107,13 @@ export class CashService {
   }
 
   createManualTransaction(sessionId: number, request: CashTransactionRequestDTO): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${sessionId}/transactions`, request);
-  }
+  return this.http.post<void>(`${this.apiUrl}/movement`, {
+    value: request.value,
+    type: request.type,
+    description: request.description,
+    sessionId: sessionId
+  });
+}
 
   getExpectedTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
     return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/${sessionId}/summary`);
@@ -133,29 +138,28 @@ export class CashService {
 
 
   getTransactionsBySession(sessionId: number): Observable<Transaction[]> {
-    return this.http.get<Transaction[]>(`${this.apiUrl}/${sessionId}/transactions`);
-  }
+  return of([]);
+}
 
   checkExistingSession() {
-    const userId = 1;
-    this._isInitializing.set(true);
-
-    this.http.get<CashSessionResponse>(`${this.apiUrl}/active/${userId}`).subscribe({
-      next: (session) => {
-        if (session) {
-          this._activeSession.set(session);
-          localStorage.setItem('active_cash_id', session.id.toString());
-        } else {
-          this.clearLocalSession();
-        }
-        this._isInitializing.set(false);
-      },
-      error: () => {
+  const userId = 1;
+  this._isInitializing.set(true);
+  this.http.get<CashSessionResponse>(`${this.apiUrl}/active/${userId}`).subscribe({
+    next: (session) => {
+      if (session) {
+        this._activeSession.set(session);
+        localStorage.setItem('active_cash_id', session.id.toString());
+      } else {
         this.clearLocalSession();
-        this._isInitializing.set(false);
       }
-    });
-  }
+      this._isInitializing.set(false);
+    },
+    error: () => {
+      this.clearLocalSession();
+      this._isInitializing.set(false);
+    }
+  });
+}
 
   private clearLocalSession() {
     this._activeSession.set(null);
