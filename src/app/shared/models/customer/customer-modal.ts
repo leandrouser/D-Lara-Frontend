@@ -19,7 +19,6 @@ export class CustomerModal {
   @Output() save = new EventEmitter<CustomerRequest>();
   @Output() close = new EventEmitter<void>();
 
-  // Estado do formulário
   formData = signal<CustomerRequest>({
     name: '',
     phone: '',
@@ -29,9 +28,6 @@ export class CustomerModal {
   isLoading = signal(false);
   errorMessage = signal('');
 
-  /**
-   * Atualiza um campo específico do formulário
-   */
   updateField(key: keyof CustomerRequest, value: any): void {
     this.formData.update(current => ({
       ...current,
@@ -39,13 +35,9 @@ export class CustomerModal {
     }));
   }
 
-  /**
-   * Salva o cliente (emite o evento para o componente pai)
-   */
   saveCustomer(): void {
     const data = this.formData();
 
-    // Validações
     if (!data.name?.trim()) {
       this.errorMessage.set('Nome é obrigatório');
       return;
@@ -58,7 +50,6 @@ export class CustomerModal {
     this.errorMessage.set('');
     this.isLoading.set(true);
 
-    // Emite os dados para o componente pai processar
     this.save.emit(data);
 
     // Limpa o formulário após enviar
@@ -68,17 +59,12 @@ export class CustomerModal {
     }, 500);
   }
 
-  /**
-   * Fecha o modal
-   */
+
   closeModal(): void {
     this.resetForm();
     this.close.emit();
   }
-
-  /**
-   * Limpa o formulário
-   */
+  
   private resetForm(): void {
     this.formData.set({
       name: '',

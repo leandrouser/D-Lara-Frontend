@@ -9,10 +9,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { 
-  PaymentMethodResponse, 
-  PaymentMethodRequest, 
-  PaymentService 
+import {
+  PaymentMethodResponse,
+  PaymentMethodRequest,
+  PaymentService
 } from '../../../../core/service/payment.service';
 
 @Component({
@@ -124,4 +124,9 @@ export class PaymentMethodDialog implements OnInit {
       }
     });
   }
+
+  toggleOption(field: 'active' | 'allowsChange' | 'allowsInstallments') {
+  const current = this.method()[field];
+  this.updateField(field, !current);
+}
 }

@@ -1,4 +1,3 @@
-/* Layout geral */
 .layout {
   display: flex;
   min-height: 100vh;
@@ -50,7 +49,6 @@
   }
 }
 
-/* Estilos para os cards com ícones */
 .cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -123,7 +121,6 @@
   }
 }
 
-/* Cores dos cards */
 .card.green {
   background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
   color: #15803d;
@@ -144,7 +141,6 @@
   color: #c2410c;
 }
 
-/* SEÇÕES INFERIORES */
 .dashboard-sections {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -155,7 +151,6 @@
   }
 }
 
-/* SECTION CARD */
 .section-card {
   background: #fff;
   border-radius: 14px;
@@ -206,7 +201,6 @@
   }
 }
 
-/* STATES */
 .loading-state {
   display: flex;
   align-items: center;
@@ -244,7 +238,6 @@
   }
 }
 
-/* TABELA */
 .table-container {
   background: #fff;
   border-radius: 12px;
@@ -254,28 +247,26 @@
 
 .table-wrapper {
   overflow-x: auto;
-  
-  /* Estilização da scrollbar */
+
   &::-webkit-scrollbar {
     height: 6px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 3px;
-    
+
     &:hover {
       background: #a8a8a8;
     }
   }
 }
 
-/* TABELA DE VENDAS - ALINHAMENTO MELHORADO */
 .sales-table {
   width: 100%;
   border-collapse: collapse;
@@ -283,7 +274,7 @@
 
   thead {
     background: #f8fafc;
-    
+
     th {
       padding: 16px 8px;
       font-weight: 600;
@@ -302,14 +293,12 @@
         height: 16px;
       }
 
-      /* LARGURAS DAS COLUNAS */
       &.col-id { width: 80px; }
       &.col-date { width: 100px; }
       &.col-customer { width: 200px; }
       &.col-total { width: 120px; }
       &.col-status { width: 130px; }
 
-      /* Linha sutil para separar visualmente as colunas */
       &:not(:last-child)::after {
         content: '';
         position: absolute;
@@ -333,7 +322,7 @@
 
       &.paid {
         background: #f0fdf4;
-        
+
         &:hover {
           background: #dcfce7;
         }
@@ -341,7 +330,7 @@
 
       &.pending {
         background: #fffbeb;
-        
+
         &:hover {
           background: #fef3c7;
         }
@@ -349,7 +338,7 @@
 
       &.cancelled {
         background: #fef2f2;
-        
+
         &:hover {
           background: #fee2e2;
         }
@@ -436,7 +425,6 @@
   }
 }
 
-/* TABELA DE ESTOQUE BAIXO - ALINHAMENTO CENTRALIZADO */
 .stock-table {
   width: 100%;
   border-collapse: collapse;
@@ -444,7 +432,7 @@
 
   thead {
     background: #f8fafc;
-    
+
     th {
       padding: 16px 8px;
       font-weight: 600;
@@ -463,7 +451,6 @@
         height: 16px;
       }
 
-      /* LARGURAS DAS COLUNAS */
       &.col-id { width: 80px; }
       &.col-product { width: 250px; }
       &.col-stock { width: 100px; }
@@ -471,7 +458,6 @@
       &.col-price { width: 120px; }
       &.col-status { width: 140px; }
 
-      /* Linha sutil para separar visualmente as colunas */
       &:not(:last-child)::after {
         content: '';
         position: absolute;
@@ -495,7 +481,7 @@
 
       &.low-stock {
         background: #fffbeb;
-        
+
         &:hover {
           background: #fef3c7;
         }
@@ -507,11 +493,10 @@
         vertical-align: middle;
         text-align: center;
 
-        /* EXCEÇÃO: Produto alinhado à esquerda para melhor legibilidade */
         &.product-name {
           text-align: left;
           padding-left: 12px;
-          
+
           strong {
             color: #1f2937;
             font-weight: 600;
@@ -562,7 +547,7 @@
             &.low {
               background: #fef3c7;
               color: #92400e;
-              
+
               .status-icon {
                 color: #d97706;
               }
@@ -580,7 +565,6 @@
   }
 }
 
-/* ESTILOS ESPECÍFICOS PARA BADGES DE ESTOQUE */
 .stock-badge {
   background: #fef3c7;
   color: #92400e;
@@ -593,7 +577,6 @@
   gap: 4px;
 }
 
-/* LISTA DE ESTOQUE (fallback) */
 .stock-list {
   display: flex;
   flex-direction: column;
@@ -652,7 +635,6 @@
   }
 }
 
-/* Animações */
 @keyframes fadein {
   from {
     opacity: 0;
@@ -673,7 +655,6 @@
   }
 }
 
-/* RESPONSIVIDADE */
 @media (max-width: 1200px) {
   .cards {
     grid-template-columns: repeat(2, 1fr);
@@ -698,15 +679,14 @@
     border-radius: 8px;
   }
 
-  /* RESPONSIVIDADE PARA TABELAS */
   .sales-table, .stock-table {
     min-width: 500px;
-    
+
     th, td {
       padding: 12px 6px;
       font-size: 13px;
     }
-    
+
     .col-id { width: 60px; }
     .col-date { width: 80px; }
     .col-customer { width: 150px; }
@@ -716,7 +696,7 @@
     .col-total { width: 100px; }
     .col-price { width: 100px; }
     .col-status { width: 110px; }
-    
+
     .status-tag {
       min-width: 70px;
       padding: 4px 8px;
@@ -732,13 +712,13 @@
 
   .card {
     padding: 1rem;
-    
+
     .info {
       strong {
         font-size: 1.5rem;
       }
     }
-    
+
     .icon {
       font-size: 2rem;
       width: 2rem;
@@ -756,15 +736,14 @@
     }
   }
 
-  /* RESPONSIVIDADE PARA TABELAS MOBILE */
   .sales-table, .stock-table {
     min-width: 400px;
-    
+
     th, td {
       padding: 10px 4px;
       font-size: 12px;
     }
-    
+
     .col-id { width: 50px; }
     .col-date { width: 70px; }
     .col-customer { width: 120px; }

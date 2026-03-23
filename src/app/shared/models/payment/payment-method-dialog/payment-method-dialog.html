@@ -1,132 +1,193 @@
 <div class="modal-overlay" *ngIf="true" (click)="onCancel()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    
-    <!-- HEADER -->
+
     <div class="modal-header">
-      <h2>{{ isEdit ? 'Editar Método de Pagamento' : 'Novo Método de Pagamento' }}</h2>
-      <button type="button" class="close-btn" (click)="onCancel()">
+      <div class="modal-header__info">
+        <span class="modal-header__breadcrumb">Configurações</span>
+        <h2 class="modal-header__title">
+          {{ isEdit ? 'Editar Método de Pagamento' : 'Novo Método de Pagamento' }}
+        </h2>
+      </div>
+      <button type="button" class="close-btn" (click)="onCancel()" aria-label="Fechar">
         <mat-icon>close</mat-icon>
       </button>
     </div>
 
-    <!-- FORMULÁRIO -->
     <form (ngSubmit)="onSave()" class="modal-form">
-      
-      <!-- NOME DO MÉTODO -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Nome do Método *</mat-label>
-        <input 
-          matInput 
-          [(ngModel)]="method().displayName" 
-          (ngModelChange)="updateField('displayName', $event)"
-          name="displayName"
-          placeholder="Ex: Cartão de Crédito"
-          required>
-      </mat-form-field>
 
-      <!-- CÓDIGO -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Código *</mat-label>
-        <input 
-          matInput 
-          [(ngModel)]="method().code" 
-          (ngModelChange)="updateField('code', $event)"
-          name="code"
-          [disabled]="isEdit"
-          placeholder="Ex: CREDIT_CARD"
-          required>
-        <mat-hint *ngIf="!isEdit">Código não pode ser alterado após criação</mat-hint>
-      </mat-form-field>
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">Nome do método <span class="required">*</span></label>
+          <mat-form-field appearance="outline" class="full-width">
+            <input
+              matInput
+              [(ngModel)]="method().displayName"
+              (ngModelChange)="updateField('displayName', $event)"
+              name="displayName"
+              placeholder="Ex: Cartão de Crédito"
+              required>
+          </mat-form-field>
+        </div>
 
-      <!-- DESCRIÇÃO -->
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Descrição</mat-label>
-        <textarea 
-          matInput 
-          [(ngModel)]="method().description"
-          (ngModelChange)="updateField('description', $event)"
-          name="description"
-          placeholder="Descreva o método de pagamento"
-          rows="3"></textarea>
-      </mat-form-field>
-
-      <!-- CHECKBOXES -->
-      <div class="checkboxes-group">
-        <mat-checkbox 
-          [(ngModel)]="method().active"
-          (ngModelChange)="updateField('active', $event)"
-          name="active"
-          color="primary">
-          Ativo
-        </mat-checkbox>
-        
-        <mat-checkbox 
-          [(ngModel)]="method().allowsChange"
-          (ngModelChange)="updateField('allowsChange', $event)"
-          name="allowsChange"
-          color="primary">
-          Permite Troco
-        </mat-checkbox>
-
-        <mat-checkbox 
-          [(ngModel)]="method().allowsInstallments"
-          (ngModelChange)="updateField('allowsInstallments', $event)"
-          name="allowsInstallments"
-          color="primary">
-          Permite Parcelamento
-        </mat-checkbox>
+        <div class="form-field">
+          <label class="field-label">Código <span class="required">*</span></label>
+          <mat-form-field appearance="outline" class="full-width">
+            <input
+              matInput
+              [(ngModel)]="method().code"
+              (ngModelChange)="updateField('code', $event)"
+              name="code"
+              [disabled]="isEdit"
+              placeholder="Ex: CREDIT_CARD"
+              required>
+          </mat-form-field>
+          <span class="field-hint" *ngIf="!isEdit">Imutável após criação</span>
+        </div>
       </div>
 
-      <!-- FOOTER COM BOTÕES -->
+      <div class="form-field">
+        <label class="field-label">Descrição</label>
+        <mat-form-field appearance="outline" class="full-width">
+          <textarea
+            matInput
+            [(ngModel)]="method().description"
+            (ngModelChange)="updateField('description', $event)"
+            name="description"
+            placeholder="Descreva o método de pagamento"
+            rows="3"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="options-group">
+        <label class="field-label">Opções</label>
+
+        <div class="option-row" [class.option-row--active]="method().active" (click)="toggleOption('active')">
+          <div class="option-row__left">
+            <span class="option-row__title">Ativo</span>
+            <span class="option-row__desc">Método disponível para uso</span>
+          </div>
+          <label class="toggle-switch" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [(ngModel)]="method().active"
+              (ngModelChange)="updateField('active', $event)"
+              name="active">
+            <span class="toggle-switch__track"></span>
+            <span class="toggle-switch__thumb"></span>
+          </label>
+        </div>
+
+        <div class="option-row" [class.option-row--active]="method().allowsChange" (click)="toggleOption('allowsChange')">
+          <div class="option-row__left">
+            <span class="option-row__title">Permite troco</span>
+            <span class="option-row__desc">Aceita pagamento com troco</span>
+          </div>
+          <label class="toggle-switch" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [(ngModel)]="method().allowsChange"
+              (ngModelChange)="updateField('allowsChange', $event)"
+              name="allowsChange">
+            <span class="toggle-switch__track"></span>
+            <span class="toggle-switch__thumb"></span>
+          </label>
+        </div>
+
+        <div class="option-row" [class.option-row--active]="method().allowsInstallments" (click)="toggleOption('allowsInstallments')">
+          <div class="option-row__left">
+            <span class="option-row__title">Permite parcelamento</span>
+            <span class="option-row__desc">Divide o valor em parcelas</span>
+          </div>
+          <label class="toggle-switch" (click)="$event.stopPropagation()">
+            <input
+              type="checkbox"
+              [(ngModel)]="method().allowsInstallments"
+              (ngModelChange)="updateField('allowsInstallments', $event)"
+              name="allowsInstallments">
+            <span class="toggle-switch__track"></span>
+            <span class="toggle-switch__thumb"></span>
+          </label>
+        </div>
+      </div>
+
       <div class="modal-footer">
-        <button 
-          type="button" 
-          mat-button 
+        <button
+          type="button"
+          mat-button
+          class="btn-cancel"
           (click)="onCancel()"
           [disabled]="isLoading()">
           Cancelar
         </button>
-        <button 
-          type="submit" 
-          mat-raised-button 
-          color="primary"
+        <button
+          type="submit"
+          mat-raised-button
+          class="btn-save"
           [disabled]="!method().displayName || !method().code || isLoading()">
           <mat-icon *ngIf="!isLoading()">{{ isEdit ? 'edit' : 'add' }}</mat-icon>
           <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
-          {{ isLoading() ? 'Salvando...' : (isEdit ? 'Atualizar' : 'Criar') }}
+          {{ isLoading() ? 'Salvando...' : (isEdit ? 'Atualizar' : 'Criar método') }}
         </button>
       </div>
+
     </form>
 
-    <!-- LISTA DE MÉTODOS (FORA DO FORM) -->
-    <hr />
+    <div class="methods-section">
 
-    <h3>Lista de Métodos</h3>
+      <div class="methods-section__header">
+        <h3 class="methods-section__title">Métodos cadastrados</h3>
+        <span class="methods-count">{{ methods().length }} {{ methods().length === 1 ? 'método' : 'métodos' }}</span>
+      </div>
 
-    <div *ngIf="methods().length === 0">
-      Nenhum método cadastrado.
+      <div class="methods-empty" *ngIf="methods().length === 0">
+        Nenhum método cadastrado.
+      </div>
+
+      <div class="methods-list" *ngIf="methods().length > 0">
+
+        <div class="methods-list__header">
+          <span>Nome</span>
+          <span>Código</span>
+          <span class="text-center">Ativo</span>
+          <span class="text-center">Troco</span>
+          <span class="text-center">Parcelas</span>
+        </div>
+
+        <div
+          class="method-row"
+          [class.method-row--inactive]="!m.active"
+          *ngFor="let m of methods()">
+
+          <div class="method-row__main">
+            <span class="method-row__name">{{ m.displayName }}</span>
+            <span class="method-row__code">{{ m.code }}</span>
+          </div>
+
+          <div class="badges-mobile">
+            <div class="badge-wrapper">
+              <span class="badge-label">Ativo</span>
+              <span class="badge" [class.badge--yes]="m.active" [class.badge--no]="!m.active">
+                {{ m.active ? 'Sim' : 'Não' }}
+              </span>
+            </div>
+            <div class="badge-wrapper">
+              <span class="badge-label">Troco</span>
+              <span class="badge" [class.badge--yes]="m.allowsChange" [class.badge--no]="!m.allowsChange">
+                {{ m.allowsChange ? 'Sim' : 'Não' }}
+              </span>
+            </div>
+            <div class="badge-wrapper">
+              <span class="badge-label">Parcelas</span>
+              <span class="badge" [class.badge--yes]="m.allowsInstallments" [class.badge--no]="!m.allowsInstallments">
+                {{ m.allowsInstallments ? 'Sim' : 'Não' }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
     </div>
-
-    <table *ngIf="methods().length > 0" class="methods-table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Código</th>
-          <th>Ativo</th>
-          <th>Troco</th>
-          <th>Parcelamento</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let m of methods()">
-          <td>{{ m.displayName }}</td>
-          <td>{{ m.code }}</td>
-          <td>{{ m.active ? 'Sim' : 'Não' }}</td>
-          <td>{{ m.allowsChange ? 'Sim' : 'Não' }}</td>
-          <td>{{ m.allowsInstallments ? 'Sim' : 'Não' }}</td>
-        </tr>
-      </tbody>
-    </table>
 
   </div>
 </div>

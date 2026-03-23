@@ -17,13 +17,13 @@ type PaymentState = 'idle' | 'loading' | 'success' | 'error';
   selector: 'app-payment',
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     FormsModule,
-    MatDialogModule, 
-    MatFormFieldModule, 
-    MatInputModule, 
-    MatButtonModule, 
-    MatIconModule, 
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
     MatListModule
   ],
   templateUrl: './payment.html',
@@ -33,7 +33,6 @@ export class Payment implements OnInit {
   private service = inject(PaymentService);
   private dialog = inject(MatDialog);
 
-  // ---------------- STATE ----------------
   methods = signal<PaymentMethodResponse[]>([]);
   state = signal<PaymentState>('idle');
   errorMessage = signal('');
@@ -41,21 +40,18 @@ export class Payment implements OnInit {
   search = signal('');
   activeFilter = signal<'all' | 'active' | 'inactive'>('all');
 
-  // ✅ Estado para paginação NO FRONTEND
   currentPage = signal(1);
   itemsPerPage = signal(10);
 
-  // ✅ Computed para dados paginados NO FRONTEND
   totalItems = computed(() => this.filteredList().length);
   totalPages = computed(() => Math.ceil(this.totalItems() / this.itemsPerPage()));
-  
+
   paginatedMethods = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage();
     const endIndex = startIndex + this.itemsPerPage();
     return this.filteredList().slice(startIndex, endIndex);
   });
 
-  // ✅ Computed para páginas visíveis
   visiblePages = computed(() => {
     const total = this.totalPages();
     const current = this.currentPage();
@@ -79,20 +75,16 @@ export class Payment implements OnInit {
     return pages;
   });
 
-  // Subject para busca com debounce
   private searchSubject = new Subject<string>();
 
-  // -------------- COMPUTEDS --------------
   isLoading = computed(() => this.state() === 'loading');
   hasError = computed(() => this.state() === 'error');
 
-  // Métricas computadas
   totalMethods = computed(() => this.methods().length);
   activeCount = computed(() => this.methods().filter(m => m.active).length);
   inactiveCount = computed(() => this.totalMethods() - this.activeCount());
   allowsChangeCount = computed(() => this.methods().filter(m => m.allowsChange).length);
 
-  // Lista filtrada
   filteredList = computed(() => {
     const term = this.search().toLowerCase().trim();
     const filter = this.activeFilter();
@@ -102,9 +94,9 @@ export class Payment implements OnInit {
         m.displayName.toLowerCase().includes(term) ||
         m.code.toLowerCase().includes(term);
 
-      const matchesFilter = 
-        filter === 'all' || 
-        (filter === 'active' && m.active) || 
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'active' && m.active) ||
         (filter === 'inactive' && !m.active);
 
       return matchesSearch && matchesFilter;
@@ -117,14 +109,13 @@ export class Payment implements OnInit {
     this.loadMethods();
   }
 
-  // ---------------- MODAL HANDLERS ----------------
   openModal(methodToEdit?: PaymentMethodResponse) {
     console.log('🔄 Abrindo modal via MatDialog');
-    
+
     const dialogRef = this.dialog.open(PaymentMethodDialog, {
       width: '550px',
       disableClose: true,
-      data: methodToEdit // Se passar o item, o modal entra em modo EDITAR
+      data: methodToEdit
     });
 
     dialogRef.afterClosed().subscribe((result: any) => {
@@ -136,7 +127,6 @@ export class Payment implements OnInit {
     });
   }
 
-  // ---------------- SEARCH SETUP ----------------
   private setupSearch() {
     this.searchSubject.pipe(
       debounceTime(500),
@@ -162,11 +152,10 @@ export class Payment implements OnInit {
     });
   }
 
-  // ---------------- LOAD DATA ----------------
   loadMethods() {
     console.log('🔄 loadMethods() chamado');
     this.state.set('loading');
-    
+
     this.service.listPaymentMethods().subscribe({
       next: (methods) => {
         console.log('✅ Dados carregados com sucesso:', methods);
@@ -182,7 +171,6 @@ export class Payment implements OnInit {
     });
   }
 
-  // ---------------- PAGINATION CONTROLS ----------------
   goToPage(page: number) {
     console.log('🎯 Indo para página:', page);
     if (page >= 1 && page <= this.totalPages()) {
@@ -211,7 +199,6 @@ export class Payment implements OnInit {
     this.currentPage.set(1);
   }
 
-  // ---------------- SEARCH HANDLERS ----------------
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     console.log('🔍 Buscando:', value);
@@ -219,14 +206,12 @@ export class Payment implements OnInit {
     this.searchSubject.next(value);
   }
 
-  // ---------------- FILTERS ----------------
   applyFilter(filter: 'all' | 'active' | 'inactive') {
     console.log('🏷️ Aplicando filtro:', filter);
     this.activeFilter.set(filter);
-    this.currentPage.set(1); 
+    this.currentPage.set(1);
   }
 
-  // ---------------- HELPERS ----------------
   getCardColor(code: string): string {
     const c = code.toUpperCase();
     if (c.includes('PIX')) return 'blue';
@@ -253,7 +238,6 @@ export class Payment implements OnInit {
     return active ? 'green' : 'red';
   }
 
-  // ✅ Métodos auxiliares para template
   getStartIndex(): number {
     return (this.currentPage() - 1) * this.itemsPerPage() + 1;
   }

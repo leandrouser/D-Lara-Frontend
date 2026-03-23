@@ -75,29 +75,29 @@
     </div>
 
     <div class="filter-buttons">
-      <button 
-        [class.active]="categoryFilter() === 'all'" 
+      <button
+        [class.active]="categoryFilter() === 'all'"
         (click)="applyCategoryFilter('all')">
         <mat-icon>apps</mat-icon>
         Todos
       </button>
-      
-      <button 
+
+      <button
         *ngFor="let category of categoriesWithoutBordado"
-        [class.active]="categoryFilter() === category" 
+        [class.active]="categoryFilter() === category"
         (click)="applyCategoryFilter(category)">
         <mat-icon>{{ getCategoryIcon(category) }}</mat-icon>
         {{ getCategoryLabel(category) }}
       </button>
 
-      <button 
-        [class.active]="lowStockFilter()" 
+      <button
+        [class.active]="lowStockFilter()"
         (click)="applyLowStockFilter()">
         <mat-icon>warning</mat-icon>
         Estoque Baixo
       </button>
     </div>
-    
+
 
         <div class="new-product-btn">
     <button (click)="openModal()" class="btn-primary">
@@ -126,7 +126,7 @@
           <th class="col-id">🆔 ID</th>
           <th class="col-barcode">🏷️ Código</th>
           <th class="col-name">📦 Nome</th>
-          <th class="col-description">📝 Descrição</th> 
+          <th class="col-description">📝 Descrição</th>
           <th class="col-category">🏷️ Categoria</th>
           <th class="col-price">💰 Preço</th>
           <th class="col-stock">📊 Estoque</th>
@@ -154,10 +154,10 @@
             </td>
           </tr>
 
-        <tr *ngFor="let p of filteredList()" 
+        <tr *ngFor="let p of filteredList()"
             [class.low-stock]="isLowStock(p)"
             [class.editing]="editingProductId() === p.id">
-          
+
           <td class="product-id">{{ p.id }}</td>
           <td class="barcode">{{ p.barcode || 'N/A' }}</td>
 
@@ -168,7 +168,7 @@
           <td class="product-description">
             <span class="description-text">{{ p.description || 'Sem descrição' }}</span>
           </td>
-          
+
           <td>
             <span class="category-tag" [class]="p.categoryEnum.toLowerCase()">
               <mat-icon>{{ getCategoryIcon(p.categoryEnum) }}</mat-icon>
@@ -205,7 +205,7 @@
                 <span class="unit">un</span>
               </div>
               <span *ngIf="editingProductId() !== p.id" class="stock-display">
-                <span class="tag" [class.active]="!isLowStock(p) && p.stockQty > 0" 
+                <span class="tag" [class.active]="!isLowStock(p) && p.stockQty > 0"
                                [class.inactive]="p.stockQty === 0"
                                [class.warning]="isLowStock(p) && p.stockQty > 0">
                   <mat-icon>{{ p.stockQty === 0 ? 'cancel' : isLowStock(p) ? 'warning' : 'check_circle' }}</mat-icon>
@@ -225,8 +225,8 @@
                   Cancelar
                 </button>
               </div>
-              <button *ngIf="editingProductId() !== p.id" 
-                      class="mini-btn" 
+              <button *ngIf="editingProductId() !== p.id"
+                      class="mini-btn"
                       (click)="startEditing(p)"
                       [disabled]="editingProductId() !== null">
                 <mat-icon>edit</mat-icon>
@@ -237,8 +237,6 @@
         </tbody>
       </table>
     </div>
-
-    
 
   <div class="pagination-container" *ngIf="totalItems() > 0">
   <div class="pagination-info">
@@ -259,15 +257,15 @@
       </div>
 
       <div class="pagination-buttons">
-        <button 
-          class="pagination-btn" 
+        <button
+          class="pagination-btn"
           (click)="previousPage()"
           [disabled]="currentPage() === 1">
           <mat-icon>chevron_left</mat-icon>
         </button>
 
         <ng-container *ngFor="let page of visiblePages()">
-          <button 
+          <button
             *ngIf="page !== -1"
             class="pagination-btn page-number"
             [class.active]="page === currentPage()"
@@ -277,8 +275,8 @@
           <span *ngIf="page === -1" class="pagination-ellipsis">...</span>
         </ng-container>
 
-        <button 
-          class="pagination-btn" 
+        <button
+          class="pagination-btn"
           (click)="nextPage()"
           [disabled]="currentPage() === totalPages()">
           <mat-icon>chevron_right</mat-icon>

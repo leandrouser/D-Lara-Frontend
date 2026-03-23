@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { SaleItemRequest, DiscountType, SaleRequest } from './sale.service';
+import { DiscountType, SaleRequest } from './sale.service';
 
 export interface SaleSessionItem {
   productId: number;
@@ -52,7 +52,7 @@ export class SaleSessionService {
   discountAmount = computed(() => {
     const sale = this._currentSale();
     const subtotal = this.subtotal();
-    
+
     if (sale.discountType === DiscountType.PERCENTAGE) {
       return subtotal * (sale.discountValue / 100);
     }
@@ -89,10 +89,10 @@ export class SaleSessionService {
   addItem(item: SaleSessionItem) {
     this._currentSale.update(state => {
       const existingItemIndex = state.items.findIndex(
-        i => i.productId === item.productId && 
+        i => i.productId === item.productId &&
              i.embroideryId === item.embroideryId
       );
-      
+
       if (existingItemIndex !== -1) {
         const updatedItems = [...state.items];
         updatedItems[existingItemIndex] = {
@@ -101,7 +101,7 @@ export class SaleSessionService {
         };
         return { ...state, items: updatedItems };
       }
-      
+
       return { ...state, items: [...state.items, item] };
     });
   }
@@ -140,7 +140,7 @@ export class SaleSessionService {
 
   convertToSaleRequest(): SaleRequest {
     const sale = this._currentSale();
-    
+
     return {
       customerId: sale.customerId,
       cashSessionId: sale.cashSessionId,

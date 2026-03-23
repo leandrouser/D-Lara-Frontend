@@ -2,7 +2,7 @@ import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { SaleItemResponse, SaleResponse, SaleService, SaleStatus } from '../../core/service/sale.service';
+import { SaleItemResponse, SaleResponse, SaleService } from '../../core/service/sale.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PhoneFormatPipe } from "../../shared/pipes/phone-pipe";
 import { SaleDetailsModalComponent } from '../../shared/models/sale/sale-details/sale-details';
@@ -10,7 +10,7 @@ import { SaleDetailsModalComponent } from '../../shared/models/sale/sale-details
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [FormsModule, CommonModule, MatIconModule, PhoneFormatPipe, 
+  imports: [FormsModule, CommonModule, MatIconModule, PhoneFormatPipe,
     SaleDetailsModalComponent],
   templateUrl: './sales.html',
   styleUrls: ['./sales.scss'],
@@ -30,7 +30,6 @@ export class Sales implements OnInit {
   totalElements = signal(0);
   totalPages = signal(0);
 
-  // Modal state
   showModal = signal(false);
   selectedSale = signal<SaleResponse | null>(null);
 
@@ -46,7 +45,7 @@ export class Sales implements OnInit {
   loadSales(): void {
     this.isLoading.set(true);
     this.error.set('');
-    
+
     this.saleService.getSales(this.currentPage(), this.itemsPerPage()).subscribe({
       next: (page) => {
         this.sales.set(page.content);
@@ -64,7 +63,7 @@ export class Sales implements OnInit {
     const stats = sales.reduce((acc, sale) => {
       const isToday = sale.createdAt?.split('T')[0] === today;
       acc.totalSales++;
-      
+
       if (sale.status === 'PAID') {
         acc.paidSales++;
         acc.totalAmount += sale.total;
@@ -93,7 +92,7 @@ export class Sales implements OnInit {
     const term = this.search().toLowerCase();
     const status = this.statusFilter();
     return this.sales().filter(sale => {
-      const matchesSearch = sale.id.toString().includes(term) || 
+      const matchesSearch = sale.id.toString().includes(term) ||
                            sale.customerName?.toLowerCase().includes(term);
       const matchesStatus = status === 'all' || sale.status?.toLowerCase() === status.toLowerCase();
       return matchesSearch && matchesStatus;
@@ -111,14 +110,14 @@ export class Sales implements OnInit {
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '---';
-    return new Intl.DateTimeFormat('pt-BR', { 
-      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
     })
     .format(new Date(dateStr));
   }
 
   getStatusClass = (status: string) => status?.toLowerCase() || 'pending';
-  
+
   getStatusIcon(status: string): string {
     const icons: any = { 'PAID': 'check_circle', 'PENDING': 'schedule', 'CANCELLED': 'cancel' };
     return icons[status] || 'help_outline';
@@ -130,20 +129,20 @@ export class Sales implements OnInit {
   }
 
   getCustomerDisplayName = (sale: any) => sale.customerName || 'Consumidor Final';
-  
+
   getCustomerPhone = (sale: any) => sale.customerPhone || '(00) 00000-0000';
-  
+
   getTotalItems(items: SaleItemResponse[] | undefined): number {
     if (!items) return 0;
     return items.reduce((acc, item) => acc + item.quantity, 0);
   }
 
-  setFilter(status: string) { 
-    this.statusFilter.set(status); 
+  setFilter(status: string) {
+    this.statusFilter.set(status);
     this.currentPage.set(0);
-    this.loadSales(); 
+    this.loadSales();
   }
-  
+
   retryLoadSales() { this.loadSales(); }
 
   goToPage(page: number | string) {
@@ -153,16 +152,16 @@ export class Sales implements OnInit {
     }
   }
 
-  nextPage() { 
+  nextPage() {
     if (this.currentPage() < this.totalPages() - 1) {
       this.goToPage(this.currentPage() + 2);
-    } 
+    }
   }
 
-  prevPage() { 
+  prevPage() {
     if (this.currentPage() > 0) {
       this.goToPage(this.currentPage());
-    } 
+    }
   }
 
   getPageNumbers(): (number | string)[] {

@@ -15,7 +15,6 @@
         </button>
       </div>
 
-      <!-- Cards com métricas -->
       <div class="cards">
         <div class="card blue">
           <div class="info">
@@ -42,7 +41,6 @@
         </div>
       </div>
 
-      <!-- Barra de busca e filtros -->
       <div class="filter-box">
         <div class="search-box">
           <div class="input-box">
@@ -57,20 +55,20 @@
         </div>
 
         <div class="filter-buttons">
-         <button 
+         <button
     (click)="applyFilter('all')"
     [class.bg-blue-600]="statusFilter() === 'all'"
     class="px-4 py-2 border rounded shadow-sm transition-colors">
     Todos
   </button>
-          <button 
+          <button
     (click)="applyFilter('active')"
     [class.bg-green-600]="statusFilter() === 'active'"
     [class.text-white]="statusFilter() === 'active'"
     class="px-4 py-2 border rounded shadow-sm transition-colors">
     Ativos
   </button>
-          <button 
+          <button
     (click)="applyFilter('inactive')"
     [class.bg-red-600]="statusFilter() === 'inactive'"
     [class.text-white]="statusFilter() === 'inactive'"
@@ -80,7 +78,6 @@
         </div>
       </div>
 
-      <!-- Indicadores de busca -->
       @if (isLoading()) {
         <div class="search-loading">
           <mat-icon class="loading-spinner">refresh</mat-icon>
@@ -98,7 +95,6 @@
         </div>
       }
 
-      <!-- Estado de erro -->
       @if (hasError()) {
         <div class="error-state">
           <div class="error-message">
@@ -112,7 +108,6 @@
         </div>
       }
 
-      <!-- Tabela de clientes -->
       <div class="table-container">
         <div class="table-wrapper">
           <table class="sales-table">
@@ -141,7 +136,6 @@
               </tr>
             </thead>
             <tbody>
-              <!-- Estado de carregamento -->
               @if (isLoading() && currentPageData().length === 0) {
                 <tr>
                   <td colspan="6" class="loading">
@@ -151,7 +145,6 @@
                 </tr>
               }
 
-              <!-- Estado vazio -->
               @if (!isLoading() && currentPageData().length === 0 && !hasError()) {
                 <tr>
                   <td colspan="6" class="empty">
@@ -165,10 +158,9 @@
                 </tr>
               }
 
-              <!-- Lista de clientes -->
               @if (!isLoading() && !hasError() && currentPageData().length > 0) {
                 @for (client of currentPageData(); track client.id) {
-                  <tr [class.active]="client.active" 
+                  <tr [class.active]="client.active"
                       [class.inactive]="!client.active">
                     <td class="client-id">
                       <strong>#{{ client.id }}</strong>
@@ -186,15 +178,15 @@
                       </span>
                     </td>
                     <td class="client-actions">
-                     <button 
-                        class="mini-btn edit-btn" 
-                        (click)="openEditModal(client)"> 
+                     <button
+                        class="mini-btn edit-btn"
+                        (click)="openEditModal(client)">
                         <mat-icon>edit</mat-icon>
                         Editar
                       </button>
 
-                      <button 
-                        class="mini-btn toggle-btn" 
+                      <button
+                        class="mini-btn toggle-btn"
                         title="{{ client.active ? 'Inativar' : 'Ativar' }} cliente"
                         (click)="toggleStatus(client)"
                         [disabled]="!client.id">
@@ -208,30 +200,29 @@
             </tbody>
           </table>
         </div>
-        
-        <!-- Paginação -->
+
         @if (showPagination()) {
           <div class="pagination">
             <div class="page-info">
-              Página {{ currentPageDisplay() }} de {{ totalPages() }} 
+              Página {{ currentPageDisplay() }} de {{ totalPages() }}
               • {{ totalElements() }} clientes no total
             </div>
-            
+
             <div class="page-buttons">
               <button (click)="prevPage()" [disabled]="!hasPrevPage()">
                 ‹ Anterior
               </button>
-              
+
               @for (p of pageNumbers(); track p) {
-                <button 
+                <button
                   (click)="goToPage(p)"
                   [class.active]="isCurrentPage(p)">
                   {{ p + 1 }}
                 </button>
               }
-              
-              <button 
-                (click)="nextPage()" 
+
+              <button
+                (click)="nextPage()"
                 [disabled]="!hasNextPage()">
                 Próxima ›
               </button>
@@ -243,9 +234,8 @@
   </div>
 </div>
 
-<!-- Modal de cliente -->
 <customer-modal
   [isOpen]="showModal()"
-  (save)="handleSave($event)" 
+  (save)="handleSave($event)"
   (close)="closeModal()">
 </customer-modal>

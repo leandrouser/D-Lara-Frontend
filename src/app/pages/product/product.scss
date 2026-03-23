@@ -1,4 +1,3 @@
-/* src/app/pages/product/product.scss */
 .products-container {
   padding: 20px;
   background-color: #f8f9fa;
@@ -261,7 +260,7 @@
 
     @media (max-width: 768px) {
       justify-content: center;
-      
+
       button {
         flex: 1;
         text-align: center;
@@ -372,7 +371,7 @@ table {
     padding: 14px 10px;
     border-bottom: 1px solid #f3f4f6;
     font-size: 15px;
-    
+
     &:nth-child(1) { width: 80px; }
     &:nth-child(2) { width: 120px; }
     &:nth-child(3) { width: 200px; }
@@ -391,14 +390,14 @@ table {
 
   tr {
     transition: background-color 0.2s ease;
-    
+
     &:hover {
       background: #f9fafb;
     }
 
     &.low-stock {
       background: #fff7ed !important;
-      
+
       &:hover {
         background: #fed7aa !important;
       }
@@ -550,7 +549,7 @@ table {
 tr.editing {
   background: #f0f9ff !important;
   border: 2px solid #0ea5e9;
-  
+
   &:hover {
     background: #e0f2fe !important;
   }
@@ -564,7 +563,7 @@ tr.editing {
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   input {
     width: 100px;
     padding: 6px 8px;
@@ -572,14 +571,14 @@ tr.editing {
     border-radius: 6px;
     font-size: 14px;
     text-align: right;
-    
+
     &:focus {
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
     }
   }
-  
+
   .currency, .unit {
     font-size: 12px;
     color: #6b7280;
@@ -599,7 +598,7 @@ tr.editing {
 .edit-actions {
   display: flex;
   gap: 6px;
-  
+
   button {
     display: flex;
     align-items: center;
@@ -610,25 +609,25 @@ tr.editing {
     cursor: pointer;
     font-size: 12px;
     transition: all 0.2s ease;
-    
+
     &.success {
       background: #d1fae5;
       color: #065f46;
-      
+
       &:hover {
         background: #a7f3d0;
       }
     }
-    
+
     &.cancel {
       background: #fef2f2;
       color: #dc2626;
-      
+
       &:hover {
         background: #fee2e2;
       }
     }
-    
+
     mat-icon {
       font-size: 15px;
       width: 14px;
@@ -640,7 +639,7 @@ tr.editing {
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  
+
   &:hover {
     background: #f3f4f6 !important;
   }
@@ -650,12 +649,12 @@ button:disabled {
   .edit-input {
     flex-direction: column;
     gap: 4px;
-    
+
     input {
       width: 80px;
     }
   }
-  
+
   .edit-actions {
     flex-direction: column;
     gap: 4px;

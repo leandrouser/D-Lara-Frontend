@@ -1,7 +1,7 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EmbroideryResponse, EmbroideryService } from '../../core/service/embroidery.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
@@ -25,7 +25,7 @@ export class Embroidery implements OnInit {
 
   displayedColumns: string[] = ['id', 'customerName', 'description', 'price', 'deliveryDate', 'actions'];
   dataSource = signal<EmbroideryResponse[]>([]);
-  
+
   searchControl = new FormControl('');
   totalElements = signal(0);
   currentPage = signal(0);
@@ -34,7 +34,7 @@ export class Embroidery implements OnInit {
   searchTerm = signal('');
 
   totalPages = computed(() => Math.ceil(this.totalElements() / this.pageSize()));
-  
+
   pendingCount = signal(0);
   completedCount = signal(0);
   showDelivered = signal<boolean>(false);
@@ -81,7 +81,7 @@ export class Embroidery implements OnInit {
 
   loadData() {
     this.loading.set(true);
-    
+
     const term = (this.searchControl.value || '').trim();
     const page = this.currentPage();
     const size = this.pageSize();
@@ -89,7 +89,7 @@ export class Embroidery implements OnInit {
 
     this.embroideryService.search(term, status, page, size).subscribe({
       next: (response) => {
-        this.dataSource.set([...response.content]); 
+        this.dataSource.set([...response.content]);
         this.totalElements.set(response.totalElements);
         this.loading.set(false);
       },
@@ -119,7 +119,7 @@ export class Embroidery implements OnInit {
 
   toggleDelivered() {
     this.showDelivered.update(v => !v);
-    this.currentPage.set(0); 
+    this.currentPage.set(0);
     this.loadData();
   }
 
@@ -133,7 +133,7 @@ export class Embroidery implements OnInit {
     const todayStr = new Date().toISOString().split('T')[0];
     const pageOverdue = items.filter(i => this.isOverdue(i.deliveryDate)).length;
     const pageToday = items.filter(i => i.deliveryDate === todayStr).length;
-    
+
     console.log('📄 Métricas da página atual:', {
       atrasados: pageOverdue,
       hoje: pageToday,
@@ -199,7 +199,7 @@ export class Embroidery implements OnInit {
 
   markAsDelivered(embroidery: EmbroideryResponse) {
     const confirmacao = confirm(`Confirmar entrega do bordado #${embroidery.id} para ${embroidery.customerName}?`);
-    
+
     if (confirmacao) {
       this.loading.set(true);
       this.embroideryService.updateStatus(embroidery.id, 'COMPLETED').subscribe({
@@ -223,8 +223,8 @@ export class Embroidery implements OnInit {
   }
 
   private showSuccess(message: string): void {
-    this.snackBar.open(message, 'OK', { 
-      duration: 3000, 
+    this.snackBar.open(message, 'OK', {
+      duration: 3000,
       panelClass: ['success-snackbar'],
       horizontalPosition: 'end',
       verticalPosition: 'top'
@@ -232,8 +232,8 @@ export class Embroidery implements OnInit {
   }
 
   private showError(message: string): void {
-    this.snackBar.open(message, 'Fechar', { 
-      duration: 4000, 
+    this.snackBar.open(message, 'Fechar', {
+      duration: 4000,
       panelClass: ['error-snackbar'],
       horizontalPosition: 'end',
       verticalPosition: 'top'

@@ -10,7 +10,7 @@
   flex-direction: column;
   transition: all 0.3s ease;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-  overflow: hidden; /* Impede que conteúdo ultrapasse */
+  overflow: hidden;
 
   &.collapsed {
     width: 70px;
@@ -27,10 +27,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  box-sizing: border-box; /* Inclui padding na largura total */
+  box-sizing: border-box;
 }
 
-/* HEADER */
 .sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -42,7 +41,7 @@
 
 .logo-section {
   flex: 1;
-  min-width: 0; /* Permite que o texto quebre */
+  min-width: 0;
 }
 
 .toggle-btn {
@@ -55,7 +54,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0; /* Impede que o botão diminua */
+  flex-shrink: 0;
   margin-left: 10px;
 
   &:hover {
@@ -64,17 +63,16 @@
 
   span {
     transition: transform 0.3s ease;
-    
+
     &.rotated {
       transform: rotate(180deg);
     }
   }
 }
 
-/* MENU */
 .sidebar-nav {
   flex: 1;
-  overflow-y: auto; /* Scroll se necessário */
+  overflow-y: auto;
   padding: 0 5px;
 }
 
@@ -122,7 +120,6 @@
   flex: 1;
 }
 
-/* Quando está recolhido */
 :host.collapsed {
   .menu-text {
     opacity: 0;
@@ -145,7 +142,6 @@
   }
 }
 
-/* USER AREA */
 .user-area {
   margin-top: auto;
   display: flex;
@@ -189,7 +185,6 @@
   text-overflow: ellipsis;
 }
 
-/* BOTÃO MOBILE */
 .mobile-menu-btn {
   display: none;
   position: fixed;
@@ -216,9 +211,6 @@
   z-index: 999;
 }
 
-/* =========================================
-   MOBILE
-   ========================================= */
 @media (max-width: 768px) {
   .mobile-menu-btn {
     display: block;
@@ -227,7 +219,7 @@
   :host {
     width: 280px;
     transform: translateX(-100%);
-    
+
     &.collapsed {
       transform: translateX(-100%);
       width: 280px;
@@ -246,7 +238,6 @@
     padding: 20px;
   }
 
-  /* No mobile, sempre mostra tudo */
   :host.collapsed {
     .menu-text {
       opacity: 1;
@@ -270,7 +261,6 @@
   }
 }
 
-/* Scrollbar personalizada */
 .sidebar-nav::-webkit-scrollbar {
   width: 4px;
 }
@@ -288,14 +278,11 @@
   background: #a8a8a8;
 }
 
-/* =========================================
-   USER AREA (Parte Inferior)
-   ========================================= */
 .user-area {
-  margin-top: auto; /* Empurra para o fundo */
+  margin-top: auto;
   padding: 16px 12px;
   border-top: 1px solid #eee;
-  background-color: #f9fafb; /* Cinza bem suave para destacar */
+  background-color: #f9fafb;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -309,14 +296,14 @@
   align-items: center;
   gap: 12px;
   flex: 1;
-  overflow: hidden; /* Impede que texto vaze na animação */
+  overflow: hidden;
 }
 
 .avatar {
   width: 40px;
   height: 40px;
-  border-radius: 12px; /* Quadrado arredondado moderno */
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8); /* Gradiente Azul */
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: #fff;
   display: flex;
   justify-content: center;
@@ -348,7 +335,6 @@
   margin-top: 2px;
 }
 
-/* Botão de Logout */
 .logout-btn {
   background: transparent;
   border: none;
@@ -362,8 +348,8 @@
   transition: all 0.2s;
 
   &:hover {
-    background-color: #fee2e2; /* Vermelho claro */
-    color: #ef4444; /* Vermelho */
+    background-color: #fee2e2;
+    color: #ef4444;
   }
 
   mat-icon {
@@ -373,36 +359,29 @@
   }
 }
 
-/* ESTADOS (Collapsed / Mobile)
-*/
-
-/* Quando o menu fecha (Desktop) */
 :host.collapsed {
   .user-area {
     padding: 16px 0;
     justify-content: center;
   }
 
-  /* Esconde textos e botão de sair */
   .user-details,
   .logout-btn {
     display: none;
     opacity: 0;
   }
 
-  /* Centraliza o avatar */
   .user-info-group {
     justify-content: center;
     flex: 0;
   }
-  
+
   .avatar {
     width: 36px;
     height: 36px;
   }
 }
 
-/* Mobile (Sempre mostra tudo, mesmo se a flag collapsed estiver true) */
 @media (max-width: 768px) {
   :host.collapsed {
     .user-details,
@@ -410,12 +389,12 @@
       display: flex;
       opacity: 1;
     }
-    
+
     .user-area {
       padding: 16px 12px;
       justify-content: space-between;
     }
-    
+
     .user-info-group {
       justify-content: flex-start;
       flex: 1;

@@ -7,7 +7,7 @@ import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switc
 import { CartItem } from '../../core/service/pdv.service';
 import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
 import { ProductService, CategoryEnum } from '../../core/service/product.service';
-import { SaleService, SaleResponse, SaleRequest, DiscountType } from '../../core/service/sale.service';
+import { SaleService, SaleResponse, SaleRequest } from '../../core/service/sale.service';
 import { CustomerModal } from "../../shared/models/customer/customer-modal";
 import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
 import { EmbroideryService } from '../../core/service/embroidery.service';
@@ -34,7 +34,6 @@ paymentDataForModal() {
 throw new Error('Method not implemented.');
 }
 
-  // Injeções
   private saleService = inject(SaleService);
   private customerService = inject(CustomerService);
   private snackBar = inject(MatSnackBar);
@@ -43,52 +42,45 @@ throw new Error('Method not implemented.');
   private productService = inject(ProductService);
   private cashService = inject(CashService);
 
-  // Controle de Memória e Busca
   private destroy$ = new Subject<void>();
   private customerSearchSubject = new Subject<string>();
 
   searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
-  
-  // --- Estados de UI ---
+
   pageTitle = signal('Frente de Caixa');
   pageSubtitle = signal('Vendas e Ordens de Serviço');
   isLoading = signal(false);
   isOpeningModalOpen = signal(false);
   isPaymentModalOpen = signal(false);
-  isModalOpen = signal(false); 
+  isModalOpen = signal(false);
   isDetailVisible = signal(false);
   CategoryEnum = CategoryEnum;
   showDelivered = signal<boolean>(false);
   selectedEmbroideryDetail = signal<any | null>(null);
 
-  // --- Filtros e Busca de Cliente ---
   customerSearchValue = signal('');
   suggestedCustomers = signal<CustomerResponse[]>([]);
   selectedCustomer = signal<CustomerResponse | null>(null);
   showCustomerDropdown = signal(false);
 
-  // --- Produtos ---
   productCategoryFilter = signal<'all' | CategoryEnum>('all');
-  filteredProducts = signal<any[]>([]); 
+  filteredProducts = signal<any[]>([]);
   totalElements = signal(0);
   currentPage = signal(0);
   totalPages = signal(1);
   pageSize = signal(10);
 
-  // --- Recuperação de Vendas ---
   saleSuggestions = signal<SaleResponse[]>([]);
   showSaleSuggestions = signal(false);
   activeSaleId = signal<number | null>(null);
 
-  // --- Carrinho e Desconto ---
   cart = signal<CartItem[]>([]);
   discountType = signal<'value' | 'percent'>('value');
   discountInput = signal(0);
 
   paymentData = signal<PaymentData | null>(null);
 
-  // --- Lógica de Negócio (Calculada) ---
-  subtotal = computed(() => 
+  subtotal = computed(() =>
     this.cart().reduce((acc, item) => acc + item.total, 0)
   );
 
@@ -111,7 +103,7 @@ throw new Error('Method not implemented.');
     this.setupCustomerSearch();
     this.setupProductSearch();
     this.productSearchSubject.next('');
-    
+
   }
 
   ngOnDestroy() {
@@ -124,7 +116,6 @@ throw new Error('Method not implemented.');
   this.productSearchSubject.next(currentTerm);
 }
 
-  // --- Busca Dinâmica de Clientes ---
   private setupCustomerSearch() {
     this.customerSearchSubject.pipe(
       debounceTime(400),
@@ -165,14 +156,13 @@ throw new Error('Method not implemented.');
     this.selectedCustomer.set(null);
   }
 
-  // --- Ações do Carrinho ---
   addToCart(p: any) {
     const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
     this.cart.update(items => {
       const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
       if (existing) {
-        return items.map(i => i === existing 
-          ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price } 
+        return items.map(i => i === existing
+          ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price }
           : i
         );
       }
@@ -205,10 +195,9 @@ throw new Error('Method not implemented.');
   });
 }
 
-  // --- Recuperação de Vendas ---
   onSearchSale(query: string) {
   console.log('--- Digitou na busca de vendas:', query); // LOG DE TESTE
-  
+
   const term = query.trim();
   if (term.length < 1) {
     console.log('Termo muito curto, ignorando...');
@@ -237,13 +226,11 @@ throw new Error('Method not implemented.');
     event.preventDefault();
     this.searchInput()?.nativeElement.focus();
   }
-    // Atalho F10 - Finalizar Venda
     if (event.key === 'F10') {
-      event.preventDefault(); // Impede o comportamento padrão do navegador
+      event.preventDefault();
       this.handleF10Press();
     }
 
-    // Atalho ESC - Limpar Carrinho ou Fechar Modais (Opcional)
     if (event.key === 'Escape') {
       if (this.isPaymentModalOpen()) {
         this.closePaymentModal();
@@ -253,7 +240,6 @@ throw new Error('Method not implemented.');
     }
   }
 
-  // Lógica dedicada para o atalho F10
   private handleF10Press() {
     if (this.isCashRegisterOpen() && this.cart().length > 0 && !this.isLoading()) {
       this.preparePayment();
@@ -268,38 +254,34 @@ throw new Error('Method not implemented.');
   this.showSaleSuggestions.set(false);
   this.activeSaleId.set(sale.id);
 
-  // 1. Mapeia o cliente (IMPORTANTE: usar o ID real para o update funcionar)
   if (sale.customerName) {
     this.selectedCustomer.set({
-      id: (sale as any).customerId || 0, // Garanta que o DTO do back envie o customerId
+      id: (sale as any).customerId || 0,
       name: sale.customerName,
       phone: (sale as any).customerPhone || 'Não informado',
       active: true
     } as any);
   }
 
-  // 2. Mapeia os descontos para os sinais (para o PDV recalcular o total na tela)
   this.discountInput.set(sale.discountValue || 0);
   this.discountType.set(sale.discountType === 'PERCENTAGE' ? 'percent' : 'value');
 
-  // 3. Mapeia os itens da venda para o formato do carrinho
   if (sale.items && sale.items.length > 0) {
     const mappedItems: CartItem[] = sale.items.map(item => {
       const isEmbroidery = !!item.embroideryId;
-      
-      const price = item.unitPrice || 0; 
+
+      const price = item.unitPrice || 0;
 
       return {
         product: {
           id: item.productId || item.embroideryId || 0,
           name: item.description,
-          price: price, // Preço unitário
-          stockQty: 999  // Valor fictício para não bloquear por falta de estoque na edição
+          price: price,
+          stockQty: 999
         } as any,
         quantity: item.quantity,
         isEmbroidery: isEmbroidery,
-        // Campos extras que seu carrinho pode usar para exibir totais
-        total: price * item.quantity 
+        total: price * item.quantity
       };
     });
 
@@ -310,7 +292,6 @@ throw new Error('Method not implemented.');
   }
 }
 
-  // --- Finalização ---
   finalizeSale(status: 'PAID' | 'PENDING') {
     if (this.cart().length === 0) return;
 
@@ -323,7 +304,7 @@ throw new Error('Method not implemented.');
 
     const saleRequest: SaleRequest = {
       customerId: this.selectedCustomer()?.id || null,
-      cashSessionId: 1, 
+      cashSessionId: 1,
       discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
       discountValue: this.discountInput(),
       items: this.cart().map(item => ({
@@ -336,7 +317,7 @@ throw new Error('Method not implemented.');
     };
 
     this.isLoading.set(true);
-    const action$ = this.activeSaleId() 
+    const action$ = this.activeSaleId()
       ? this.saleService.update(this.activeSaleId()!, saleRequest)
       : this.saleService.createSale(saleRequest);
 
@@ -359,7 +340,6 @@ throw new Error('Method not implemented.');
     this.selectedCustomer.set(null);
   }
 
-  // --- UI Auxiliares ---
   changeDiscountType(type: 'value' | 'percent') {
     this.discountType.set(type);
   }
@@ -372,10 +352,8 @@ throw new Error('Method not implemented.');
     if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
   }
 
-  // Agora o método aceita diretamente o número que o modal envia
 onConfirmCashOpen(value: number) {
-  // Montamos o objeto que o serviço espera aqui dentro
-  const request: OpenSessionRequest = { initialValue: value };
+  const request: OpenSessionRequest = { value: value };
 
   this.cashService.openCashRegister(request).subscribe({
     next: (session) => {
@@ -399,7 +377,7 @@ onConfirmCashOpen(value: number) {
   this.productCategoryFilter.set(filter);
   this.currentPage.set(0);
     const currentTerm = (document.querySelector('.search-input-wrapper input') as HTMLInputElement)?.value || '';
-    this.productSearchSubject.next(currentTerm); 
+    this.productSearchSubject.next(currentTerm);
 }
 
   private lastSearchTerm = '';
@@ -408,12 +386,10 @@ onConfirmCashOpen(value: number) {
   this.isModalOpen.set(true);
 }
 
-// Método para fechar o modal
 onCloseCustomerModal() {
   this.isModalOpen.set(false);
 }
 
-// Método que recebe os dados do modal e envia para o servidor
 handleSaveCustomer(newCustomerData: CustomerRequest) {
   this.isLoading.set(true);
 
@@ -422,12 +398,10 @@ handleSaveCustomer(newCustomerData: CustomerRequest) {
   ).subscribe({
     next: (customer: CustomerResponse) => {
       this.snackBar.open('Cliente cadastrado com sucesso!', 'OK', { duration: 3000 });
-      
-      // LOGICA DE CONVENIÊNCIA: 
-      // Já seleciona o cliente criado para a venda atual automaticamente
+
       this.selectedCustomer.set(customer);
-      
-      this.isModalOpen.set(false); // Fecha o modal
+
+      this.isModalOpen.set(false);
       this.isLoading.set(false);
     },
     error: (err) => {
@@ -438,7 +412,6 @@ handleSaveCustomer(newCustomerData: CustomerRequest) {
   });
 }
 
-
 onProductSearchInput(event: any) {
   const val = event.target.value;
   this.lastSearchTerm = val;
@@ -448,21 +421,20 @@ onProductSearchInput(event: any) {
 private setupProductSearch() {
   this.productSearchSubject.pipe(
     debounceTime(400),
-    // Removemos o distinctUntilChanged para que a troca de categoria dispare a busca
     switchMap(term => {
       this.isLoading.set(true);
-      
+
       if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
         console.log('Buscando Bordados para:', term);
         const status = this.showDelivered() ? 'DELIVERED' : 'PENDING';
-        
+
         return this.embroideryService.search(term, status, this.currentPage(), this.pageSize()).pipe(
           map(res => ({
             ...res,
             content: res.content.map(emb => ({
               ...emb,
-              name: emb.customerName, 
-              description: emb.description, 
+              name: emb.customerName,
+              description: emb.description,
               deliveryDate: emb.deliveryDate,
               categoryEnum: CategoryEnum.BORDADO,
               price: emb.price,
@@ -475,11 +447,11 @@ private setupProductSearch() {
         return this.productService.findAll().pipe(
           map(products => {
             const termLower = term.toLowerCase();
-            let filtered = products.filter(p => 
-              p.name.toLowerCase().includes(termLower) || 
+            let filtered = products.filter(p =>
+              p.name.toLowerCase().includes(termLower) ||
               (p.barcode && p.barcode.includes(term))
             );
-            
+
             const catFilter = this.productCategoryFilter();
             if (catFilter !== 'all') {
               filtered = filtered.filter(p => p.categoryEnum === catFilter);
@@ -544,27 +516,23 @@ preparePayment() {
   cashSessionId: sessionId,
   discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
   discountValue: this.discountInput(),
-  // REPRODUZINDO A LÓGICA DO BACK: Enviamos apenas os dados base
   items: this.cart().map(item => ({
     productId: item.isEmbroidery ? null : item.product.id,
     embroideryId: item.isEmbroidery ? item.product.id : null,
     quantity: item.quantity,
-    // Se for o "Bordado Manual", enviamos o preço. Se for produto comum, o back busca.
-    manualPrice: item.isEmbroidery ? item.product.price : null, 
+    manualPrice: item.isEmbroidery ? item.product.price : null,
     description: item.product.name
   }))
 };
 
   this.isLoading.set(true);
 
-  // Se já estamos editando uma venda, usamos ela. Se não, criamos uma nova.
-  const action$ = this.activeSaleId() 
+  const action$ = this.activeSaleId()
     ? this.saleService.update(this.activeSaleId()!, saleRequest)
     : this.saleService.createSale(saleRequest);
 
   action$.pipe(take(1)).subscribe({
     next: (sale: SaleResponse) => {
-      // Monta o objeto que o Modal de Pagamento espera
       const data: PaymentData = {
         saleId: sale.id,
         totalAmount: this.totalWithDiscount(),
@@ -610,7 +578,7 @@ isOverdue(dateStr: string): boolean {
 showSuccess(message: string) {
   this.snackBar.open(message, 'Fechar', {
     duration: 3000,
-    panelClass: ['success-snackbar'], // Você pode estilizar no CSS
+    panelClass: ['success-snackbar'],
     horizontalPosition: 'end',
     verticalPosition: 'top'
   });

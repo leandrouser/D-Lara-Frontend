@@ -1,4 +1,3 @@
-// src/app/pages/product/product-create-dialog/product-create-dialog.component.ts
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -14,14 +13,14 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
   selector: 'app-product-create-dialog',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    MatFormFieldModule, 
-    MatInputModule, 
-    MatSelectModule, 
+    CommonModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule // Importado para usar os elementos do diálogo
+    MatDialogModule
   ],
   template: `
     <h2 mat-dialog-title>
@@ -29,7 +28,7 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
     </h2>
     <mat-dialog-content>
       <form #productForm="ngForm">
-        
+
         <mat-form-field appearance="outline">
           <mat-label>Nome do Produto *</mat-label>
           <input matInput name="name" [(ngModel)]="form.name" required>
@@ -42,7 +41,7 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
           <mat-label>Código de Barras</mat-label>
           <input matInput name="barcode" [(ngModel)]="form.barcode">
         </mat-form-field>
-        
+
         <mat-form-field appearance="outline">
           <mat-label>Descrição</mat-label>
           <textarea matInput name="description" [(ngModel)]="form.description"></textarea>
@@ -84,16 +83,16 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
             A categoria é obrigatória
           </mat-error>
         </mat-form-field>
-        
+
       </form>
     </mat-dialog-content>
-    
+
     <mat-dialog-actions align="end">
       <button mat-button (click)="dialogRef.close()">Cancelar</button>
-      <button 
-        mat-raised-button 
-        color="primary" 
-        [disabled]="productForm.invalid" 
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="productForm.invalid"
         (click)="submitForm()"
       >
         <mat-icon>save</mat-icon> Salvar Produto
@@ -105,7 +104,7 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
       display: flex;
       flex-direction: column;
       gap: 10px;
-      
+
     }
     mat-form-field {
       width: 100%;
@@ -132,10 +131,9 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
   `
 })
 export class ProductCreateDialogComponent {
-  
-  // Referência injetada para fechar o próprio diálogo
+
   dialogRef = inject(MatDialogRef<ProductCreateDialogComponent>);
-  
+
   form: ProductRequest = {
     barcode: '',
     name: '',
@@ -144,21 +142,16 @@ export class ProductCreateDialogComponent {
     stockQty: 0,
     categoryEnum: CategoryEnum.CAMA
   };
-  
+
   categories = Object.values(CategoryEnum);
 
-  /**
-   * Envia os dados do formulário e fecha o dialog, retornando os dados para o componente pai.
-   */
   submitForm() {
-    // Garante a tipagem correta antes de fechar
     const dataToSend: ProductRequest = {
       ...this.form,
       price: Number(this.form.price),
       stockQty: Number(this.form.stockQty)
     };
-    
-    // Fecha o dialog, retornando os dados (result)
+
     this.dialogRef.close(dataToSend);
   }
 }

@@ -1,6 +1,3 @@
-/* ══════════════════════════════════════════════
-   OVERLAY & MODAL CONTAINER
-   ══════════════════════════════════════════════ */
 .modal-overlay {
   position: fixed !important;
   top: 0 !important;
@@ -40,9 +37,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ══════════════════════════════════════════════
-   HEADER
-   ══════════════════════════════════════════════ */
 .modal-header {
   padding: 20px 24px !important;
   color: white !important;
@@ -113,12 +107,8 @@
   mat-icon { font-size: 20px !important; width: 20px !important; height: 20px !important; color: white !important; }
 }
 
-/* ══════════════════════════════════════════════
-   BODY
-   ══════════════════════════════════════════════ */
 .modal-body { padding: 24px !important; }
 
-/* Info / Instruction messages */
 .info-message,
 .instruction-message {
   display: flex !important;
@@ -146,7 +136,6 @@
   p { color: #1e293b !important; }
 }
 
-/* Form Group (Abertura) */
 .form-group {
   display: flex !important;
   flex-direction: column !important;
@@ -165,7 +154,6 @@
   }
 }
 
-/* Input Wrapper (shared) */
 .input-wrapper {
   position: relative !important;
   display: flex !important;
@@ -203,7 +191,6 @@
 
 .hint { color: #64748b !important; font-size: 0.8rem !important; margin-top: 4px !important; }
 
-/* Session Info (Fechamento) */
 .session-info {
   background: #f8fafc !important;
   border-radius: 12px !important;
@@ -225,7 +212,6 @@
   }
 }
 
-/* Payment Inputs */
 .payment-inputs {
   display: grid !important;
   gap: 16px !important;
@@ -249,11 +235,9 @@
 
   label { font-weight: 600 !important; color: #1e293b !important; font-size: 0.95rem !important; }
 
-  /* Inputs no Fechamento são menores que o da Abertura */
   .input-wrapper input { font-size: 1rem !important; padding: 10px 10px 10px 44px !important; }
 }
 
-/* Empty state quando não há métodos */
 .empty-methods {
   display: flex !important;
   align-items: center !important;
@@ -268,11 +252,6 @@
   p { margin: 0 !important; font-size: 0.9rem !important; }
 }
 
-/* ══════════════════════════════════════════════
-   RESULTADO DO FECHAMENTO
-   ══════════════════════════════════════════════ */
-
-/* Result Header */
 .result-header {
   display: flex !important;
   justify-content: space-between !important;
@@ -307,7 +286,6 @@
   }
 }
 
-/* Reconciliation Table */
 .reconciliation-table {
   border: 1px solid #e2e8f0 !important;
   border-radius: 12px !important;
@@ -355,7 +333,6 @@
   }
 }
 
-/* Total Summary */
 .total-summary {
   background: #f8fafc !important;
   border-radius: 12px !important;
@@ -385,7 +362,6 @@
   }
 }
 
-/* Discrepancy Note */
 .discrepancy-note {
   display: flex !important;
   gap: 12px !important;
@@ -399,9 +375,6 @@
   p { margin: 0 !important; font-size: 0.9rem !important; color: #78350f !important; line-height: 1.4 !important; }
 }
 
-/* ══════════════════════════════════════════════
-   FOOTER
-   ══════════════════════════════════════════════ */
 .modal-footer {
   padding: 20px 24px !important;
   background: #f8fafc !important;
@@ -414,9 +387,6 @@
   z-index: 10 !important;
 }
 
-/* ══════════════════════════════════════════════
-   BUTTONS
-   ══════════════════════════════════════════════ */
 button {
   padding: 12px 24px !important;
   border-radius: 10px !important;
@@ -457,16 +427,12 @@ button {
     &:hover:not(:disabled) { transform: translateY(-1px) !important; box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.3) !important; }
   }
 
-  /* Botão Concluir (sem classe extra) */
   &:not(.opening):not(.closing) {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
     &:hover:not(:disabled) { transform: translateY(-1px) !important; box-shadow: 0 6px 10px -1px rgba(16, 185, 129, 0.3) !important; }
   }
 }
 
-/* ══════════════════════════════════════════════
-   UTILITIES
-   ══════════════════════════════════════════════ */
 .text-right { text-align: right !important; }
 
 @keyframes spin {

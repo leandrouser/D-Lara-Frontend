@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { map, Observable, of, forkJoin, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environments';
 import { CategoryEnum } from './product.service';
 
@@ -93,11 +93,12 @@ export class SaleService {
 private apiUrl = `${environment.apiUrl}/sales`;
 
   getSales(page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
-    return this.http.get<Page<SaleResponse>>(this.apiUrl, { params });
-  }
+  const params = new HttpParams()
+    .set('q', '')
+    .set('page', page.toString())
+    .set('size', size.toString());
+  return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, { params });
+}
 
   getSaleById(id: number): Observable<SaleResponse> {
     return this.http.get<SaleResponse>(`${this.apiUrl}/${id}`);
@@ -116,5 +117,5 @@ searchSales(term: string, page: number = 0, size: number = 10): Observable<Page<
     params: { q: term, page: page.toString(), size: size.toString() }
   });
 }
-  
+
 }

@@ -1,6 +1,3 @@
-/* =========================================
-   LAYOUT BASE
-   ========================================= */
 .layout {
   display: flex;
   min-height: 100vh;
@@ -78,9 +75,6 @@
   }
 }
 
-/* =========================================
-   CARDS
-   ========================================= */
 .cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -153,7 +147,6 @@
   }
 }
 
-/* Cores dos cards */
 .card.blue {
   background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
   color: #0369a1;
@@ -169,23 +162,20 @@
   color: #c2410c;
 }
 
-/* =========================================
-   FILTROS
-   ========================================= */
 .filter-box {
   background: #fff;
-  padding: 16px 20px; // Reduzido o padding vertical
+  padding: 16px 20px;
   margin-top: 25px;
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
-  gap: 15px; // Reduzido o gap
+  gap: 15px;
   align-items: center;
 }
 
 .search-box {
   flex: 1;
-  min-width: 250px; // Largura mínima reduzida
+  min-width: 250px;
 
   .input-box {
     position: relative;
@@ -194,24 +184,24 @@
 
     .search-icon {
       position: absolute;
-      left: 10px; // Ajustado
+      left: 10px;
       color: #6b7280;
       z-index: 2;
-      font-size: 18px; // Ícone menor
+      font-size: 18px;
     }
 
     input {
-      padding: 10px 12px 10px 35px; // Padding reduzido
+      padding: 10px 12px 10px 35px;
       width: 100%;
       border-radius: 8px;
       border: 1px solid #d1d5db;
       font-family: 'Poppins', sans-serif;
-      font-size: 13px; // Fonte menor
+      font-size: 13px;
 
       &:focus {
         outline: none;
         border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); // Sombra reduzida
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
       }
     }
   }
@@ -219,20 +209,20 @@
 
 .filter-buttons {
   display: flex;
-  gap: 6px; // Gap reduzido entre botões
+  gap: 6px;
 
   button {
     border: 1px solid #d1d5db;
-    padding: 8px 14px; // Padding reduzido
+    padding: 8px 14px;
     border-radius: 6px;
     background: #fff;
     font-family: 'Poppins', sans-serif;
-    font-size: 12px; // Fonte menor
+    font-size: 12px;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 6px; // Gap interno reduzido
+    gap: 6px;
 
     &:hover {
       background: #f9fafb;
@@ -245,16 +235,13 @@
     }
 
     mat-icon {
-      font-size: 16px; // Ícone menor
+      font-size: 16px;
       width: 16px;
       height: 16px;
     }
   }
 }
 
-/* =========================================
-   ESTADO DE ERRO
-   ========================================= */
 .error-state {
   margin-top: 25px;
   background: #fef2f2;
@@ -293,9 +280,6 @@
   }
 }
 
-/* =========================================
-   TABELA
-   ========================================= */
 .table-container {
   background: #fff;
   border-radius: 12px;
@@ -315,7 +299,7 @@
 
   thead {
     background: #f8fafc;
-    
+
     th {
       padding: 16px 12px;
       text-align: left;
@@ -337,7 +321,6 @@
         text-align: center;
       }
 
-      // Larguras das colunas para clientes
       &.col-id { width: 100px; }
       &.col-name { width: 200px; }
       &.col-phone { width: 150px; }
@@ -356,10 +339,9 @@
         background: #f9fafb;
       }
 
-      // Cores para diferentes status de clientes
       &.active {
         background: #f0fdf4;
-        
+
         &:hover {
           background: #dcfce7;
         }
@@ -367,7 +349,7 @@
 
       &.inactive {
         background: #fef2f2;
-        
+
         &:hover {
           background: #fee2e2;
         }
@@ -390,7 +372,7 @@
     padding: 40px;
     color: #9ca3af;
     font-size: 16px;
-    
+
     mat-icon {
       margin-right: 8px;
       vertical-align: middle;
@@ -404,9 +386,6 @@
   }
 }
 
-/* =========================================
-   STATUS TAGS
-   ========================================= */
 .status-tag {
   padding: 6px 12px;
   border-radius: 20px;
@@ -433,9 +412,6 @@
   }
 }
 
-/* =========================================
-   BOTÕES DE AÇÃO
-   ========================================= */
 .mini-btn {
   background: #3b82f6;
   color: white;
@@ -478,9 +454,6 @@
   }
 }
 
-/* =========================================
-   PAGINAÇÃO
-   ========================================= */
 .pagination {
   display: flex;
   justify-content: space-between;
@@ -525,17 +498,11 @@
   }
 }
 
-/* =========================================
-   ANIMAÇÕES
-   ========================================= */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-/* =========================================
-   RESPONSIVIDADE
-   ========================================= */
 @media (max-width: 1200px) {
   .cards {
     grid-template-columns: repeat(2, 1fr);
@@ -560,7 +527,7 @@
   .filter-buttons {
     flex-wrap: wrap;
     justify-content: center;
-    
+
     button {
       flex: 1;
       min-width: 120px;
@@ -571,7 +538,7 @@
   .header {
     flex-direction: column;
     gap: 15px;
-    
+
     .btn-new-sale {
       align-self: stretch;
       justify-content: center;
@@ -598,13 +565,13 @@
 
   .card {
     padding: 1rem;
-    
+
     .info {
       strong {
         font-size: 1.5rem;
       }
     }
-    
+
     .icon {
       font-size: 2rem;
       width: 2rem;
@@ -615,7 +582,7 @@
   .mini-btn {
     padding: 6px 10px;
     font-size: 11px;
-    
+
     mat-icon {
       font-size: 12px;
       width: 12px;
@@ -623,7 +590,6 @@
     }
   }
 
-  /* Indicadores de busca */
 .search-loading {
   padding: 10px;
   text-align: center;
@@ -648,13 +614,12 @@
   gap: 8px;
 }
 
-/* Estados da tabela */
 .loading, .empty {
   text-align: center;
   padding: 40px;
   color: #9ca3af;
   font-size: 16px;
-  
+
   mat-icon {
     margin-right: 8px;
     vertical-align: middle;

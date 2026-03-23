@@ -1,7 +1,6 @@
 <div class="modal-overlay" *ngIf="open()" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    
-    <!-- HEADER -->
+
     <div class="modal-header">
       <div class="header-content">
         <h2 class="modal-title">{{ title }}</h2>
@@ -14,10 +13,8 @@
       </button>
     </div>
 
-    <!-- CONTEÚDO -->
     <div class="modal-body" *ngIf="saleData">
-      
-      <!-- INFORMAÇÕES DA VENDA -->
+
       <div class="info-section">
         <h3>Informações da Venda</h3>
         <div class="info-grid">
@@ -38,7 +35,6 @@
         </div>
       </div>
 
-      <!-- INFORMAÇÕES DO CLIENTE -->
       <div class="info-section">
         <h3>Informações do Cliente</h3>
         <div class="info-grid">
@@ -57,7 +53,6 @@
         </div>
       </div>
 
-      <!-- ITENS DA VENDA -->
       <div class="info-section">
         <h3>Itens da Venda</h3>
         <div class="items-table">
@@ -84,7 +79,6 @@
         </div>
       </div>
 
-      <!-- RESUMO FINANCEIRO -->
       <div class="info-section">
         <h3>Resumo Financeiro</h3>
         <div class="summary-grid">
@@ -105,7 +99,6 @@
 
     </div>
 
-    <!-- FOOTER -->
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeModal()">
         Fechar

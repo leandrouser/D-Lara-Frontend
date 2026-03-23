@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
+import { FechamentoCaixaRequest, PrintService } from '../../../core/service/print.service';
 
 interface PaymentMethod {
   id: number;
@@ -47,13 +48,14 @@ export class CashModalComponent implements OnInit, OnChanges {
 
   @Output() confirm = new EventEmitter<any>();
 
-  initialValue = 0;
+  initialValue: number | null = 0;
   closingCounts: PaymentMethod[] = [];
   closingResult: ClosingResult | null = null;
   isClosingConfirmed = false;
   isLoading = false;
 
   protected Math = Math;
+  private printService = inject(PrintService);
 
   ngOnInit(): void {
     if (this.modalType === 'CLOSING') {
@@ -73,11 +75,14 @@ export class CashModalComponent implements OnInit, OnChanges {
   }
 
   confirmOpen(): void {
-    if (this.initialValue >= 0) {
-      this.confirm.emit(this.initialValue);
-      this.initialValue = 0;
-    }
-  }
+  const value = Number(this.initialValue ?? 0);
+  console.log('>>> confirmOpen value:', value, typeof value);
+
+  if (value < 0) return;
+
+  this.confirm.emit(value);
+  this.initialValue = 0;
+}
 
   private initializeClosingCounts(): void {
     this.closingCounts = this.paymentMethods.map(m => ({
@@ -96,21 +101,39 @@ export class CashModalComponent implements OnInit, OnChanges {
     }
   }
 
-  submitClosing(): void {
+submitClosing(): void {
     const counts = this.closingCounts.map(m => ({
-      paymentMethodId: m.id,
-      physicalAmount: m.physicalAmount ?? 0
+        paymentMethodId: m.id,
+        reportedValue: m.physicalAmount ?? 0
     }));
-
     this.isLoading = true;
     this.confirm.emit({ type: 'CLOSING', counts });
-  }
+}
 
   setClosingResult(result: ClosingResult): void {
-    this.closingResult = result;
-    this.isClosingConfirmed = true;
-    this.isLoading = false;
-  }
+  this.closingResult = result;
+  this.isClosingConfirmed = true;
+  this.isLoading = false;
+
+  const fechamento: FechamentoCaixaRequest = {
+    sessaoId: result.sessionId,
+    dataHora: result.closedAt,
+    detalhes: result.details.map(d => ({
+      metodoPagamento: d.methodName,
+      valorSistema: d.expectedAmount,
+      valorInformado: d.reportedAmount,
+      diferenca: d.difference
+    })),
+    totalSistema: result.totalSystemExpected,
+    totalInformado: result.totalUserReported,
+    totalDiferenca: result.totalDiscrepancy
+  };
+
+  this.printService.imprimirFechamento(fechamento).subscribe({
+    next: () => console.log('✅ Relatório de fechamento enviado para impressão'),
+    error: (err) => console.warn('⚠️ Erro ao imprimir fechamento:', err)
+  });
+}
 
   closeModal(): void {
     this.resetModal();
@@ -130,4 +153,9 @@ export class CashModalComponent implements OnInit, OnChanges {
     if (difference < 0) return 'negative';
     return '';
   }
+  onBlurInitialValue(): void {
+  if (this.initialValue === null || this.initialValue === undefined) {
+    this.initialValue = 0;
+  }
+}
 }

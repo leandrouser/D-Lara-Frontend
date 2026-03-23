@@ -1,7 +1,6 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
-    
-    <!-- HEADER -->
+
     <div class="modal-header">
       <h2>Novo Cliente</h2>
       <button type="button" class="close-btn" (click)="closeModal()">
@@ -9,10 +8,8 @@
       </button>
     </div>
 
-    <!-- FORMULÁRIO -->
     <form (ngSubmit)="saveCustomer()" class="modal-form">
-      
-      <!-- NOME -->
+
       <div class="form-group">
         <label for="name">Nome *</label>
         <input
@@ -29,7 +26,6 @@
         </small>
       </div>
 
-      <!-- TELEFONE -->
       <div class="form-group">
         <label for="phone">Telefone *</label>
         <input
@@ -46,7 +42,6 @@
         <small class="hint">Formato: (00) 00000-0000</small>
       </div>
 
-      <!-- STATUS ATIVO -->
       <div class="form-group checkbox-group">
         <label class="checkbox-label">
           <input
@@ -61,23 +56,21 @@
         </label>
       </div>
 
-      <!-- MENSAGEM DE ERRO -->
       <div class="error-message" *ngIf="errorMessage()">
         <mat-icon>error</mat-icon>
         {{ errorMessage() }}
       </div>
 
-      <!-- FOOTER COM BOTÕES -->
       <div class="modal-footer">
-        <button 
-          type="button" 
-          class="btn-cancel" 
+        <button
+          type="button"
+          class="btn-cancel"
           (click)="closeModal()"
           [disabled]="isLoading()">
           Cancelar
         </button>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           class="btn-save"
           [disabled]="!formData().name || !formData().phone || isLoading()">
           <mat-icon *ngIf="!isLoading()">person_add</mat-icon>

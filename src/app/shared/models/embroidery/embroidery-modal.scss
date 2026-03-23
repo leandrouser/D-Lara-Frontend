@@ -1,11 +1,7 @@
-// ==================== ESTILOS SEGUINDO MATERIAL DESIGN OFICIAL ====================
-
-// Remove estilos customizados do host
 :host {
   display: block;
 }
 
-// ==================== TÍTULO DO DIALOG ====================
 [mat-dialog-title] {
   h2 {
     margin: 0;
@@ -15,7 +11,6 @@
   }
 }
 
-// ==================== CONTEÚDO DO DIALOG ====================
 mat-dialog-content {
   display: flex;
   flex-direction: column;
@@ -25,7 +20,6 @@ mat-dialog-content {
   overflow-y: auto;
 }
 
-// ==================== FORM FIELDS ====================
 .full-width {
   width: 100%;
 }
@@ -33,7 +27,7 @@ mat-dialog-content {
 .form-row {
   display: flex;
   gap: 16px;
-  
+
   @media (max-width: 600px) {
     flex-direction: column;
   }
@@ -41,16 +35,15 @@ mat-dialog-content {
 
 .form-field-half {
   flex: 1;
-  
+
   @media (max-width: 600px) {
     width: 100%;
   }
 }
 
-// ==================== SEÇÃO DE CLIENTE ====================
 .customer-section {
   position: relative;
-  padding-top: 10px; 
+  padding-top: 10px;
   margin-bottom: 8px;
 }
 
@@ -58,7 +51,6 @@ mat-dialog-content {
   width: 100%;
 }
 
-// Dropdown de resultados
 .dropdown {
   position: absolute;
   top: 100%;
@@ -73,7 +65,7 @@ mat-dialog-content {
   max-height: 300px;
   overflow-y: auto;
   z-index: 1000;
-  
+
   .loading-spinner,
   .no-results {
     display: flex;
@@ -82,34 +74,31 @@ mat-dialog-content {
     gap: 8px;
     padding: 24px;
     color: rgba(0, 0, 0, 0.6);
-    
+
     mat-icon {
       &.spinning {
         animation: spin 1s linear infinite;
       }
     }
   }
-  
+
   mat-list {
     padding: 0;
   }
-  
+
   .customer-result-item {
     cursor: pointer;
-    
+
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);
     }
   }
 }
 
-// Card do cliente selecionado
 .customer-card {
-  /* Aplica o gradiente blue das métricas */
   background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%) !important;
   color: #0369a1 !important;
-  
-  /* Ajustes de estrutura e sombra */
+
   margin: 0 0 1.5rem 0;
   padding: 0.5rem;
   border-radius: 12px;
@@ -122,7 +111,7 @@ mat-dialog-content {
   mat-card-header {
     position: relative;
     padding: 8px;
-    
+
     .customer-avatar {
       display: flex;
       align-items: center;
@@ -130,32 +119,31 @@ mat-dialog-content {
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      /* Avatar branco com ícone na cor do texto do card */
-      background-color: #ffffff; 
+      background-color: #ffffff;
       color: #0369a1;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      
+
       mat-icon {
         font-size: 28px;
         width: 28px;
         height: 28px;
       }
     }
-    
+
     mat-card-title {
       font-size: 1.1rem !important;
       font-weight: 700 !important;
       color: #0369a1;
       margin-bottom: 2px;
     }
-    
+
     mat-card-subtitle {
       color: #0369a1;
       opacity: 0.8;
       font-weight: 500;
       font-size: 0.85rem;
     }
-    
+
     .clear-button {
       position: absolute;
       top: -5px;
@@ -163,14 +151,13 @@ mat-dialog-content {
       color: #0369a1 !important;
     }
   }
-  
+
   .customer-info {
     padding: 0 16px 12px 16px;
     margin-top: 4px;
-    
+
     mat-chip-set {
       mat-chip {
-        /* Chips discretos que combinam com o fundo blue */
         --mdc-chip-elevated-container-color: rgba(255, 255, 255, 0.5);
         --mdc-chip-label-text-color: #0369a1;
         font-weight: 600;
@@ -185,11 +172,10 @@ mat-dialog-content {
   }
 }
 
-// ==================== SEÇÃO DE ARQUIVO ====================
 .file-section {
   margin-top: 8px;
   padding: 16px;
-  border: 1px dashed #d1d5db; // Estilo "dropzone"
+  border: 1px dashed #d1d5db;
   border-radius: 12px;
   background-color: #f9fafb;
 
@@ -201,38 +187,38 @@ mat-dialog-content {
     color: #6b7280;
     margin-bottom: 12px;
   }
-  
+
   .upload-button {
     width: 100%;
     justify-content: flex-start;
     text-align: left;
-    
+
     mat-icon {
       margin-right: 8px;
     }
   }
-  
+
   .file-chip-list {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     mat-chip-option {
       pointer-events: none;
     }
-    
+
     button {
       margin-left: auto;
     }
   }
-  
+
   .file-hint {
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 12px;
     color: rgba(0, 0, 0, 0.6);
-    
+
     mat-icon {
       font-size: 16px;
       width: 16px;
@@ -240,17 +226,16 @@ mat-dialog-content {
     }
   }
 
-// ==================== AÇÕES DO DIALOG ====================
 mat-dialog-actions {
   padding: 8px;
-  
+
   button {
     margin-left: 8px;
-    
+
     &:first-child {
       margin-left: 0;
     }
-    
+
     mat-icon {
       margin-right: 4px;
       font-size: 18px;
@@ -260,27 +245,24 @@ mat-dialog-actions {
   }
 }
 
-/* Garante que o modal de cliente (z-index) fique acima do modal de bordado */
 customer-modal {
   position: relative;
   z-index: 9999;
 }
 
-// ==================== ANIMAÇÕES ====================
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-// ==================== RESPONSIVIDADE ====================
 @media (max-width: 600px) {
   mat-dialog-content {
     padding: 16px;
   }
-  
+
   mat-dialog-actions {
     flex-direction: column-reverse;
-    
+
     button {
       width: 100%;
       margin: 4px 0;
@@ -288,20 +270,17 @@ customer-modal {
   }
 }
 
-// ==================== AJUSTES GLOBAIS ====================
 ::ng-deep {
-  // Ajusta o container do dialog para largura adequada
   .mat-mdc-dialog-container .mdc-dialog__surface {
     max-width: 600px;
     width: 100%;
   }
-  
-  // Snackbar customizado
+
   .error-snackbar {
     --mdc-snackbar-container-color: #d32f2f;
     --mat-snack-bar-button-color: #fff;
   }
-  
+
   .success-snackbar {
     --mdc-snackbar-container-color: #388e3c;
     --mat-snack-bar-button-color: #fff;
@@ -332,7 +311,7 @@ customer-modal {
     .file-details {
       display: flex;
       flex-direction: column;
-      
+
       .file-name {
         font-size: 14px;
         font-weight: 500;
@@ -342,7 +321,7 @@ customer-modal {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      
+
       .file-size {
         font-size: 11px;
         color: #6b7280;
@@ -395,23 +374,18 @@ customer-modal {
 }
 }
 
-// Container que agrupa o campo de busca e o botão "+"
-// ... (outros estilos acima)
-
-// CERTIFIQUE-SE DE QUE ESTE BLOCO NÃO ESTÁ DENTRO DE OUTRA CLASSE
 .search-with-action {
   display: flex !important;
   flex-direction: row !important;
-  align-items: center; // Mudei para center para alinhar melhor o botão com o input
+  align-items: center;
   gap: 8px;
   width: 100%;
   margin-bottom: 10px;
 
   mat-form-field {
-    flex: 1 !important; // Força o input a ocupar o espaço e empurrar o botão
+    flex: 1 !important;
     width: auto !important;
-    
-    // Remove margens nativas que podem quebrar o flex
+
     .mat-mdc-form-field-wrapper {
         padding-bottom: 0 !important;
     }
@@ -419,15 +393,13 @@ customer-modal {
 
   .quick-add-btn {
   flex-shrink: 0 !important;
-  margin-top: -20px; 
-  
-  // Aumentando o botão
+  margin-top: -20px;
+
   width: 56px !important;
   height: 56px !important;
-  
-  // Aumentando o ícone internamente
+
   mat-icon {
-    font-size: 32px !important; 
+    font-size: 32px !important;
     width: 32px !important;
     height: 32px !important;
     display: flex !important;
@@ -435,7 +407,6 @@ customer-modal {
     justify-content: center;
   }
 
-  // Efeito de hover para dar profundidade
   &:hover {
     transform: scale(1.1);
     transition: transform 0.2s ease-in-out;

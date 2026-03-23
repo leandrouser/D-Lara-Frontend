@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { finalize, catchError, of } from 'rxjs';
-import { CashService, OpenSessionRequest, CashTransactionRequestDTO, CloseSessionRequest, Transaction } from '../../core/service/cash.service';
+import { finalize } from 'rxjs';
+import { CashService, OpenSessionRequest, CloseSessionRequest, Transaction } from '../../core/service/cash.service';
 import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
 import { PaymentService } from '../../core/service/payment.service';
 
@@ -75,7 +75,7 @@ export class CashManagement implements OnInit {
     }
 
     this.isLoading.set(true);
-    const request: OpenSessionRequest = { initialValue };
+    const request: OpenSessionRequest = { value: initialValue };
 
     this.cashService.openCashRegister(request)
       .pipe(finalize(() => this.isLoading.set(false)))
@@ -123,6 +123,7 @@ export class CashManagement implements OnInit {
   }
 
 onConfirmCashClosing(event: any): void {
+  console.log('>>> evento fechamento:', JSON.stringify(event));
   const sessionId = this.cashService.activeSessionId();
   if (!sessionId) {
     this.showError('Sessão não encontrada');
@@ -133,7 +134,7 @@ onConfirmCashClosing(event: any): void {
 
   const request: CloseSessionRequest = {
     sessionId: sessionId,
-    counts: event.counts
+    reportedPayments: event.counts
   };
 
   this.cashService.closeSession(sessionId, request)
@@ -141,11 +142,11 @@ onConfirmCashClosing(event: any): void {
     .subscribe({
       next: (response) => {
         this.showSuccess('✅ Caixa fechado com sucesso!');
-        
+
         if (this.cashModal) {
             this.cashModal.setClosingResult(response);
           }
-        
+
       },
       error: (err) => {
         this.showError(err.error?.message || 'Erro ao fechar caixa');
@@ -240,9 +241,10 @@ onConfirmCashClosing(event: any): void {
   }
 
   onModalConfirm(event: any): void {
-  if (typeof event === 'number') {
-    this.onConfirmCashOpen(event);
-  } else if (event.type === 'CLOSING') {
+      console.log('evento:', event, '| tipo:', typeof event);
+    if (event !== null && event !== undefined && !isNaN(Number(event)) && typeof event !== 'object') {
+    this.onConfirmCashOpen(Number(event));
+  } else if (event?.type === 'CLOSING') {
     this.onConfirmCashClosing(event);
   }
 }

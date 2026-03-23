@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environments';
 
 
 export interface OpenSessionRequest {
-  initialValue: number;
+  value: number;
 }
 
 export interface CashRegisterStatus {
@@ -22,12 +22,12 @@ export interface CashTransactionRequestDTO {
 
 export interface PaymentMethodCountDTO {
   paymentMethodId: number;
-  physicalAmount: number;
+  reportedValue: number;
 }
 
 export interface CloseSessionRequest {
   sessionId: number;
-  counts: PaymentMethodCountDTO[];
+  reportedPayments: PaymentMethodCountDTO[];
 }
 
 export interface PaymentMethodTotal {
@@ -138,13 +138,12 @@ export class CashService {
 
 
   getTransactionsBySession(sessionId: number): Observable<Transaction[]> {
-  return of([]);
+  return this.http.get<Transaction[]>(`${this.apiUrl}/${sessionId}/transactions`);
 }
 
   checkExistingSession() {
-  const userId = 1;
   this._isInitializing.set(true);
-  this.http.get<CashSessionResponse>(`${this.apiUrl}/active/${userId}`).subscribe({
+  this.http.get<CashSessionResponse>(`${this.apiUrl}/active/1`).subscribe({
     next: (session) => {
       if (session) {
         this._activeSession.set(session);
@@ -154,8 +153,10 @@ export class CashService {
       }
       this._isInitializing.set(false);
     },
-    error: () => {
-      this.clearLocalSession();
+    error: (err) => {
+      if (err.status === 404 || err.status === 204) {
+        this.clearLocalSession();
+      }
       this._isInitializing.set(false);
     }
   });

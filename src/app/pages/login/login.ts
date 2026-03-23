@@ -34,13 +34,10 @@ export class Login {
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
 
-  // Controle de visibilidade da senha
   hidePassword = signal(true);
-  
-  // Controle de loading
+
   isLoading = signal(false);
 
-  // Formulário
   loginForm = this.fb.group({
     username: ['', [Validators.required]],
     password: ['', [Validators.required, Validators.minLength(4)]]
@@ -61,7 +58,6 @@ export class Login {
       .subscribe({
         next: () => {
           this.isLoading.set(false);
-          // O redirecionamento já acontece no service, mas pode reforçar aqui
         },
         error: (err) => {
           console.error(err);
@@ -76,7 +72,7 @@ export class Login {
       duration: 5000,
       horizontalPosition: 'center',
       verticalPosition: 'bottom',
-      panelClass: ['error-snackbar'] // Vamos estilizar isso
+      panelClass: ['error-snackbar']
     });
   }
 }

@@ -2,10 +2,8 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Observable, Subject, switchMap, tap } from 'rxjs';
-
+import { debounceTime, distinctUntilChanged, Observable, Subject, switchMap } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
-
 import { CustomerService, CustomerResponse, Page, CustomerStats } from '../../core/service/customer.service';
 import { CustomerModal } from '../../shared/models/customer/customer-modal';
 import { PhoneFormatPipe } from "../../shared/pipes/phone-pipe";
@@ -165,7 +163,7 @@ private loadStatsFromExistingEndpoint() {
 
  loadCustomers() {
   this.state.set('loading');
-  
+
   const query = this.search() || '';
   const page = this.page();
   const size = this.pageSize;
@@ -175,7 +173,7 @@ private loadStatsFromExistingEndpoint() {
 
   if (query.trim().length > 0) {
     request$ = this.api.searchPaged(query, page, size);
-  } 
+  }
   else {
     if (status === 'active') {
       request$ = this.api.getActiveCustomers(page, size);
@@ -282,18 +280,18 @@ private loadStatsFromExistingEndpoint() {
     if (!pagedData || typeof pagedData.totalPages !== 'number') {
       return [];
     }
-    
+
     const totalPages = pagedData.totalPages;
     const currentPage = this.page();
     const pages: number[] = [];
-    
+
     const startPage = Math.max(0, currentPage - 2);
     const endPage = Math.min(totalPages - 1, currentPage + 2);
-    
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-    
+
     return pages;
   }
 
@@ -304,13 +302,13 @@ private loadStatsFromExistingEndpoint() {
 
   getTotalPages(): number {
     const pagedData = this.paged();
-    return pagedData && typeof pagedData.totalPages === 'number' ? 
+    return pagedData && typeof pagedData.totalPages === 'number' ?
     pagedData.totalPages : 0;
   }
 
   getTotalElements(): number {
     const pagedData = this.paged();
-    return pagedData && typeof pagedData.totalElements === 'number' ? 
+    return pagedData && typeof pagedData.totalElements === 'number' ?
     pagedData.totalElements : this.customers().length;
   }
 
@@ -383,7 +381,7 @@ handleSave(formData: any) {
 
 }
 
-private getRequestObservable(query: string, status: string, page: number, size: number): 
+private getRequestObservable(query: string, status: string, page: number, size: number):
 Observable<Page<CustomerResponse>> {
     if (query.trim().length > 0) {
       return this.api.searchPaged(query, page, size);

@@ -4,21 +4,19 @@
       <mat-spinner diameter="50"></mat-spinner>
     </div>
   }
-  <!-- HEADER -->
   <div class="page-header">
     <div class="header-info">
       <h1><mat-icon>account_balance_wallet</mat-icon> Gerenciamento de Caixa</h1>
       <p class="subtitle">Controle de aberturas, fechamentos e movimentações financeiras</p>
     </div>
 
-    <button class="cash-status-btn" [class.open]="isCashOpen()" 
+    <button class="cash-status-btn" [class.open]="isCashOpen()"
       (click)="!isCashOpen() ? isOpeningModalOpen.set(true) : null">
       <mat-icon>{{ isCashOpen() ? 'lock_open' : 'lock' }}</mat-icon>
       <span>CAIXA {{ isCashOpen() ? 'ABERTO' : 'FECHADO' }}</span>
     </button>
   </div>
 
-  <!-- CARDS DE RESUMO (Apenas quando aberto) -->
   <div class="cards" *ngIf="isCashOpen() && cashService.activeSession() as session">
     <div class="card green">
       <div class="card-info">
@@ -59,7 +57,6 @@
     </div>
   </div>
 
-  <!-- AÇÕES PRINCIPAIS -->
   <div class="action-bar" *ngIf="isCashOpen()">
     <div class="action-group">
       <button class="btn-action supply" (click)="movementType.set('SUPPLEMENT'); showMovementForm.set(true)" [disabled]="isLoading()">
@@ -79,22 +76,21 @@
     </button>
   </div>
 
-  <!-- FORMULÁRIO DE MOVIMENTAÇÃO -->
   <div class="movement-form" *ngIf="showMovementForm()">
 <h3>Nova Movimentação: {{ movementType() === 'SUPPLEMENT' ? 'Suprimento' : 'Sangria' }}</h3>
     <div class="form-fields">
-      <input 
-        type="number" 
-        [ngModel]="movementValue()" 
+      <input
+        type="number"
+        [ngModel]="movementValue()"
         (ngModelChange)="movementValue.set($event)"
         placeholder="Valor (R$)"
         min="0"
         step="0.01"
         [disabled]="isLoading()">
-      
-      <input 
-        type="text" 
-        [ngModel]="movementObservation()" 
+
+      <input
+        type="text"
+        [ngModel]="movementObservation()"
         (ngModelChange)="movementObservation.set($event)"
         placeholder="Observação (opcional)"
         [disabled]="isLoading()">
@@ -110,7 +106,6 @@
     </div>
   </div>
 
-  <!-- TABELA DE TRANSAÇÕES -->
   <div class="table-section" *ngIf="isCashOpen()">
     <div class="section-header">
       <h3><mat-icon>list_alt</mat-icon> Movimentações da Sessão</h3>
@@ -147,14 +142,14 @@
               <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLEMENT'"
                   [class.expense]="item.type === 'SANGRIA'">
                 <td class="date-cell">
-                  {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                  {{ item.timestamp | date: 'dd/MM/yyyy HH:mm' }}
                 </td>
                 <td class="type-cell">
                   <span [class]="'type-badge ' + item.type.toLowerCase()">
                     <mat-icon>
-                    {{ item.type === 'SALE' ? 'shopping_cart' : 
-                       item.type === 'SUPPLEMENT' ? 'add_circle' : 
-                       item.type === 'SANGRIA' ? 'remove_circle' : 
+                    {{ item.type === 'SALE' ? 'shopping_cart' :
+                       item.type === 'SUPPLEMENT' ? 'add_circle' :
+                       item.type === 'SANGRIA' ? 'remove_circle' :
                        item.type === 'OPENING' ? 'vpn_key' : 'sync_alt' }}
                   </mat-icon>
                     {{ getTypeLabel(item.type) }}
@@ -163,7 +158,7 @@
                 <td class="description-cell">
                 {{ item.description || '---' }}
               </td>
-               <td class="value-cell" 
+               <td class="value-cell"
                   [class.positive]="item.type === 'SALE' || item.type === 'SUPPLEMENT' || item.type === 'OPENING'"
                   [class.negative]="item.type === 'SANGRIA' || item.type === 'CHANGE'">
                 {{ (item.type === 'SANGRIA' || item.type === 'CHANGE') ? '- ' : '+ ' }}
@@ -177,8 +172,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ABERTURA DE CAIXA -->
- <app-cash-modal 
+ <app-cash-modal
   [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
   [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
   [session]="cashService.activeSession()"

@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environments';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = environment.apiUrl; 
+  private apiUrl = environment.apiUrl;
 
   private http = inject(HttpClient);
 
@@ -29,7 +29,6 @@ export class ApiService {
   }
 
   getfindByStockQtyLessThan() {
-    // Chama o método genérico get passando o endpoint
     return this.get<any[]>('products/low-stock');
   }
 }

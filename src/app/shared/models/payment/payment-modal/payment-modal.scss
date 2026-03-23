@@ -4,7 +4,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(214, 135, 135, 0.6);
   backdrop-filter: blur(2px);
   z-index: 1000;
   display: flex;
@@ -29,7 +29,6 @@
   }
 }
 
-// HEADER
 .modal-header {
   background-color: #2c3e50;
   color: white;
@@ -48,7 +47,7 @@
     div {
       display: flex;
       flex-direction: column;
-      
+
       h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
       .customer-name { font-size: 0.85rem; opacity: 0.9; }
     }
@@ -65,7 +64,6 @@
   }
 }
 
-// BODY
 .modal-body {
   padding: 24px;
   background-color: #f8f9fa;
@@ -73,7 +71,6 @@
   overflow-y: auto;
 }
 
-// CARDS DE RESUMO
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -95,8 +92,8 @@
     span { font-size: 1.4rem; font-weight: 700; color: #333; margin-top: 4px; }
 
     &.total { border-color: #3498db; }
-    &.paid { 
-      border-color: #f39c12; 
+    &.paid {
+      border-color: #f39c12;
       &.completed { border-color: #27ae60; span { color: #27ae60; } }
     }
     &.remaining { border-color: #e74c3c; span { color: #e74c3c; } }
@@ -104,7 +101,6 @@
   }
 }
 
-// GRID PRINCIPAL
 .main-content-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -122,7 +118,6 @@
   margin-bottom: 12px;
 }
 
-// SELEÇÃO DE MÉTODOS
 .methods-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -155,7 +150,6 @@
   }
 }
 
-// INPUT DE VALOR
 .amount-entry {
   .input-group {
     display: flex;
@@ -182,7 +176,7 @@
       outline: none;
       font-weight: 600;
       color: #333;
-      
+
       &:focus { border-color: #2196f3; z-index: 1; }
     }
 
@@ -210,7 +204,6 @@
   }
 }
 
-// LISTA DE PAGAMENTOS
 .payment-list-container {
   background: white;
   border: 1px solid #eee;
@@ -218,7 +211,7 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  height: 320px; // Altura fixa para scroll
+  height: 320px;
 
   .empty-list {
     flex: 1;
@@ -250,7 +243,7 @@
         justify-content: space-between;
         flex: 1;
         margin-right: 12px;
-        
+
         .method-name { font-weight: 500; color: #333; }
         .item-amount { font-weight: 700; color: #2c3e50; }
       }
@@ -265,9 +258,8 @@
         &:hover { background-color: #ffebee; }
       }
 
-      .spacer { width: 32px; } // Espaço onde ficaria o botão de remover
+      .spacer { width: 32px; }
 
-      // Estilo específico para Troco
       &.is-change {
         background-color: #fcf3cf;
         border-radius: 6px;
@@ -281,7 +273,6 @@
   }
 }
 
-// FOOTER
 .modal-footer {
   padding: 16px 24px;
   border-top: 1px solid #eee;
@@ -293,7 +284,7 @@
   .footer-status {
     font-weight: 600;
     font-size: 0.9rem;
-    
+
     .processing-text { color: #3498db; display: flex; align-items: center; gap: 8px; }
     .success-text { color: #27ae60; display: flex; align-items: center; gap: 8px; }
   }
@@ -322,13 +313,13 @@
       background-color: #2ecc71;
       color: white;
       box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
-      
-      &:hover:not(:disabled) { 
-        background-color: #27ae60; 
+
+      &:hover:not(:disabled) {
+        background-color: #27ae60;
         transform: translateY(-1px);
         box-shadow: 0 6px 8px rgba(46, 204, 113, 0.3);
       }
-      
+
       &:disabled {
         background-color: #bdc3c7;
         color: #fff;
@@ -336,10 +327,26 @@
         box-shadow: none;
       }
     }
+
+    .btn-reprint {
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+  &:hover {
+    background-color: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px rgba(52, 152, 219, 0.3);
+  }
+}
   }
 }
 
-// ANIMAÇÃO DE ROTAÇÃO
 .spin {
   animation: rotation 1s infinite linear;
 }

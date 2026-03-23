@@ -1,5 +1,4 @@
 <div class="products-container">
-  <!-- HEADER -->
   <div class="page-header">
     <h1>
       <mat-icon>payments</mat-icon>
@@ -8,7 +7,6 @@
     <p class="subtitle">Gerencie como seus clientes podem pagar</p>
   </div>
 
-  <!-- CARDS DE MÉTRICAS - MESMO LAYOUT DOS PRODUTOS -->
   <div class="cards">
     <div class="card blue">
       <div class="info">
@@ -44,7 +42,6 @@
     </div>
   </div>
 
-  <!-- BARRA DE BUSCA E FILTROS -->
   <div class="search-filters">
     <div class="search-box">
       <div class="input-box">
@@ -59,22 +56,22 @@
     </div>
 
     <div class="filter-buttons">
-      <button 
-        [class.active]="activeFilter() === 'all'" 
+      <button
+        [class.active]="activeFilter() === 'all'"
         (click)="applyFilter('all')">
         <mat-icon>apps</mat-icon>
         Todos
       </button>
-      
-      <button 
-        [class.active]="activeFilter() === 'active'" 
+
+      <button
+        [class.active]="activeFilter() === 'active'"
         (click)="applyFilter('active')">
         <mat-icon>check_circle</mat-icon>
         Ativos
       </button>
-      
-      <button 
-        [class.active]="activeFilter() === 'inactive'" 
+
+      <button
+        [class.active]="activeFilter() === 'inactive'"
         (click)="applyFilter('inactive')">
         <mat-icon>pause_circle</mat-icon>
         Inativos
@@ -89,7 +86,6 @@
     </div>
   </div>
 
-  <!-- INDICADORES DE BUSCA -->
   <div *ngIf="isLoading()" class="search-loading">
     <mat-icon class="loading-spinner">refresh</mat-icon>
     Buscando métodos de pagamento...
@@ -101,7 +97,6 @@
     <span *ngIf="filteredList().length !== totalMethods()">• {{ filteredList().length }} resultados</span>
   </div>
 
-  <!-- TABELA -->
   <div class="table-container">
     <div class="table-wrapper">
       <table>
@@ -117,7 +112,6 @@
         </thead>
 
         <tbody>
-          <!-- LOADING -->
           <tr *ngIf="isLoading() && filteredList().length === 0">
             <td colspan="6" class="loading">
               <mat-icon class="loading-spinner">refresh</mat-icon>
@@ -125,7 +119,6 @@
             </td>
           </tr>
 
-          <!-- EMPTY -->
           <tr *ngIf="!isLoading() && filteredList().length === 0">
             <td colspan="6" class="empty">
               <mat-icon>search_off</mat-icon>
@@ -138,7 +131,6 @@
             </td>
           </tr>
 
-          <!-- LISTA -->
           <tr *ngFor="let m of paginatedMethods()">
             <td class="product-id">{{ m.id }}</td>
             <td class="barcode">
@@ -146,14 +138,14 @@
                 {{ m.code }}
               </span>
             </td>
-            
+
             <td class="product-name">
               <div class="name-with-icon">
                 <mat-icon class="method-icon">{{ getMethodIcon(m.code) }}</mat-icon>
                 <span class="name-text">{{ m.displayName }}</span>
               </div>
             </td>
-            
+
             <td>
               <span class="status-tag" [class]="getStatusColor(m.active)">
                 {{ getStatusLabel(m.active) }}
@@ -166,7 +158,6 @@
               </span>
             </td>
 
-            <!-- COLUNA AÇÕES -->
             <td class="actions-col">
               <button class="mini-btn" (click)="openModal(m)">
                 <mat-icon>edit</mat-icon>
@@ -178,7 +169,6 @@
       </table>
     </div>
 
-    <!-- ✅ CONTROLES DE PAGINAÇÃO -->
     <div class="pagination-container" *ngIf="totalItems() > 0">
       <div class="pagination-info">
         <span>
@@ -187,7 +177,6 @@
       </div>
 
       <div class="pagination-controls">
-        <!-- Selecionar itens por página -->
         <div class="items-per-page">
           <label>Itens por página:</label>
           <select [value]="itemsPerPage()" (change)="changeItemsPerPage($event)">
@@ -198,18 +187,16 @@
           </select>
         </div>
 
-        <!-- Navegação -->
         <div class="pagination-buttons">
-          <button 
-            class="pagination-btn" 
+          <button
+            class="pagination-btn"
             (click)="previousPage()"
             [disabled]="currentPage() === 1">
             <mat-icon>chevron_left</mat-icon>
           </button>
 
-          <!-- Números das páginas -->
           <ng-container *ngFor="let page of visiblePages()">
-            <button 
+            <button
               *ngIf="page !== -1"
               class="pagination-btn page-number"
               [class.active]="page === currentPage()"
@@ -219,8 +206,8 @@
             <span *ngIf="page === -1" class="pagination-ellipsis">...</span>
           </ng-container>
 
-          <button 
-            class="pagination-btn" 
+          <button
+            class="pagination-btn"
             (click)="nextPage()"
             [disabled]="currentPage() === totalPages()">
             <mat-icon>chevron_right</mat-icon>

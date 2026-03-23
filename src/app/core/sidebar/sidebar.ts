@@ -29,29 +29,22 @@ export class Sidebar implements OnInit {
   @Output() openChange = new EventEmitter<boolean>();
 
   isConfigModalOpen = signal(false);
-  
-  // ✅ Lógica do Usuário
-  user = this.authService.currentUser; // Pega o usuário do signal global
 
-  // Nome para exibição (se nulo, mostra 'Visitante')
+  user = this.authService.currentUser;
+
   userName = computed(() => this.user()?.name || 'Visitante');
 
-  // Inicial para o Avatar (Primeira letra do nome)
   userInitial = computed(() => {
     const name = this.userName();
     return name ? name.charAt(0).toUpperCase() : '?';
   });
 
-  // ✅ Função de Logout
   logout() {
-    // Adicione um confirm se desejar
     if(confirm('Deseja realmente sair do sistema?')) {
         this.authService.logout();
     }
   }
 
-  // ... (Mantenha todo o resto do seu código: isMobile, toggleSidebar, ngOnInit, etc) ...
-  
   private hideTimeout: any;
 
   isMobile(): boolean {
@@ -130,20 +123,17 @@ export class Sidebar implements OnInit {
   openConfig() {
     const dialogRef = this.dialog.open(PaymentMethodDialog, {
       width: '400px',
-      disableClose: false // Permite fechar clicando fora
+      disableClose: false
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         console.log('Método salvo com sucesso!');
-        // Aqui você pode atualizar listas se necessário
       }
     });
   }
 
   onMethodSaved() {
-  // Aqui você pode colocar um alerta ou snackbar de sucesso
   console.log('Método cadastrado com sucesso!');
-  // Se quiser, pode disparar um evento global para o PDV atualizar a lista
 }
 }

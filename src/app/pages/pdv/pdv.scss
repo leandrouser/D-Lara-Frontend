@@ -1,4 +1,3 @@
-/* Estilos Base e Layout */
 .pdv-container {
   height: 100vh;
   display: flex;
@@ -6,7 +5,7 @@
   padding: 10px 20px;
   background-color: #f8fafc;
   box-sizing: border-box;
-  overflow: hidden; 
+  overflow: hidden;
   animation: fadein 0.3s ease-in-out;
 }
 
@@ -17,21 +16,21 @@
   overflow: hidden;
 
   .left-side {
-    flex: 0 0 60%; 
-   
+    flex: 0 0 60%;
+
     min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  .right-side { 
-    flex: 0 0 40%; 
+  .right-side {
+    flex: 0 0 40%;
     width: 40%;
     max-width: 40%;
     min-width: 0;
-    background: #fff; 
-    border-radius: 12px; 
+    background: #fff;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
@@ -40,22 +39,19 @@
   }
 }
 
-/* Cliente Selection Row */
 .customer-selection-row {
   display: flex;
-  align-items: center; 
+  align-items: center;
   gap: 20px;
   width: 100%;
   margin-bottom: 5px;
 }
 
-/* Área de Seleção de Cliente (Input + Botão + Dropdown) */
 .customer-selection-area {
   flex: 1;
   max-width: 450px;
-  position: relative; // Necessário para o dropdown absoluto
+  position: relative;
 
-  /* RESTAURADO: O "quadro" do input e elementos internos */
   .search-filters.compact {
     background: #fff;
     padding: 6px 12px;
@@ -64,7 +60,7 @@
     align-items: center;
     gap: 8px;
     border: 1px solid #cbd5e1;
-    height: 45px; // Altura fixa para controle do dropdown
+    height: 45px;
     box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
 
@@ -72,26 +68,26 @@
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
-    
+
     .search-box {
       flex: 1;
       .input-box {
-        display: flex; 
-        align-items: center; 
+        display: flex;
+        align-items: center;
         gap: 8px;
 
-        mat-icon { 
-          color: #64748b; 
-          font-size: 20px; 
-          width: 20px; 
+        mat-icon {
+          color: #64748b;
+          font-size: 20px;
+          width: 20px;
           height: 20px;
         }
 
-        input { 
-          border: none; 
-          outline: none; 
-          width: 100%; 
-          font-size: 14px; 
+        input {
+          border: none;
+          outline: none;
+          width: 100%;
+          font-size: 14px;
           color: #1e293b;
           background: transparent;
 
@@ -101,25 +97,24 @@
     }
 
     .new-customer-btn button {
-      background: #2563eb; 
-      color: white; 
-      border: none; 
+      background: #2563eb;
+      color: white;
+      border: none;
       border-radius: 6px;
-      width: 34px; 
-      height: 30px; 
-      cursor: pointer; 
-      display: flex; 
-      align-items: center; 
+      width: 34px;
+      height: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
       justify-content: center;
       transition: background 0.2s;
 
       &:hover { background: #1d4ed8; }
-      
+
       mat-icon { font-size: 18px; width: 18px; height: 18px; }
     }
   }
 
-  /* DROPDOWN: Flutuando por cima dos filtros de baixo */
   .customer-dropdown {
   position: absolute;
   top: 50px;
@@ -136,7 +131,7 @@
   .dropdown-item {
     display: flex;
     align-items: center;
-    padding: 10px 10px; // Aumentamos o respiro interno
+    padding: 10px 10px;
     gap: 10px;
     cursor: pointer;
     border-bottom: 1px solid #f1f5f9;
@@ -144,15 +139,14 @@
 
     &:last-child { border-bottom: none; }
 
-    &:hover { 
-      background-color: #f8fafc; 
-      transform: scale(1.005); // Leve efeito de aproximação
-      
+    &:hover {
+      background-color: #f8fafc;
+      transform: scale(1.005);
+
       .c-name { color: #2563eb; }
       .c-id { background: #dbeafe; color: #2563eb; }
     }
 
-    /* ID maior e mais visível */
     .c-id {
       font-size: 15px;
       font-weight: 800;
@@ -165,31 +159,30 @@
       transition: all 0.2s;
     }
 
-    /* Container de info agora é uma LINHA */
     .c-info {
       display: flex;
-      flex-direction: row; // TUDO NA HORIZONTAL
+      flex-direction: row;
       align-items: center;
-      justify-content: space-between; // Nome na esquerda, Telefone na direita
+      justify-content: space-between;
       flex: 1;
       gap: 15px;
 
-      .c-name { 
-        font-size: 18px; // Nome bem grande
-        font-weight: 800; 
-        color: #1e293b; 
+      .c-name {
+        font-size: 18px;
+        font-weight: 800;
+        color: #1e293b;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 60%; // Garante que o nome não "atropele" o telefone
+        max-width: 60%;
       }
 
-      .c-phone { 
-        font-size: 16px; // Telefone maior
+      .c-phone {
+        font-size: 16px;
         font-weight: 600;
-        color: #64748b; 
+        color: #64748b;
         font-family: 'Roboto Mono', monospace;
         display: flex;
         align-items: center;
@@ -203,7 +196,6 @@
     }
   }
 
-  /* Estado vazio também ampliado */
   .dropdown-empty {
     padding: 40px;
     text-align: center;
@@ -220,7 +212,6 @@
 
 }
 
-/* Card Cliente Selecionado */
 .card.selected-item-card {
   display: flex;
   align-items: center;
@@ -261,7 +252,6 @@
   &:hover .remove-badge { opacity: 1; }
 }
 
-/* Filtros de Categoria */
 .quick-actions-row {
   display: flex; gap: 10px; margin: 5px 0 15px 0;
   button {
@@ -275,7 +265,6 @@
   }
 }
 
-/* Área de Itens e Grid */
 .items-display-area {
   flex: 1;
   background: #f1f5f9;
@@ -312,15 +301,13 @@
 
 .products-grid-scroll {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); 
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 12px;
   padding: 10px;
   overflow-y: auto;
   max-height: calc(100vh - 250px);
 }
 
-/* PRODUCT CARD (COM ESTOQUE E ALERTAS) */
-/* --- BLOCO COMPLETO: PRODUCT CARD --- */
 .product-card {
   background: #ffffff;
   border-radius: 12px;
@@ -337,7 +324,6 @@
     box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
   }
 
-  /* 1. Overlay e Badges de Estoque */
   .low-stock-badge {
     position: absolute;
     top: 40px;
@@ -372,7 +358,6 @@
     pointer-events: none;
   }
 
-  /* 2. Conteúdo Interno */
   .card-content {
     padding: 15px;
     display: flex;
@@ -408,7 +393,7 @@
           margin-left: 2px;
           &.danger { color: #ef4444; }
         }
-        
+
       }
 
       .p-price {
@@ -432,7 +417,6 @@
       overflow: hidden;
     }
 
-    /* 3. Rodapé do Card */
     .p-footer {
       margin-top: auto;
       display: flex;
@@ -475,7 +459,6 @@
     }
   }
 
-  /* 4. ESTILO ESPECIAL PARA BORDADOS (ROXO) */
   &.is-embroidery {
     border-left: 6px solid #7e22ce;
     background: linear-gradient(to right, #ffffff, #faf5ff);
@@ -507,7 +490,6 @@
       }
     }
 
-    /* Marca d'água decorativa */
     &::after {
       content: 'auto_fix_high';
       font-family: 'Material Icons';
@@ -536,7 +518,7 @@
 
 
 
-  
+
 }
 
 /* Paginação */
@@ -661,10 +643,10 @@
     display: flex;
     flex-direction: column;
     min-width: 85px;
-    
+
     .p-id { font-size: 11px; font-weight: 800; color: #94a3b8; }
-    .p-barcode { 
-      font-size: 10px; color: #cbd5e1; display: flex; align-items: center; gap: 3px; 
+    .p-barcode {
+      font-size: 10px; color: #cbd5e1; display: flex; align-items: center; gap: 3px;
       mat-icon { font-size: 14px; width: 14px; height: 14px; }
     }
   }
@@ -676,9 +658,9 @@
     flex-direction: column;
     min-width: 0;
 
-    .item-name { 
-      font-size: 13px; font-weight: 700; color: #1e293b; 
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+    .item-name {
+      font-size: 13px; font-weight: 700; color: #1e293b;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .item-tag { font-size: 9px; font-weight: 800; color: #7e22ce; text-transform: uppercase; margin-top: 2px; }
   }
@@ -720,10 +702,10 @@
     flex-direction: column;
     align-items: flex-end;
 
-    small { 
-      font-size: 9px; 
-      font-weight: 700; 
-      color: #94a3b8; 
+    small {
+      font-size: 9px;
+      font-weight: 700;
+      color: #94a3b8;
       text-transform: uppercase;
       margin-bottom: 1px;
     }
@@ -800,7 +782,7 @@
       align-items: center;
       gap: 8px;
       color: #475569;
-      
+
       mat-icon { font-size: 20px; width: 20px; height: 20px; color: #6366f1; }
       span { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     }
@@ -810,7 +792,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
   }
 
   .discount-controls {
@@ -891,7 +873,7 @@
         }
 
         // Ajuste de padding quando houver prefixo/sufixo
-        padding-left: 40px; 
+        padding-left: 40px;
         &:has(+ .suffix) { padding-right: 40px; }
       }
     }
@@ -927,12 +909,12 @@
   border-radius: 8px;
   border: 1px dashed #22c55e;
   margin-top: 8px;
-  
+
   span:first-child {
     color: #15803d;
     font-weight: 700;
   }
-  
+
   span:last-child {
     color: #15803d;
     font-size: 14px;
@@ -948,7 +930,7 @@
       font-size: 13px;
       color: #64748b;
       margin-bottom: 4px;
-      
+
       &.discount-applied {
         color: #ef4444; // Vermelho para indicar subtração
         font-weight: 600;
@@ -985,7 +967,7 @@
     color: #94a3b8;
     cursor: not-allowed;
     box-shadow: none;
-    
+
     mat-icon { color: #94a3b8; }
   }
 
@@ -1118,7 +1100,7 @@
     background: #f9fafb;
     display: flex;
     gap: 10px;
-    button { 
+    button {
       flex: 1; padding: 12px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
@@ -1162,7 +1144,7 @@
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    
+
     /* ESTADO PADRÃO: FECHADO (VERMELHO) */
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     color: white;
@@ -1260,11 +1242,11 @@
 
       .sug-details {
         text-align: right;
-        .status-badge { 
-          font-size: 10px; 
-          background: #fff3ed; 
-          color: #9a3412; 
-          padding: 2px 8px; 
+        .status-badge {
+          font-size: 10px;
+          background: #fff3ed;
+          color: #9a3412;
+          padding: 2px 8px;
           border-radius: 12px;
           font-weight: 800;
           border: 1px solid #ffedd5;
@@ -1286,7 +1268,7 @@
   color: #9a3412;
   font-size: 13px;
   font-weight: 700;
-  
+
   button {
     background: transparent;
     border: none;

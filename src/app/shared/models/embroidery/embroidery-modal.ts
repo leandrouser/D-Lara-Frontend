@@ -50,7 +50,7 @@ export class EmbroideryModal implements OnInit {
   isEditMode = false;
   loading = signal(false);
   isCustomerModalOpen = false;
-  
+
   minDate = new Date();
   maxDate = new Date();
 
@@ -59,7 +59,7 @@ export class EmbroideryModal implements OnInit {
   selectedCustomer = signal<CustomerResponse | null>(null);
   showCustomerResults = signal(false);
   isSearchingCustomer = signal(false);
-  
+
   private customerSearch$ = new Subject<string>();
 
   constructor(
@@ -70,14 +70,12 @@ export class EmbroideryModal implements OnInit {
     private snackBar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA) public data?: EmbroideryResponse
   ) {
-    this.maxDate.setFullYear(this.maxDate.getFullYear() + 2); // Aumentado para 2 anos de prazo
-    this.setupCustomerSearch();
+    this.maxDate.setFullYear(this.maxDate.getFullYear() + 2);
   }
 
   ngOnInit(): void {
     this.isEditMode = !!this.data;
     this.initializeForm();
-    // Se for edição, carregamos os dados do cliente para o card azul
     if (this.isEditMode && this.data?.customerId) {
       this.loadCustomerById(this.data.customerId);
     }
@@ -91,12 +89,12 @@ export class EmbroideryModal implements OnInit {
         if (!term || term.trim().length < 2) {
           this.customerSearchResults.set([]);
           this.isSearchingCustomer.set(false);
-          return of({ 
-          content: [], 
-          totalElements: 0, 
-          totalPages: 0, 
-          size: 10, 
-          number: 0 
+          return of({
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: 10,
+          number: 0
         } as any);
         }
         this.isSearchingCustomer.set(true);
@@ -149,12 +147,12 @@ export class EmbroideryModal implements OnInit {
     const fileName = file.name.toLowerCase();
     const isPesFile = fileName.endsWith('.pes') || fileName.endsWith('.dst');
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    
-    if (file.size > 15 * 1024 * 1024) { // Aumentado para 15MB
+
+    if (file.size > 15 * 1024 * 1024) {
       this.showError('Arquivo muito grande. Máximo: 15MB');
       return;
     }
-    
+
     if (!allowedTypes.includes(file.type) && !isPesFile) {
       this.showError('Formato inválido. Use JPG, PNG, PDF, PES ou DST');
       return;
@@ -165,8 +163,7 @@ export class EmbroideryModal implements OnInit {
 
   save(): void {
     const customer = this.selectedCustomer();
-    
-    // Validação de Cliente
+
     if (!customer?.id) {
       this.showError('Selecione um cliente antes de salvar.');
       return;
@@ -179,17 +176,14 @@ export class EmbroideryModal implements OnInit {
     const formData = new FormData();
     const formValue = this.form.getRawValue();
 
-    // 1. Parâmetros individuais esperados pelo Controller Java
     formData.append('customerId', customer.id.toString());
     formData.append('description', formValue.description);
     formData.append('price', String(formValue.price));
-    
-    // 2. Data formatada para yyyy-MM-dd (LocalDate)
+
     if (formValue.deliveryDate) {
       formData.append('deliveryDate', this.formatDateForBackend(formValue.deliveryDate));
     }
 
-    // 3. Arquivo
     if (this.selectedFile) {
       formData.append('file', this.selectedFile);
     }
@@ -217,7 +211,7 @@ export class EmbroideryModal implements OnInit {
 }
 
 openNewCustomerModal(): void {
-  this.isCustomerModalOpen = true; 
+  this.isCustomerModalOpen = true;
 }
 
 trackByCustomerId(index: number, customer: CustomerResponse): number {
@@ -225,27 +219,23 @@ trackByCustomerId(index: number, customer: CustomerResponse): number {
 }
 
 downloadCurrentFile(): void {
-  // 1. Validação básica: só baixa se tiver um ID e um nome de arquivo
   if (!this.data?.id || !this.data?.fileName) {
     this.showError('Não há arquivo disponível para download.');
     return;
   }
 
   this.loading.set(true);
-  
-  // 2. Chama o service que retorna o Blob (binário do arquivo)
+
   this.embroideryService.downloadFile(this.data.id).subscribe({
     next: (blob: Blob) => {
-      // 3. Cria um link temporário na memória do navegador para disparar o download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = this.data?.fileName || 'arquivo-bordado';
-      
-      // 4. Simula o clique e limpa a memória
+
       link.click();
       window.URL.revokeObjectURL(url);
-      
+
       this.loading.set(false);
       this.showSuccess('Download iniciado!');
     },
@@ -258,14 +248,10 @@ downloadCurrentFile(): void {
 }
 
 removeCurrentFile(): void {
-  // 1. Limpa o arquivo selecionado no input (se houver)
   this.selectedFile = null;
 
-  // 2. Limpa o valor no formulário para que o HTML entenda que não há mais arquivo
   this.form.get('fileName')?.setValue(null);
 
-  // 3. Opcional: Se você quiser garantir que o input de arquivo seja resetado 
-  // para permitir selecionar o mesmo arquivo novamente:
   const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
   if (fileInput) {
     fileInput.value = '';
@@ -282,7 +268,7 @@ onQuickCustomerSave(customerData: any): void {
     next: (newCustomer: CustomerResponse) => {
       this.loading.set(false);
       if (newCustomer?.id) {
-        this.selectCustomer(newCustomer); // Seleciona automaticamente o cliente recém-criado
+        this.selectCustomer(newCustomer);
         this.showSuccess('Cliente cadastrado e selecionado!');
       }
     },
@@ -293,7 +279,6 @@ onQuickCustomerSave(customerData: any): void {
   });
 }
 
-  // MÉTODOS AUXILIARES
   private parseBackendDate(dateString?: string): Date | null {
     if (!dateString) return null;
     const [year, month, day] = dateString.split('-').map(Number);
@@ -314,7 +299,7 @@ onQuickCustomerSave(customerData: any): void {
       price: [this.data?.price || 0, [Validators.required, Validators.min(0.01)]],
       deliveryDate: [this.parseBackendDate(this.data?.deliveryDate), [Validators.required]],
       fileName: [this.data?.fileName || null],
-      status: [this.data?.status || 'PENDING'] 
+      status: [this.data?.status || 'PENDING']
     });
   }
 

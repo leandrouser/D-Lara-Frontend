@@ -5,7 +5,6 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http'; // 👈 Use withInterceptors
 import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 
-// 👇 Importe o interceptor que criamos
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -14,11 +13,11 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
     provideHttpClient(
-      withInterceptors([authInterceptor]) 
+      withInterceptors([authInterceptor])
     ),
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
 
-    
+
     importProvidersFrom(MatNativeDateModule),
   ]
 };

@@ -1,10 +1,9 @@
-// src/app/pages/product/product.ts
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { debounceTime, distinctUntilChanged, 
+import { debounceTime, distinctUntilChanged,
   Subject, switchMap, tap } from 'rxjs';
 import { ProductService, ProductResponse, CategoryEnum, ProductRequest } from '../../core/service/product.service';
 import { ProductCreateDialogComponent } from '../../shared/models/product/product-modal';
@@ -16,10 +15,10 @@ type ProductState = 'idle' | 'loading' | 'success' | 'error';
 @Component({
   selector: 'app-product',
   standalone: true,
-  imports: [CommonModule, 
-    FormsModule, 
-    RouterModule, 
-    MatIconModule, 
+  imports: [CommonModule,
+    FormsModule,
+    RouterModule,
+    MatIconModule,
     MatDialogModule,
 
   ],
@@ -30,7 +29,7 @@ export class Product implements OnInit {
   showModal = signal(false);
   private api = inject(ProductService);
   private dialog = inject(MatDialog);
-  
+
   products = signal<ProductResponse[]>([]);
   state = signal<ProductState>('idle');
   errorMessage = signal('');
@@ -50,7 +49,7 @@ export class Product implements OnInit {
 
   totalItems = computed(() => this.filteredList().length);
   totalPages = computed(() => Math.ceil(this.totalItems() / this.itemsPerPage()));
-  
+
   paginatedProducts = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage();
     const endIndex = startIndex + this.itemsPerPage();
@@ -134,16 +133,12 @@ categoriesWithoutBordado = Object
 
   openModal() {
   console.log('🔄 Abrindo modal de cadastro via MatDialog');
-    
-    // Abre o diálogo
     const dialogRef = this.dialog.open(ProductCreateDialogComponent, {
-        width: '550px', // Define a largura padrão
-        disableClose: true // Opcional: força o uso dos botões
+        width: '550px',
+        disableClose: true
     });
 
-    // Se inscreve para receber o resultado quando o diálogo for fechado
     dialogRef.afterClosed().subscribe((result: ProductRequest | undefined) => {
-        // 'result' só terá valor se o botão 'Salvar' (que chama dialogRef.close(data)) for pressionado.
         if (result) {
             this.createProduct(result);
         } else {
@@ -158,7 +153,7 @@ categoriesWithoutBordado = Object
       distinctUntilChanged(),
       tap(() => {
         this.state.set('loading');
-        this.currentPage.set(1); // Reset para primeira página ao buscar
+        this.currentPage.set(1);
       }),
       switchMap(term => {
         return this.api.findAll();
@@ -180,13 +175,13 @@ categoriesWithoutBordado = Object
   loadProducts() {
     console.log('🔄 loadProducts() chamado');
     this.state.set('loading');
-    
+
     this.api.findAll().subscribe({
       next: (products) => {
         console.log('✅ Dados carregados com sucesso:', products);
         this.products.set(products);
         this.state.set('success');
-        this.currentPage.set(1); // Sempre começa na página 1
+        this.currentPage.set(1);
       },
       error: err => {
         console.error('❌ Erro ao carregar produtos:', err);
@@ -221,7 +216,7 @@ categoriesWithoutBordado = Object
     const value = (event.target as HTMLSelectElement).value;
     console.log('📏 Mudando itens por página para:', value);
     this.itemsPerPage.set(Number(value));
-    this.currentPage.set(1); // Reset para primeira página
+    this.currentPage.set(1);
   }
 
   onSearchInput(event: Event) {
@@ -271,8 +266,7 @@ applyCategoryFilter(category: CategoryEnum | 'all') {
     if (!productId) return;
 
     const formData = this.editForm();
-    
-    // Validações
+
     if (formData.price < 0) {
       alert('Por favor, informe um preço válido');
       return;
@@ -296,7 +290,7 @@ applyCategoryFilter(category: CategoryEnum | 'all') {
 
     this.api.update(productId, updateData).subscribe({
       next: (updatedProduct) => {
-        this.products.update(list => 
+        this.products.update(list =>
           list.map(p => p.id === productId ? updatedProduct : p)
         );
         this.cancelEditing();
@@ -322,7 +316,7 @@ applyCategoryFilter(category: CategoryEnum | 'all') {
   getCategoryLabel(category: CategoryEnum): string {
     const labels = {
       [CategoryEnum.CAMA]: 'Cama',
-      [CategoryEnum.MESA]: 'Mesa', 
+      [CategoryEnum.MESA]: 'Mesa',
       [CategoryEnum.BANHO]: 'Banho',
       [CategoryEnum.BORDADO]: 'Bordado',
     };
@@ -332,7 +326,7 @@ applyCategoryFilter(category: CategoryEnum | 'all') {
   getCategoryIcon(category: CategoryEnum): string {
     const icons = {
       [CategoryEnum.CAMA]: 'bed',
-      [CategoryEnum.MESA]: 'table_restaurant', 
+      [CategoryEnum.MESA]: 'table_restaurant',
       [CategoryEnum.BANHO]: 'bathtub',
       [CategoryEnum.BORDADO]: 'embroidery_needle',
     };
@@ -350,9 +344,8 @@ applyCategoryFilter(category: CategoryEnum | 'all') {
   handleProductCreated(data: ProductRequest) {
     this.api.create(data).subscribe({
       next: (newProduct) => {
-        // Adiciona o novo produto à lista local de signals
         this.products.update(list => [...list, newProduct]);
-        this.showModal.set(false); // Fecha o modal
+        this.showModal.set(false);
         alert(`Produto "${newProduct.name}" criado com sucesso!`);
         console.log('✅ Novo produto criado:', newProduct);
       },
