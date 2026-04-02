@@ -21,6 +21,7 @@ export interface EmbroideryResponse {
   fileName: string;
   createdAt: string;
   deliveryDate: string;
+  deliveredAt: string | null;
 }
 
 export interface EmbroideryRequest {
@@ -29,7 +30,7 @@ export interface EmbroideryRequest {
   price: number;
   deliveryDate: string;
   fileName?: string;
-  fileData?: string; 
+  fileData?: string;
 }
 
 export interface SpringPage<T> {
@@ -56,11 +57,11 @@ export type EmbroideryStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELE
 @Injectable({ providedIn: 'root' })
 
 export class EmbroideryService {
- 
+
   private readonly apiUrl = `${environment.apiUrl}/embroidery`;
-  
+
   constructor(private http: HttpClient) {}
- 
+
   search(term: string, status: string, page: number, size: number): Observable<SpringPage<EmbroideryResponse>> {
     const params = new HttpParams()
       .set('term', term)
@@ -102,14 +103,14 @@ export class EmbroideryService {
   }
 
   updateStatus(id: number, status: string): Observable<void> {
-  console.log('📤 Enviando PATCH para:', `${this.apiUrl}/${id}/status`);
-  console.log('📦 Body:', { status });
-  
+  const httpParams = new HttpParams().set('status', status);
+
   return this.http.patch<void>(
-    `${this.apiUrl}/${id}/status`, 
-    { status }
+    `${this.apiUrl}/${id}/status`,
+    null,
+    { params: httpParams }
   );
-  }
+}
 
   findAll(page: number = 0, size: number = 5): Observable<SpringPage<EmbroideryResponse>> {
     const params = new HttpParams()

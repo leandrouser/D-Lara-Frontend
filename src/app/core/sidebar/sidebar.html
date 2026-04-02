@@ -1,6 +1,7 @@
-<button class="mobile-menu-btn" (click)="toggleMobile()">☰</button>
-
-<div class="sidebar-overlay" (click)="toggleMobile()" *ngIf="open() && isMobile()"></div>
+<div class="sidebar-overlay"
+     (click)="toggleMobile()"
+     *ngIf="open() && isMobileScreen()">
+</div>
 
 <div class="sidebar" (mouseenter)="onMouseEnterSidebar()" (mouseleave)="onMouseLeaveSidebar()">
   <div class="sidebar-header">
@@ -16,36 +17,36 @@
 
   <nav class="sidebar-nav">
     <ul>
-      <li routerLink="/dashboard" routerLinkActive="active">
-        <span class="icon">🏠</span> 
-        <span class="menu-text">Dashboard</span>
-      </li>
-      <li routerLink="/sales" routerLinkActive="active">
-        <span class="icon">🛒</span> 
-        <span class="menu-text">Vendas</span>
-      </li>
-      <li routerLink="/pdv" routerLinkActive="active">
-        <span class="icon">💳</span> 
+     <li routerLink="/dashboard" routerLinkActive="active" (click)="toggleMobile()">
+      <span class="icon">🏠</span>
+      <span class="menu-text">Dashboard</span>
+    </li>
+    <li routerLink="/sales" routerLinkActive="active" (click)="toggleMobile()">
+      <span class="icon">🛒</span>
+      <span class="menu-text">Vendas</span>
+    </li>
+      <li routerLink="/pdv" routerLinkActive="active" (click)="toggleMobile()">
+        <span class="icon">💳</span>
         <span class="menu-text">PDV</span>
       </li>
-      <li routerLink="/products" routerLinkActive="active">
-        <span class="icon">📦</span> 
+      <li routerLink="/products" routerLinkActive="active" (click)="toggleMobile()">
+        <span class="icon">📦</span>
         <span class="menu-text">Produtos</span>
       </li>
-      <li routerLink="/customers" routerLinkActive="active">
-        <span class="icon">👥</span> 
+      <li routerLink="/customers" routerLinkActive="active" (click)="toggleMobile()">
+        <span class="icon">👥</span>
         <span class="menu-text">Clientes</span>
       </li>
-      <li routerLink="/embroidery" routerLinkActive="active">
-        <span class="icon">🧵</span> 
+      <li routerLink="/embroidery" routerLinkActive="active" (click)="toggleMobile()">
+        <span class="icon">🧵</span>
         <span class="menu-text">Bordados</span>
       </li>
-      <li routerLink="/cash" routerLinkActive="active">
+      <li routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
         <span class="icon">💵</span>
         <span class="menu-text">Caixa</span>
       </li>
 
-      <li routerLink="/payment" routerLinkActive="active">
+      <li routerLink="/payment" routerLinkActive="active" (click)="toggleMobile()">
         <span class="icon">⚙️</span>
         <span class="menu-text" *ngIf="!collapsed()">Configurações</span>
       </li>
@@ -55,7 +56,7 @@
   <div class="user-area">
     <div class="user-info-group">
       <div class="avatar">{{ userInitial() }}</div>
-      
+
       <div class="user-details">
         <span class="name">{{ userName() }}</span>
         <span class="role" *ngIf="user()?.role">{{ user()?.role }}</span>

@@ -76,6 +76,7 @@ export class EmbroideryModal implements OnInit {
   ngOnInit(): void {
     this.isEditMode = !!this.data;
     this.initializeForm();
+    this.setupCustomerSearch();
     if (this.isEditMode && this.data?.customerId) {
       this.loadCustomerById(this.data.customerId);
     }

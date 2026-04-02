@@ -1,13 +1,14 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core'; // Adicionei ViewChild
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms'; // Adicionei NgForm
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { CategoryEnum, ProductRequest } from '../../../core/service/product.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // Opcional: para avisar que salvou
+import { CategoryEnum, ProductRequest, ProductService } from '../../../core/service/product.service'; // Importe seu serviço
 
 @Component({
   selector: 'app-product-create-dialog',
@@ -20,7 +21,8 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSnackBarModule
   ],
   template: `
     <h2 mat-dialog-title>
@@ -32,9 +34,6 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
         <mat-form-field appearance="outline">
           <mat-label>Nome do Produto *</mat-label>
           <input matInput name="name" [(ngModel)]="form.name" required>
-          <mat-error *ngIf="productForm.controls['name']?.errors?.['required']">
-            O nome é obrigatório
-          </mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -51,24 +50,11 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
           <mat-form-field appearance="outline" class="half-width">
             <mat-label>Preço (R$) *</mat-label>
             <input matInput name="price" type="number" [(ngModel)]="form.price" required min="0">
-            <mat-icon matSuffix>attach_money</mat-icon>
-            <mat-error *ngIf="productForm.controls['price']?.errors?.['required']">
-                O preço é obrigatório
-            </mat-error>
-            <mat-error *ngIf="productForm.controls['price']?.errors?.['min']">
-                O preço deve ser positivo
-            </mat-error>
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="half-width">
             <mat-label>Estoque Inicial (un) *</mat-label>
             <input matInput name="stockQty" type="number" [(ngModel)]="form.stockQty" required min="0">
-            <mat-error *ngIf="productForm.controls['stockQty']?.errors?.['required']">
-                O estoque é obrigatório
-            </mat-error>
-            <mat-error *ngIf="productForm.controls['stockQty']?.errors?.['min']">
-                A quantidade deve ser positiva
-            </mat-error>
           </mat-form-field>
         </div>
 
@@ -79,79 +65,80 @@ import { CategoryEnum, ProductRequest } from '../../../core/service/product.serv
               {{ category }}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="productForm.controls['categoryEnum']?.errors?.['required']">
-            A categoria é obrigatória
-          </mat-error>
         </mat-form-field>
 
       </form>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close()">Cancelar</button>
+      <button mat-button (click)="dialogRef.close()">Sair</button>
+
       <button
         mat-raised-button
         color="primary"
-        [disabled]="productForm.invalid"
-        (click)="submitForm()"
+        [disabled]="productForm.invalid || isSaving"
+        (click)="submitForm(productForm)"
       >
-        <mat-icon>save</mat-icon> Salvar Produto
+        <mat-icon>{{ isSaving ? 'hourglass_empty' : 'save' }}</mat-icon>
+        {{ isSaving ? 'Salvando...' : 'Salvar e Continuar' }}
       </button>
     </mat-dialog-actions>
   `,
-  styles: `
-    mat-dialog-content {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-
-    }
-    mat-form-field {
-      width: 100%;
-      margin-top: 10px;
-    }
-    .form-row {
-      display: flex;
-      gap: 16px;
-    }
-    .half-width {
-      flex: 1;
-    }
-    mat-dialog-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 600;
-        color: #3f51b5;
-        margin-bottom: 10px;
-    }
-    mat-dialog-actions button {
-        margin-left: 8px;
-    }
-  `
+  styles: [`
+    mat-dialog-content { display: flex; flex-direction: column; gap: 10px; }
+    mat-form-field { width: 100%; margin-top: 10px; }
+    .form-row { display: flex; gap: 16px; }
+    .half-width { flex: 1; }
+    mat-dialog-title { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #3f51b5; }
+  `]
 })
 export class ProductCreateDialogComponent {
-
   dialogRef = inject(MatDialogRef<ProductCreateDialogComponent>);
+  productService = inject(ProductService); // Injetando o serviço
+  snackBar = inject(MatSnackBar); // Injetando snackbar para feedback
 
-  form: ProductRequest = {
-    barcode: '',
-    name: '',
-    description: '',
-    price: 0,
-    stockQty: 0,
-    categoryEnum: CategoryEnum.CAMA
-  };
-
+  isSaving = false;
   categories = Object.values(CategoryEnum);
 
-  submitForm() {
+  form: ProductRequest = this.getInitialForm();
+
+  private getInitialForm(): ProductRequest {
+    return {
+      barcode: '',
+      name: '',
+      description: '',
+      price: 0,
+      stockQty: 0,
+      categoryEnum: CategoryEnum.CAMA
+    };
+  }
+
+  submitForm(ngForm: NgForm) {
+    if (ngForm.invalid) return;
+
+    this.isSaving = true;
+
     const dataToSend: ProductRequest = {
       ...this.form,
       price: Number(this.form.price),
       stockQty: Number(this.form.stockQty)
     };
 
-    this.dialogRef.close(dataToSend);
+    // Chamada direta ao serviço
+    this.productService.create(dataToSend).subscribe({
+      next: (res) => {
+        this.snackBar.open('Produto cadastrado com sucesso!', 'OK', { duration: 3000 });
+        this.isSaving = false;
+
+        // RESET DO FORMULÁRIO
+        ngForm.resetForm(); // Reseta as validações do HTML
+        this.form = this.getInitialForm(); // Reseta os dados do objeto
+      },
+      error: (err) => {
+        console.error(err);
+        this.snackBar.open('Erro ao salvar produto.', 'Fechar', { duration: 5000 });
+        this.isSaving = false;
+      }
+    });
   }
 }

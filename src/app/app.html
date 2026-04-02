@@ -1,8 +1,18 @@
-<div class="layout" 
-     [class.sidebar-collapsed]="sidebarCollapsed()" 
+<div class="layout"
+     [class.sidebar-collapsed]="sidebarCollapsed()"
      *ngIf="!isLoginPage()">
-     
+
+  <button class="mobile-menu-btn" (click)="toggleMobileSidebar()">
+    <mat-icon>{{ sidebarOpen() ? 'close' : 'menu' }}</mat-icon>
+  </button>
+
+  <div class="sidebar-overlay"
+       *ngIf="sidebarOpen()"
+       (click)="toggleMobileSidebar()">
+  </div>
+
   <app-sidebar
+    #sidebar
     (collapsedChange)="onSidebarCollapsedChange($event)"
     (openChange)="onSidebarOpenChange($event)"
   ></app-sidebar>
@@ -11,7 +21,3 @@
     <router-outlet></router-outlet>
   </div>
 </div>
-
-<ng-container *ngIf="isLoginPage()">
-  <router-outlet></router-outlet>
-</ng-container>

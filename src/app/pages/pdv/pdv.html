@@ -6,8 +6,8 @@
     </div>
 
     <div class="header-actions">
-      <button class="cash-status-btn" 
-              [class.is-open]="isCashRegisterOpen()" 
+      <button class="cash-status-btn"
+              [class.is-open]="isCashRegisterOpen()"
               (click)="handleButtonClick()">
         <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
         <span>CAIXA {{ isCashRegisterOpen() ? 'ABERTO' : 'FECHADO' }}</span>
@@ -24,19 +24,19 @@
               <div class="search-box">
                 <div class="input-box">
                   <mat-icon>person_search</mat-icon>
-                  <input 
-                    type="text" 
-                    placeholder="ID, Nome ou Telefone..." 
-                    [value]="customerSearchValue()" 
+                  <input
+                    type="text"
+                    placeholder="ID, Nome ou Telefone..."
+                    [value]="customerSearchValue()"
                     (input)="onCustomerSearchInput($event)">
                 </div>
 
-                
+
               </div>
               <div class="new-customer-btn">
                 <button (click)="openCustomerModal()"><mat-icon>person_add</mat-icon></button>
               </div>
-              
+
                 </div>
 
             @if (showCustomerDropdown()) {
@@ -47,7 +47,7 @@
                     <div class="c-info">
                       <span class="c-name">{{c.name}}</span>
                       <span class="c-phone">
-                        <mat-icon style="font-size: 14px; width: 14px; height: 14px; margin-right: 4px;">phone</mat-icon> 
+                        <mat-icon style="font-size: 14px; width: 14px; height: 14px; margin-right: 4px;">phone</mat-icon>
                         {{c.phone}}
                       </span>
                     </div>
@@ -89,13 +89,13 @@
   <div class="product-search-bar">
     <div class="search-input-wrapper">
       <mat-icon>search</mat-icon>
-      <input #searchInput 
-             type="text" 
-             placeholder="Pesquisar produto ou bordado (F2)..." 
+      <input #searchInput
+             type="text"
+             placeholder="Pesquisar produto ou bordado (F2)..."
              (input)="onProductSearchInput($event)" />
-      
-      @if (isLoading()) { 
-        <mat-icon class="spinner-loading">refresh</mat-icon> 
+
+      @if (isLoading()) {
+        <mat-icon class="spinner-loading">refresh</mat-icon>
       }
     </div>
     <div class="results-info">
@@ -114,7 +114,7 @@
                       <span class="p-stock" [class.danger]="p.stockQty <= 5">
                         {{ p.stockQty }} em estoque
                       </span>
-                    } 
+                    }
                   </div>
                   <span class="p-price">R$ {{ p.price | number:'1.2-2' }}</span>
                 </div>
@@ -126,7 +126,7 @@
                   </p>
 
                   @if (p.deliveryDate) {
-                    <div class="delivery-date-info" 
+                    <div class="delivery-date-info"
                         [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
                         style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">
                       <mat-icon style="font-size: 16px; width: 16px; height: 16px;">event</mat-icon>
@@ -146,8 +146,8 @@
                       <span>OS #{{ p.id }}</span>
                     </div>
                   }
-                  <button class="btn-add-cart" 
-                          [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0" 
+                  <button class="btn-add-cart"
+                          [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
                           (click)="addToCart(p)">
                     <span>
                       {{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}
@@ -218,7 +218,7 @@
     <mat-icon>shopping_basket</mat-icon>
     <h2>Resumo da Venda</h2>
   </div>
-  
+
   @if (activeSaleId()) {
     <span class="edit-badge">
       <mat-icon>edit</mat-icon>
@@ -228,7 +228,7 @@
 </div>
 
    <div class="cart-content">
-  @for (item of cart(); track $index) { 
+  @for (item of cart(); track $index) {
     <div class="cart-item">
       <div class="col-id">
         <span class="p-id">#{{ item.product.id }}</span>
@@ -291,16 +291,16 @@
       <div class="discount-row">
       <div class="discount-controls">
         <div class="type-selector">
-          <button [class.active]="discountType() === 'value'" 
+          <button [class.active]="discountType() === 'value'"
                   (click)="changeDiscountType('value')">R$</button>
-          <button [class.active]="discountType() === 'percent'" 
+          <button [class.active]="discountType() === 'percent'"
                   (click)="changeDiscountType('percent')">%</button>
         </div>
 
         <div class="input-wrapper">
           @if (discountType() === 'value') { <span class="prefix">R$</span> }
-          <input type="number" 
-                 [value]="discountInput()" 
+          <input type="number"
+                 [value]="discountInput()"
                  (input)="updateDiscountValue($event)"
                  placeholder="0,00">
           @if(discountType() === 'percent') { <span class="suffix">%</span> }
@@ -309,7 +309,7 @@
       @if (calculatedDiscount() > 0) {
       <div class="summary-item discount-applied">
         <span>
-          Desconto 
+          Desconto
           @if (discountType() === 'percent') { ({{ discountInput() }}%) }
         </span>
         <span>- {{ calculatedDiscount() | currency:'BRL' }}</span>
@@ -328,10 +328,10 @@
   </div>
 
 
-  <button class="btn-checkout" 
+  <button class="btn-checkout"
           [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
           (click)="preparePayment()"> <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
-    
+
     <span>
       {{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}
     </span>
@@ -347,8 +347,8 @@
     </p>
   }
 
-  <app-cash-modal 
-    [isOpen]="isOpeningModalOpen()" 
+  <app-cash-modal
+    [isOpen]="isOpeningModalOpen()"
     (close)="isOpeningModalOpen.set(false)"
     (confirm)="onConfirmCashOpen($event)">
   </app-cash-modal>
@@ -388,15 +388,15 @@
   </div>
 }
 
-<payment-modal 
-  [isOpen]="isPaymentModalOpen()" 
-  [paymentData]="paymentData()" 
+<payment-modal
+  [isOpen]="isPaymentModalOpen()"
+  [paymentData]="paymentData()"
   (close)="closePaymentModal()"
   (paymentProcessed)="handlePaymentProcessed($event)">
 </payment-modal>
 
 <customer-modal
   [isOpen]="isModalOpen()"
-  (save)="handleSaveCustomer($event)"
+  (customerAdded)="onCustomerAdded($event)"
   (close)="onCloseCustomerModal()">
 </customer-modal>

@@ -158,25 +158,25 @@
             [class.low-stock]="isLowStock(p)"
             [class.editing]="editingProductId() === p.id">
 
-          <td class="product-id">{{ p.id }}</td>
-          <td class="barcode">{{ p.barcode || 'N/A' }}</td>
+          <td class="product-id" data-label="ID">{{ p.id }}</td>
+          <td class="barcode" data-label="Código">{{ p.barcode || 'N/A' }}</td>
 
-          <td class="product-name">
+          <td class="product-name" data-label="Nome">
             <span class="name-text">{{ p.name }}</span>
           </td>
 
-          <td class="product-description">
+          <td class="product-description" data-label="Descrição">
             <span class="description-text">{{ p.description || 'Sem descrição' }}</span>
           </td>
 
-          <td>
+          <td class="product-category" data-label="Categoria">
             <span class="category-tag" [class]="p.categoryEnum.toLowerCase()">
               <mat-icon>{{ getCategoryIcon(p.categoryEnum) }}</mat-icon>
               {{ getCategoryLabel(p.categoryEnum) }}
             </span>
           </td>
 
-            <td class="price-cell">
+            <td class="price-cell" data-label="Preço">
               <div *ngIf="editingProductId() === p.id" class="edit-input">
                 <input
                   type="number"
@@ -193,7 +193,7 @@
               </span>
             </td>
 
-            <td class="stock-cell">
+            <td class="stock-cell" data-label="Estoque">
               <div *ngIf="editingProductId() === p.id" class="edit-input">
                 <input
                   type="number"

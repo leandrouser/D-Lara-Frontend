@@ -5,25 +5,31 @@
   transition: all 0.3s ease;
 }
 
+// app-layout.scss ou shell.scss
 .mobile-menu-btn {
   display: none;
   position: fixed;
-  top: 15px;
-  left: 15px;
+  top: 14px;
+  left: 14px;
   z-index: 1100;
-  background: var(--color-primary);
+  background: #1d4ed8;
   color: #fff;
   border: none;
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: background 0.2s;
 
-@media (max-width: 768px) {
-  .mobile-menu-btn {
-    display: block;
+  &:hover { background: #1e40af; }
+
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+
+  @media (max-width: 768px) {
+    display: flex;
   }
 }
 
@@ -48,16 +54,17 @@
   display: none;
 }
 
-@media (max-width: 768px) {
-  .sidebar-overlay {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.55);
-    z-index: 900;
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+
+  @media (min-width: 769px) {
+    display: none;
   }
 }
 

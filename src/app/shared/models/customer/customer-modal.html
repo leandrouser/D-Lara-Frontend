@@ -9,21 +9,18 @@
     </div>
 
     <form (ngSubmit)="saveCustomer()" class="modal-form">
-
       <div class="form-group">
         <label for="name">Nome *</label>
         <input
           type="text"
           id="name"
-          [(ngModel)]="formData().name"
+          [ngModel]="formData().name"
+          (ngModelChange)="updateField('name', $event)"
           name="name"
           placeholder="Digite o nome do cliente"
           required
           [disabled]="isLoading()"
         >
-        <small class="error" *ngIf="!formData().name && errorMessage()">
-          {{ errorMessage() }}
-        </small>
       </div>
 
       <div class="form-group">
@@ -31,7 +28,7 @@
         <input
           type="tel"
           id="phone"
-          [(ngModel)]="formData().phone"
+          [ngModel]="formData().phone"
           (ngModelChange)="updateField('phone', $event)"
           name="phone"
           placeholder="(00) 00000-0000"
@@ -46,19 +43,18 @@
         <label class="checkbox-label">
           <input
             type="checkbox"
-            [(ngModel)]="formData().active"
+            [ngModel]="formData().active"
             (ngModelChange)="updateField('active', $event)"
             name="active"
             [disabled]="isLoading()"
           >
-          <span class="checkmark"></span>
           <span class="label-text">Cliente ativo</span>
         </label>
       </div>
 
-      <div class="error-message" *ngIf="errorMessage()">
-        <mat-icon>error</mat-icon>
-        {{ errorMessage() }}
+      <div class="error-container" *ngIf="errorMessage()">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
       </div>
 
       <div class="modal-footer">
@@ -67,15 +63,23 @@
           class="btn-cancel"
           (click)="closeModal()"
           [disabled]="isLoading()">
-          Cancelar
+          Sair
         </button>
+
         <button
           type="submit"
           class="btn-save"
+          [class.loading]="isLoading()"
           [disabled]="!formData().name || !formData().phone || isLoading()">
-          <mat-icon *ngIf="!isLoading()">person_add</mat-icon>
-          <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
-          {{ isLoading() ? 'Salvando...' : 'Salvar Cliente' }}
+
+          <ng-container *ngIf="!isLoading()">
+            <mat-icon>person_add</mat-icon>
+            Salvar e Continuar
+          </ng-container>
+
+          <ng-container *ngIf="isLoading()">
+             <span class="spinner"></span> Salvando...
+          </ng-container>
         </button>
       </div>
     </form>

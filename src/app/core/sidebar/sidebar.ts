@@ -29,6 +29,7 @@ export class Sidebar implements OnInit {
   @Output() openChange = new EventEmitter<boolean>();
 
   isConfigModalOpen = signal(false);
+  isMobileScreen = signal(window.innerWidth <= 768);
 
   user = this.authService.currentUser;
 
@@ -48,7 +49,7 @@ export class Sidebar implements OnInit {
   private hideTimeout: any;
 
   isMobile(): boolean {
-    return window.innerWidth <= 768;
+    return this.isMobileScreen();
   }
 
   toggleSidebar() {
@@ -76,6 +77,7 @@ export class Sidebar implements OnInit {
 
   @HostListener('window:resize')
   onResize() {
+    this.isMobileScreen.set(window.innerWidth <= 768);
     this.checkScreenSize();
   }
 

@@ -326,6 +326,11 @@ openCreateModal() {
   this.showModal.set(true);
 }
 
+refreshDataOnly() {
+  this.loadCustomers();
+  this.loadCustomerStats();
+}
+
 saveCustomer(formData: any) {
   const customerToEdit = this.selectedCustomer();
 
@@ -343,9 +348,26 @@ saveCustomer(formData: any) {
   }
 }
 
+closeAndReload() {
+  this.showModal.set(false);
+  this.selectedCustomer.set(null);
+  window.location.reload();
+}
+
+onCustomerAdded(newCustomer: CustomerResponse): void {
+  this.loadCustomers();
+  this.loadCustomerStats();
+}
+
 closeModal() {
   this.showModal.set(false);
   this.selectedCustomer.set(null);
+}
+
+handleModalEvent() {
+  this.showModal.set(false);
+  this.loadCustomers();
+  this.loadCustomerStats();
 }
 
 handleSave(formData: any) {

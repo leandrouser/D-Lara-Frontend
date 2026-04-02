@@ -390,26 +390,10 @@ onCloseCustomerModal() {
   this.isModalOpen.set(false);
 }
 
-handleSaveCustomer(newCustomerData: CustomerRequest) {
-  this.isLoading.set(true);
-
-  this.customerService.create(newCustomerData).pipe(
-    take(1)
-  ).subscribe({
-    next: (customer: CustomerResponse) => {
-      this.snackBar.open('Cliente cadastrado com sucesso!', 'OK', { duration: 3000 });
-
-      this.selectedCustomer.set(customer);
-
-      this.isModalOpen.set(false);
-      this.isLoading.set(false);
-    },
-    error: (err) => {
-      console.error('Erro ao cadastrar cliente:', err);
-      this.snackBar.open('Erro ao cadastrar cliente. Verifique os dados.', 'Erro');
-      this.isLoading.set(false);
-    }
-  });
+onCustomerAdded(newCustomer: CustomerResponse) {
+  this.isModalOpen.set(false);
+  this.selectedCustomer.set(newCustomer);
+  this.showSuccess(`Cliente ${newCustomer.name} selecionado!`);
 }
 
 onProductSearchInput(event: any) {

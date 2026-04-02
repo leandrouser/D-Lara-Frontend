@@ -234,8 +234,9 @@
   </div>
 </div>
 
+<!-- customer.html -->
 <customer-modal
   [isOpen]="showModal()"
-  (save)="handleSave($event)"
+  (customerAdded)="onCustomerAdded($event)"
   (close)="closeModal()">
 </customer-modal>

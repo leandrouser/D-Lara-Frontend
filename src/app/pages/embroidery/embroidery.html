@@ -33,7 +33,7 @@
       <mat-icon class="icon">event_available</mat-icon>
     </div>
 
-    <div class="card purple"> 
+    <div class="card purple">
       <div class="info">
     <span>A Entregar</span>
     <strong>{{ pendingCount() }}</strong>
@@ -65,8 +65,8 @@
   </div>
 
   <div class="filter-actions">
-    <button (click)="toggleDelivered()" 
-            class="btn-filter" 
+    <button (click)="toggleDelivered()"
+            class="btn-filter"
             [class.active]="showDelivered()">
       <mat-icon>{{ showDelivered() ? 'assignment_turned_in' : 'history' }}</mat-icon>
       {{ showDelivered() ? 'Ver Tudo' : 'Ver Entregues' }}
@@ -97,6 +97,7 @@
           <th class="col-price center">💰 Preço</th>
           <th class="col-date center">📅 Entrega</th>
           <th class="col-status center">📌 Status</th>
+          <th class="col-date center" *ngIf="showDelivered()">✅ Entregue em</th>
           <th class="col-actions center">⚙️ Ações</th>
         </tr>
       </thead>
@@ -110,20 +111,30 @@
         </tr>
 
         <tr *ngFor="let e of dataSource()" [class.late-row]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
-          <td class="col-id center">#{{ e.id }}</td>
-          <td class="col-name"><strong>{{ e.customerName }}</strong></td>
-          <td class="col-description">{{ e.description }}</td>
-          <td class="col-price center">R$ {{ e.price | number:'1.2-2' }}</td>
-          <td class="col-date center">
+          <td class="col-id center" data-label="Código">#{{ e.id }}</td>
+          <td class="col-name" data-label="Cliente"><strong>{{ e.customerName }}</strong></td>
+          <td class="col-description" data-label="Descrição">{{ e.description }}</td>
+          <td class="col-price center" data-label="Preço">R$ {{ e.price | number:'1.2-2' }}</td>
+
+          <td class="col-date center" data-label="Entrega">
             <span class="delivery-badge" [class.late]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
-              {{ e.deliveryDate | date:'dd/MM/yyyy' }}
+              {{ e.deliveryDate ? (e.deliveryDate | date:'dd/MM/yyyy') : '—' }}
             </span>
           </td>
-          <td class="col-status center">
+
+          <td class="col-status center" data-label="Status">
             <span class="status-badge" [class.delivered]="e.status === 'COMPLETED'">
               {{ e.status === 'COMPLETED' ? 'Entregue' : 'Pendente' }}
             </span>
           </td>
+
+          <td class="col-date center" data-label="Entregue em" *ngIf="showDelivered()">
+            <span class="delivery-badge delivered" *ngIf="e.deliveredAt; else semData">
+              {{ e.deliveredAt | date:'dd/MM/yyyy' }}
+            </span>
+            <ng-template #semData>—</ng-template>
+          </td>
+
           <td class="col-actions center">
             <div class="action-buttons">
               <button mat-icon-button *ngIf="e.status !== 'COMPLETED'" (click)="markAsDelivered(e)" matTooltip="Entregar">
@@ -157,7 +168,7 @@
     </div>
   </div>
 </div>
- 
+
   <div class="table-stats">
     Total: <strong>{{ totalElements() }}</strong> bordados
 </div>
