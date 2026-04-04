@@ -154,7 +154,7 @@
             </td>
           </tr>
 
-        <tr *ngFor="let p of filteredList()"
+        <tr *ngFor="let p of paginatedProducts()"
             [class.low-stock]="isLowStock(p)"
             [class.editing]="editingProductId() === p.id">
 
@@ -170,8 +170,7 @@
           </td>
 
           <td class="product-category" data-label="Categoria">
-            <span class="category-tag" [class]="p.categoryEnum.toLowerCase()">
-              <mat-icon>{{ getCategoryIcon(p.categoryEnum) }}</mat-icon>
+            <span class="category-tag" [class]="p.categoryEnum.toLowerCase()">              <mat-icon>{{ getCategoryIcon(p.categoryEnum) }}</mat-icon>
               {{ getCategoryLabel(p.categoryEnum) }}
             </span>
           </td>

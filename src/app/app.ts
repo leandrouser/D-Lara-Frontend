@@ -20,18 +20,22 @@ export class App implements OnInit {
 
   sidebarCollapsed = signal(false);
   sidebarOpen = signal(false);
-  isLoginPage = signal(false);
+  isLoginPage = signal(true);
 
-  ngOnInit() {
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      const isLogin = event.urlAfterRedirects.includes('/login');
-      this.isLoginPage.set(isLogin);
-    });
-  }
+ngOnInit() {
+  // Verifica a URL atual imediatamente (para o carregamento inicial)
+  const currentUrl = this.router.url;
+  this.isLoginPage.set(currentUrl.includes('/login'));
 
-  // método intermediário — evita acessar sidebar antes de existir
+  // Continua escutando mudanças de rota
+  this.router.events.pipe(
+    filter(event => event instanceof NavigationEnd)
+  ).subscribe((event: any) => {
+    const isLogin = event.urlAfterRedirects.includes('/login');
+    this.isLoginPage.set(isLogin);
+  });
+}
+
   toggleMobileSidebar() {
     if (this.sidebar) {
       this.sidebar.toggleMobile();
@@ -43,6 +47,6 @@ export class App implements OnInit {
   }
 
   onSidebarOpenChange(open: boolean) {
-    this.sidebarOpen.set(open); // <-- já sincroniza o signal local
+    this.sidebarOpen.set(open);
   }
 }

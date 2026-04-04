@@ -25,9 +25,9 @@ export class AuthService {
       .pipe(
         tap(response => {
           localStorage.setItem('token', response.token);
-          
-          const user = response.user || { name: 'Usuário', role: 'ADMIN' }; 
-          
+
+          const user = response.user || { name: 'Usuário', role: 'ADMIN' };
+
           localStorage.setItem('user', JSON.stringify(user));
           this.currentUser.set(user);
 
@@ -35,6 +35,10 @@ export class AuthService {
         })
       );
   }
+
+  isAdmin(): boolean {
+  return this.currentUser()?.role === 'ADMIN';
+}
 
   logout() {
     localStorage.removeItem('token');
@@ -45,7 +49,7 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     const token = localStorage.getItem('token');
-    return !!token; 
+    return !!token;
   }
 
   private getUserFromStorage(): User | null {

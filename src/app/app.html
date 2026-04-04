@@ -1,23 +1,29 @@
-<div class="layout"
-     [class.sidebar-collapsed]="sidebarCollapsed()"
-     *ngIf="!isLoginPage()">
+<!-- Renderiza a rota sempre (login incluso) -->
+<ng-container *ngIf="isLoginPage()">
+  <router-outlet></router-outlet>
+</ng-container>
 
-  <button class="mobile-menu-btn" (click)="toggleMobileSidebar()">
-    <mat-icon>{{ sidebarOpen() ? 'close' : 'menu' }}</mat-icon>
-  </button>
+<!-- Layout com sidebar apenas fora do login -->
+<ng-container *ngIf="!isLoginPage()">
+  <div class="layout" [class.sidebar-collapsed]="sidebarCollapsed()">
 
-  <div class="sidebar-overlay"
-       *ngIf="sidebarOpen()"
-       (click)="toggleMobileSidebar()">
+    <button class="mobile-menu-btn" (click)="toggleMobileSidebar()">
+      <mat-icon>{{ sidebarOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+
+    <div class="sidebar-overlay"
+         *ngIf="sidebarOpen()"
+         (click)="toggleMobileSidebar()">
+    </div>
+
+    <app-sidebar
+      #sidebar
+      (collapsedChange)="onSidebarCollapsedChange($event)"
+      (openChange)="onSidebarOpenChange($event)"
+    ></app-sidebar>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
   </div>
-
-  <app-sidebar
-    #sidebar
-    (collapsedChange)="onSidebarCollapsedChange($event)"
-    (openChange)="onSidebarOpenChange($event)"
-  ></app-sidebar>
-
-  <div class="content">
-    <router-outlet></router-outlet>
-  </div>
-</div>
+</ng-container>

@@ -54,7 +54,7 @@ import { CategoryEnum, ProductRequest, ProductService } from '../../../core/serv
 
           <mat-form-field appearance="outline" class="half-width">
             <mat-label>Estoque Inicial (un) *</mat-label>
-            <input matInput name="stockQty" type="number" [(ngModel)]="form.stockQty" required min="0">
+            <input matInput name="stockQty" type="number" [(ngModel)]="form.stockQty">
           </mat-form-field>
         </div>
 
@@ -94,8 +94,8 @@ import { CategoryEnum, ProductRequest, ProductService } from '../../../core/serv
 })
 export class ProductCreateDialogComponent {
   dialogRef = inject(MatDialogRef<ProductCreateDialogComponent>);
-  productService = inject(ProductService); // Injetando o serviço
-  snackBar = inject(MatSnackBar); // Injetando snackbar para feedback
+  productService = inject(ProductService);
+  snackBar = inject(MatSnackBar);
 
   isSaving = false;
   categories = Object.values(CategoryEnum);
@@ -124,15 +124,13 @@ export class ProductCreateDialogComponent {
       stockQty: Number(this.form.stockQty)
     };
 
-    // Chamada direta ao serviço
     this.productService.create(dataToSend).subscribe({
       next: (res) => {
         this.snackBar.open('Produto cadastrado com sucesso!', 'OK', { duration: 3000 });
         this.isSaving = false;
 
-        // RESET DO FORMULÁRIO
-        ngForm.resetForm(); // Reseta as validações do HTML
-        this.form = this.getInitialForm(); // Reseta os dados do objeto
+        ngForm.resetForm();
+        this.form = this.getInitialForm();
       },
       error: (err) => {
         console.error(err);

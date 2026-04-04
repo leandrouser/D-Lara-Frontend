@@ -50,6 +50,11 @@
         <span class="icon">⚙️</span>
         <span class="menu-text" *ngIf="!collapsed()">Configurações</span>
       </li>
+
+      <li *ngIf="authService.isAdmin()" routerLink="/users" routerLinkActive="active">
+        <mat-icon class="icon">manage_accounts</mat-icon>
+        <span class="menu-text">Usuários</span>
+      </li>
     </ul>
   </nav>
 

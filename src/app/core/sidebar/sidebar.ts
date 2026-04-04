@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { PaymentMethodDialog } from '../../shared/models/payment/payment-method-dialog/payment-method-dialog';
 
-
 @Component({
   selector: 'app-sidebar',
   standalone: true,
@@ -19,7 +18,7 @@ import { PaymentMethodDialog } from '../../shared/models/payment/payment-method-
   }
 })
 export class Sidebar implements OnInit {
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
   private dialog = inject(MatDialog);
 
   collapsed = signal(false);
@@ -136,6 +135,6 @@ export class Sidebar implements OnInit {
   }
 
   onMethodSaved() {
-  console.log('Método cadastrado com sucesso!');
-}
+    console.log('Método cadastrado com sucesso!');
+  }
 }

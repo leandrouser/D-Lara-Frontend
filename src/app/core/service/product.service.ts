@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environments';
 
 export enum CategoryEnum {
   CAMA = 'CAMA',
-  MESA = 'MESA', 
+  MESA = 'MESA',
   BANHO = 'BANHO',
   BORDADO = 'BORDADO',
 }
@@ -29,7 +29,6 @@ export interface ProductResponse {
   categoryEnum: CategoryEnum;
   stockQty: number;
 }
-
 
 export interface SpringPage<T> {
   content: T[];
@@ -68,7 +67,7 @@ export interface Page<T> {
 export class ProductService {
   private http = inject(HttpClient);
   private apiUrl=`${environment.apiUrl}/products`;
-    
+
   create(data: ProductRequest): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(this.apiUrl, data);
   }
@@ -86,12 +85,12 @@ export class ProductService {
   }
 
    searchPaged(
-  term: string, 
-  page: number = 0, 
-  size: number = 10, 
-  category: string = '' 
+  term: string,
+  page: number = 0,
+  size: number = 10,
+  category: string = ''
 ): Observable<Page<ProductResponse>> {
-  
+
   let params = new HttpParams()
     .set('search', term)
     .set('page', page.toString())
@@ -120,7 +119,7 @@ export class ProductService {
 
   searchProducts(search: string = ''): Observable<ProductResponse[]> {
   let params = new HttpParams().set('size', '50');
-  
+
   if (search.trim()) {
     params = params.set('search', search.trim());
   }

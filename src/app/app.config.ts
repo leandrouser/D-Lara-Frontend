@@ -9,15 +9,11 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
     provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
     provideAnimations(),
-    provideHttpClient(
-      withInterceptors([authInterceptor])
-    ),
+    provideHttpClient(withInterceptors([authInterceptor])),
     { provide: MAT_DATE_LOCALE, useValue: 'pt-BR' },
-
-
-    importProvidersFrom(MatNativeDateModule),
+    importProvidersFrom(MatNativeDateModule)
   ]
 };

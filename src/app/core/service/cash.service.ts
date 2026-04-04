@@ -136,6 +136,10 @@ export class CashService {
     );
   }
 
+  private clearLocalSession() {
+  this._activeSession.set(null);
+  localStorage.removeItem('active_cash_id');
+}
 
   getTransactionsBySession(sessionId: number): Observable<Transaction[]> {
   return this.http.get<Transaction[]>(`${this.apiUrl}/${sessionId}/transactions`);
@@ -143,7 +147,7 @@ export class CashService {
 
   checkExistingSession() {
   this._isInitializing.set(true);
-  this.http.get<CashSessionResponse>(`${this.apiUrl}/active/1`).subscribe({
+  this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).subscribe({
     next: (session) => {
       if (session) {
         this._activeSession.set(session);
@@ -162,18 +166,13 @@ export class CashService {
   });
 }
 
-  private clearLocalSession() {
-    this._activeSession.set(null);
-    localStorage.removeItem('active_cash_id');
-  }
-
-  getOpenCashRegisterStatus(userId: number): Observable<CashRegisterStatus> {
-    return this.http.get<CashSessionResponse>(`${this.apiUrl}/active/${userId}`).pipe(
-      map(session => ({
-        isOpen: !!session,
-        cashMovementId: session?.id || null
-      })),
-      catchError(() => of({ isOpen: false, cashMovementId: null }))
-    );
-  }
+getOpenCashRegisterStatus(): Observable<CashRegisterStatus> { // removeu userId
+  return this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).pipe( // era /active/${userId}
+    map(session => ({
+      isOpen: !!session,
+      cashMovementId: session?.id || null
+    })),
+    catchError(() => of({ isOpen: false, cashMovementId: null }))
+  );
+}
 }

@@ -279,13 +279,13 @@ applyCategoryFilter(category: CategoryEnum | 'all') {
     const currentProduct = this.products().find(p => p.id === productId);
     if (!currentProduct) return;
 
-    const updateData = {
+    const updateData: ProductRequest = {
       barcode: currentProduct.barcode,
       name: currentProduct.name,
       description: currentProduct.description,
       categoryEnum: currentProduct.categoryEnum,
-      price: formData.price,
-      stockQty: formData.stockQty
+      price: Number(formData.price),
+      stockQty: Number(formData.stockQty)
     };
 
     this.api.update(productId, updateData).subscribe({

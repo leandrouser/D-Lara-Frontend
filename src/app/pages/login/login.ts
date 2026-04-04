@@ -58,6 +58,7 @@ export class Login {
       .subscribe({
         next: () => {
           this.isLoading.set(false);
+          this.router.navigate(['/dashboard']);
         },
         error: (err) => {
           console.error(err);
