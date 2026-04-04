@@ -14,12 +14,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Instalar dependencias
-        run: |
-          cd /d C:\projetos\Frontend
-          npm install
+        run: npm install
       - name: Build Angular
-        run: |
-          cd /d C:\projetos\Frontend
-          C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
+        run: C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
       - name: Copiar para NGINX
-        run: xcopy /E /I /Y "C:\projetos\Frontend\dist\dlara-frontend\browser" "C:\nginx\html\pdv"
+        run: xcopy /E /I /Y "dist\dlara-frontend\browser" "C:\nginx\html\pdv"
