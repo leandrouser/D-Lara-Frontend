@@ -6,12 +6,18 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: cmd
     steps:
-      - name: Notificar maquina local
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Instalar dependencias
         run: |
-          curl -X POST \
-            -H 'Content-Type: application/json' \
-            -H 'X-Deploy-Token: ${{ secrets.DEPLOY_TOKEN }}' \
-            -d '{"project": "frontend"}' \
-            ${{ secrets.LOCAL_WEBHOOK_URL }}
+          cd /d C:\projetos\Frontend
+          npm install
+      - name: Build Angular
+        run: |
+          cd /d C:\projetos\Frontend
+          C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
