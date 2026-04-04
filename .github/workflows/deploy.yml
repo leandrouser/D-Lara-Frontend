@@ -22,4 +22,4 @@ jobs:
           cd /d C:\projetos\Frontend
           C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
       - name: Copiar para NGINX
-        run: xcopy /E /I /Y "C:\projetos\Frontend\dist\dlara-frontend" "C:\nginx\html\pdv"
+        run: xcopy /E /I /Y "C:\projetos\Frontend\dist\dlara-frontend\browser" "C:\nginx\html\pdv"
