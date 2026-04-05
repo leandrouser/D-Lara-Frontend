@@ -61,17 +61,17 @@ export class Sales implements OnInit {
   private calculateSalesStats(sales: SaleResponse[]): void {
     const today = new Date().toISOString().split('T')[0];
     const stats = sales.reduce((acc, sale) => {
-      const isToday = sale.createdAt?.split('T')[0] === today;
+      const isToday = sale.dateSale.split('T')[0] === today;
       acc.totalSales++;
 
-      if (sale.status === 'PAID') {
+      if (sale.saleStatus === 'PAID') {
         acc.paidSales++;
         acc.totalAmount += sale.total;
         if (isToday) { acc.todaySales++; acc.todayAmount += sale.total; }
-      } else if (sale.status === 'PENDING') {
+      } else if (sale.saleStatus === 'PENDING') {
         acc.pendingSales++;
         acc.pendingAmount += sale.total;
-      } else if (sale.status === 'CANCELLED') {
+      } else if (sale.saleStatus === 'CANCELLED') {
         acc.cancelledSales++;
       }
       return acc;
@@ -94,7 +94,7 @@ export class Sales implements OnInit {
     return this.sales().filter(sale => {
       const matchesSearch = sale.id.toString().includes(term) ||
                            sale.customerName?.toLowerCase().includes(term);
-      const matchesStatus = status === 'all' || sale.status?.toLowerCase() === status.toLowerCase();
+      const matchesStatus = status === 'all' || sale.saleStatus?.toLowerCase() === status.toLowerCase();
       return matchesSearch && matchesStatus;
     });
   });

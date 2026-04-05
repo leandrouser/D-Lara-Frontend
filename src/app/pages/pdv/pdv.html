@@ -4,11 +4,8 @@
       <h1><mat-icon>shopping_cart_checkout</mat-icon> {{ pageTitle() }}</h1>
       <p class="subtitle">{{ pageSubtitle() }}</p>
     </div>
-
     <div class="header-actions">
-      <button class="cash-status-btn"
-              [class.is-open]="isCashRegisterOpen()"
-              (click)="handleButtonClick()">
+      <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
         <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
         <span>CAIXA {{ isCashRegisterOpen() ? 'ABERTO' : 'FECHADO' }}</span>
       </button>
@@ -19,25 +16,22 @@
     <div class="left-side">
       <div class="top-controls">
         <div class="customer-selection-row">
+
+          <!-- Busca de cliente -->
           <div class="customer-selection-area">
             <div class="search-filters compact">
               <div class="search-box">
                 <div class="input-box">
                   <mat-icon>person_search</mat-icon>
-                  <input
-                    type="text"
-                    placeholder="ID, Nome ou Telefone..."
+                  <input type="text" placeholder="ID, Nome ou Telefone..."
                     [value]="customerSearchValue()"
                     (input)="onCustomerSearchInput($event)">
                 </div>
-
-
               </div>
               <div class="new-customer-btn">
                 <button (click)="openCustomerModal()"><mat-icon>person_add</mat-icon></button>
               </div>
-
-                </div>
+            </div>
 
             @if (showCustomerDropdown()) {
               <div class="customer-dropdown">
@@ -47,7 +41,7 @@
                     <div class="c-info">
                       <span class="c-name">{{c.name}}</span>
                       <span class="c-phone">
-                        <mat-icon style="font-size: 14px; width: 14px; height: 14px; margin-right: 4px;">phone</mat-icon>
+                        <mat-icon style="font-size:14px;width:14px;height:14px;margin-right:4px">phone</mat-icon>
                         {{c.phone}}
                       </span>
                     </div>
@@ -62,15 +56,12 @@
             }
 
             <div class="quick-actions-row">
-              <button [class.active]="productCategoryFilter() === 'all'" (click)="setProductFilter('all')">
-                Produtos
-              </button>
-              <button [class.active]="productCategoryFilter() === CategoryEnum.BORDADO" (click)="setProductFilter(CategoryEnum.BORDADO)">
-                Bordados
-              </button>
+              <button [class.active]="productCategoryFilter() === 'all'" (click)="setProductFilter('all')">Produtos</button>
+              <button [class.active]="productCategoryFilter() === CategoryEnum.BORDADO" (click)="setProductFilter(CategoryEnum.BORDADO)">Bordados</button>
             </div>
           </div>
 
+          <!-- Card cliente selecionado -->
           @if (selectedCustomer(); as customer) {
             <div class="card selected-item-card purple" (click)="clearCustomer()" title="Clique para remover">
               <div class="info">
@@ -82,26 +73,36 @@
               <div class="remove-badge"><mat-icon>close</mat-icon></div>
             </div>
           }
+
+          <!-- ── Card Bordado Avulso ── -->
+          <div class="card bordado-quick-card" (click)="openBordadoModal()" title="Adicionar bordado com valor livre">
+            <div class="info">
+              <span class="bq-label">Bordado</span>
+              <strong class="bq-name">VALOR LIVRE</strong>
+              <small class="bq-hint">Clique para definir o preço</small>
+            </div>
+            <mat-icon class="icon">brush</mat-icon>
+            <div class="add-badge"><mat-icon>add</mat-icon></div>
+          </div>
+
         </div>
       </div>
 
-     <div class="items-display-area">
-  <div class="product-search-bar">
-    <div class="search-input-wrapper">
-      <mat-icon>search</mat-icon>
-      <input #searchInput
-             type="text"
-             placeholder="Pesquisar produto ou bordado (F2)..."
-             (input)="onProductSearchInput($event)" />
-
-      @if (isLoading()) {
-        <mat-icon class="spinner-loading">refresh</mat-icon>
-      }
-    </div>
-    <div class="results-info">
-      {{ totalElements() }} produtos encontrados
-    </div>
-  </div>
+      <div class="items-display-area">
+        <div class="product-search-bar">
+          <div class="search-input-wrapper">
+            <mat-icon>search</mat-icon>
+            <input #searchInput type="text"
+                   placeholder="Pesquisar produto ou bordado (F2)..."
+                   (input)="onProductSearchInput($event)" />
+            @if (isLoading()) {
+              <mat-icon class="spinner-loading">refresh</mat-icon>
+            }
+          </div>
+          <div class="results-info">
+            {{ totalElements() }} produto{{ totalElements() !== 1 ? 's' : '' }} encontrado{{ totalElements() !== 1 ? 's' : '' }}
+          </div>
+        </div>
 
         <div class="products-grid-scroll">
           @for (p of filteredProducts(); track p.id) {
@@ -111,50 +112,42 @@
                   <div class="header-left">
                     <span class="p-category">{{ p.categoryEnum }}</span>
                     @if (p.categoryEnum !== CategoryEnum.BORDADO) {
-                      <span class="p-stock" [class.danger]="p.stockQty <= 5">
-                        {{ p.stockQty }} em estoque
-                      </span>
+                      <span class="p-stock" [class.danger]="p.stockQty <= 5">{{ p.stockQty }} em estoque</span>
                     }
                   </div>
-                  <span class="p-price">R$ {{ p.price | number:'1.2-2' }}</span>
+                  <span class="p-price">{{ p.price | brlCurrency }}</span>
                 </div>
                 <h3 class="p-name">{{ p.name }}</h3>
 
                 @if (p.categoryEnum === CategoryEnum.BORDADO) {
-                  <p class="p-description-hint" style="font-size: 11px; color: #666; margin-bottom: 4px;">
-                    {{ p.description | slice:0:35 }}{{ p.description.length > 35 ? '...' : '' }}
+                  <p class="p-description-hint" style="font-size:11px;color:#666;margin-bottom:4px">
+                    {{ p.description | slice:0:35 }}{{ p.description?.length > 35 ? '...' : '' }}
                   </p>
-
                   @if (p.deliveryDate) {
                     <div class="delivery-date-info"
-                        [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
-                        style="font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-                      <mat-icon style="font-size: 16px; width: 16px; height: 16px;">event</mat-icon>
+                         [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
+                         style="font-size:12px;font-weight:bold;display:flex;align-items:center;gap:4px">
+                      <mat-icon style="font-size:16px;width:16px;height:16px">event</mat-icon>
                       <span>Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}</span>
                     </div>
                   }
                 }
+
                 <div class="p-footer">
                   @if (p.barcode) {
                     <div class="p-barcode" title="Identificador">
-                      <mat-icon>view_week</mat-icon>
-                      <span>{{ p.barcode }}</span>
+                      <mat-icon>view_week</mat-icon><span>{{ p.barcode }}</span>
                     </div>
                   } @else if (p.categoryEnum === CategoryEnum.BORDADO) {
                     <div class="p-barcode">
-                      <mat-icon>architecture</mat-icon>
-                      <span>OS #{{ p.id }}</span>
+                      <mat-icon>architecture</mat-icon><span>OS #{{ p.id }}</span>
                     </div>
                   }
                   <button class="btn-add-cart"
                           [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
                           (click)="addToCart(p)">
-                    <span>
-                      {{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}
-                    </span>
-                    <mat-icon>
-                      {{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}
-                    </mat-icon>
+                    <span>{{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}</span>
+                    <mat-icon>{{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}</mat-icon>
                   </button>
                 </div>
               </div>
@@ -170,14 +163,23 @@
         @if (totalPages() > 1) {
           <div class="pdv-pagination">
             <span class="page-counter">
-              Página <b>{{ currentPage() + 1 }}</b> de {{ totalPages() }}
+              {{ currentPage() * pageSize() + 1 }}–{{ pageRangeEnd() }} de {{ totalElements() }}
             </span>
             <div class="pagination-actions">
-              <button [disabled]="currentPage() === 0" (click)="changePage(-1)">
+              <button class="page-btn nav" [disabled]="currentPage() === 0" (click)="goToPage(0)" title="Primeira página">
+                <mat-icon>first_page</mat-icon>
+              </button>
+              <button class="page-btn nav" [disabled]="currentPage() === 0" (click)="changePage(-1)" title="Anterior">
                 <mat-icon>chevron_left</mat-icon>
               </button>
-              <button [disabled]="currentPage() >= totalPages() - 1" (click)="changePage(1)">
+              @for (page of pageNumbers; track page) {
+                <button class="page-btn" [class.active]="currentPage() === page" (click)="goToPage(page)">{{ page + 1 }}</button>
+              }
+              <button class="page-btn nav" [disabled]="currentPage() >= totalPages() - 1" (click)="changePage(1)" title="Próxima">
                 <mat-icon>chevron_right</mat-icon>
+              </button>
+              <button class="page-btn nav" [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(totalPages() - 1)" title="Última">
+                <mat-icon>last_page</mat-icon>
               </button>
             </div>
           </div>
@@ -186,183 +188,210 @@
     </div>
 
     <div class="right-side">
- <div class="sale-recovery-area">
-  <div class="recovery-input-container">
-    <div class="recovery-input">
-      <mat-icon>search</mat-icon>
-      <input type="text" placeholder="Buscar venda..." (input)="onSearchSale($any($event.target).value)">
-    </div>
-
-    @if (showSaleSuggestions() && saleSuggestions().length > 0) {
-      <div class="suggestions-dropdown">
-        @for (sale of saleSuggestions(); track sale.id) {
-          <div class="suggestion-item" (click)="selectSaleToEdit(sale)">
-            <div class="sug-info">
-              <span class="sug-id">Venda #{{ sale.id }}</span>
-              <span class="sug-name">{{ sale.customerName }}</span>
+      <div class="sale-recovery-area">
+        <div class="recovery-input-container">
+          <div class="recovery-input">
+            <mat-icon>search</mat-icon>
+            <input type="text" placeholder="Buscar venda..." (input)="onSearchSale($any($event.target).value)">
+          </div>
+          @if (showSaleSuggestions() && saleSuggestions().length > 0) {
+            <div class="suggestions-dropdown">
+              @for (sale of saleSuggestions(); track sale.id) {
+                <div class="suggestion-item" (click)="selectSaleToEdit(sale)">
+                  <div class="sug-info">
+                    <span class="sug-id">Venda #{{ sale.id }}</span>
+                    <span class="sug-name">{{ sale.customerName }}</span>
+                  </div>
+                  <div class="sug-details">
+                    <span class="sug-total">{{ sale.total | brlCurrency }}</span>
+                    <span class="status-badge">{{ sale.saleStatus }}</span>
+                  </div>
+                </div>
+              }
             </div>
-            <div class="sug-details">
-              <span class="sug-total">{{ sale.total | currency:'BRL' }}</span>
-              <span class="status-badge">{{ sale.status }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="cart-wrapper">
+        <div class="cart-header">
+          <div class="header-main-info">
+            <mat-icon>shopping_basket</mat-icon>
+            <h2>Resumo da Venda</h2>
+          </div>
+          @if (activeSaleId()) {
+            <span class="edit-badge pending">
+              <mat-icon>edit</mat-icon>
+              EDITANDO #{{ activeSaleId() }}
+            </span>
+          } @else if (isCopiedSale() && cart().length > 0) {
+            <span class="edit-badge copied">
+              <mat-icon>content_copy</mat-icon>
+              NOVA A PARTIR DE VENDA PAGA
+            </span>
+          }
+        </div>
+
+        <div class="cart-content">
+          @for (item of cart(); track $index) {
+            <div class="cart-item">
+              <div class="col-id">
+                <span class="p-id">#{{ item.product.id }}</span>
+                <span class="p-barcode">
+                  <mat-icon>view_week</mat-icon>
+                  {{ item.product.barcode || 'S/ REF' }}
+                </span>
+              </div>
+              <div class="col-info">
+                <span class="item-name">{{ item.product.name }}</span>
+                @if (item.isEmbroidery) { <span class="item-tag">SERVIÇO BORDADO</span> }
+              </div>
+              <div class="col-qty">
+                <div class="qty-stepper">
+                  <button (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1"><mat-icon>remove</mat-icon></button>
+                  <span class="qty-val">{{ item.quantity }}</span>
+                  <button (click)="updateQuantity(item, 1)"><mat-icon>add</mat-icon></button>
+                </div>
+              </div>
+              <div class="col-price-row">
+                <div class="price-box unit">
+                  <small>Unit.</small>
+                  <span>{{ item.product.price | brlCurrency }}</span>
+                </div>
+                <div class="price-divider"></div>
+                <div class="price-box line-total">
+                  <small>Total Item</small>
+                  <span class="total-value">{{ item.total | brlCurrency }}</span>
+                </div>
+                <button class="btn-remove" (click)="removeFromCart($index)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+            </div>
+          } @empty {
+            <div class="cart-empty">
+              <mat-icon>add_shopping_cart</mat-icon>
+              <p>Carrinho vazio</p>
+            </div>
+          }
+        </div>
+
+        <div class="cart-footer">
+          <div class="discount-container">
+            <div class="input-group">
+              <div class="label-with-icon">
+                <mat-icon>local_offer</mat-icon>
+                <span>Desconto</span>
+              </div>
+              <div class="discount-row">
+                <div class="discount-controls">
+                  <div class="type-selector">
+                    <button [class.active]="discountType() === 'value'" (click)="changeDiscountType('value')">R$</button>
+                    <button [class.active]="discountType() === 'percent'" (click)="changeDiscountType('percent')">%</button>
+                  </div>
+                  <div class="input-wrapper">
+                    @if (discountType() === 'value') { <span class="prefix">R$</span> }
+                    <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0,00">
+                    @if (discountType() === 'percent') { <span class="suffix">%</span> }
+                  </div>
+                </div>
+                @if (calculatedDiscount() > 0) {
+                  <div class="summary-item discount-applied">
+                    <span>Desconto @if (discountType() === 'percent') { ({{ discountInput() }}%) }</span>
+                    <span>- {{ calculatedDiscount() | brlCurrency }}</span>
+                  </div>
+                }
+              </div>
             </div>
           </div>
-        }
+
+          <div class="divider-dashed">
+            <div class="total-line">
+              <div class="total-row">
+                <span>Total a Pagar:</span>
+                <strong>{{ totalWithDiscount() | brlCurrency }}</strong>
+              </div>
+            </div>
+
+            <button class="btn-checkout"
+                    [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
+                    (click)="preparePayment()">
+              <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
+              <span>{{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}</span>
+              @if (isLoading()) { <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner> }
+            </button>
+
+            @if (!isCashRegisterOpen() && cart().length > 0) {
+              <p style="color:#ef4444;font-size:11px;text-align:center;margin-top:8px;font-weight:700;text-transform:uppercase">
+                Abra o caixa para concluir a venda
+              </p>
+            }
+
+            <app-cash-modal
+              [isOpen]="isOpeningModalOpen()"
+              (close)="isOpeningModalOpen.set(false)"
+              (confirm)="onConfirmCashOpen($event)">
+            </app-cash-modal>
+          </div>
+        </div>
       </div>
-    }
+    </div>
   </div>
 </div>
 
-  <div class="cart-wrapper">
-    <div class="cart-header">
-  <div class="header-main-info">
-    <mat-icon>shopping_basket</mat-icon>
-    <h2>Resumo da Venda</h2>
-  </div>
-
-  @if (activeSaleId()) {
-    <span class="edit-badge">
-      <mat-icon>edit</mat-icon>
-      EDITANDO #{{ activeSaleId() }}
-    </span>
-  }
-</div>
-
-   <div class="cart-content">
-  @for (item of cart(); track $index) {
-    <div class="cart-item">
-      <div class="col-id">
-        <span class="p-id">#{{ item.product.id }}</span>
-        <span class="p-barcode">
-          <mat-icon>view_week</mat-icon>
-          {{ item.product.barcode || 'S/ REF' }}
-        </span>
+<!-- ── Modal Bordado Avulso ── -->
+@if (isBordadoModalOpen()) {
+  <div class="modal-overlay" (click)="closeBordadoModal()">
+    <div class="bordado-modal" (click)="$event.stopPropagation()">
+      <div class="bordado-modal-header">
+        <mat-icon>brush</mat-icon>
+        <h3>Adicionar Bordado</h3>
+        <button class="close-btn" (click)="closeBordadoModal()"><mat-icon>close</mat-icon></button>
       </div>
-
-      <div class="col-info">
-        <span class="item-name">{{ item.product.name }}</span>
-        @if (item.isEmbroidery) {
-          <span class="item-tag">SERVIÇO BORDADO</span>
-        }
-      </div>
-
-      <div class="col-qty">
-        <div class="qty-stepper">
-          <button (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1">
-            <mat-icon>remove</mat-icon>
-          </button>
-          <span class="qty-val">{{ item.quantity }}</span>
-          <button (click)="updateQuantity(item, 1)">
-            <mat-icon>add</mat-icon>
-          </button>
+      <div class="bordado-modal-body">
+        <div class="bm-field">
+          <label>Descrição <small>(opcional)</small></label>
+          <input type="text"
+                 [(ngModel)]="bordadoDescription"
+                 [ngModel]="bordadoDescription()"
+                 (ngModelChange)="bordadoDescription.set($event)"
+                 placeholder="Ex: Bordado floral manga direita"
+                 maxlength="80">
+        </div>
+        <div class="bm-field">
+          <label>Valor do Bordado <span class="required">*</span></label>
+          <div class="bm-price-input">
+            <span class="bm-prefix">R$</span>
+            <input type="number"
+                   [ngModel]="bordadoPrice()"
+                   (ngModelChange)="bordadoPrice.set($event)"
+                   placeholder="0,00"
+                   min="0.01"
+                   step="0.01"
+                   autofocus>
+          </div>
         </div>
       </div>
-
-      <div class="col-price-row">
-        <div class="price-box unit">
-          <small>Unit.</small>
-          <span>{{ item.product.price | currency:'BRL' }}</span>
-        </div>
-
-        <div class="price-divider"></div> <div class="price-box line-total">
-          <small>Total Item</small>
-          <span class="total-value">{{ item.total | currency:'BRL' }}</span>
-        </div>
-
-        <button class="btn-remove" (click)="removeFromCart($index)">
-          <mat-icon>delete_outline</mat-icon>
+      <div class="bordado-modal-footer">
+        <button class="bm-btn-cancel" (click)="closeBordadoModal()">
+          <mat-icon>close</mat-icon> Cancelar
+        </button>
+        <button class="bm-btn-confirm" (click)="confirmAddBordado()" [disabled]="!bordadoPrice() || bordadoPrice()! <= 0">
+          <mat-icon>add_shopping_cart</mat-icon> Adicionar ao Carrinho
         </button>
       </div>
-    </div> } @empty {
-    <div class="cart-empty">
-      <mat-icon>add_shopping_cart</mat-icon>
-      <p>Carrinho vazio</p>
-    </div>
-  }
-</div>
-
- <div class="cart-footer">
-  <div class="discount-container">
-    <div class="input-group">
-      <div class="label-with-icon">
-        <mat-icon>local_offer</mat-icon>
-        <span>Desconto</span>
-      </div>
-
-      <div class="discount-row">
-      <div class="discount-controls">
-        <div class="type-selector">
-          <button [class.active]="discountType() === 'value'"
-                  (click)="changeDiscountType('value')">R$</button>
-          <button [class.active]="discountType() === 'percent'"
-                  (click)="changeDiscountType('percent')">%</button>
-        </div>
-
-        <div class="input-wrapper">
-          @if (discountType() === 'value') { <span class="prefix">R$</span> }
-          <input type="number"
-                 [value]="discountInput()"
-                 (input)="updateDiscountValue($event)"
-                 placeholder="0,00">
-          @if(discountType() === 'percent') { <span class="suffix">%</span> }
-        </div>
-      </div>
-      @if (calculatedDiscount() > 0) {
-      <div class="summary-item discount-applied">
-        <span>
-          Desconto
-          @if (discountType() === 'percent') { ({{ discountInput() }}%) }
-        </span>
-        <span>- {{ calculatedDiscount() | currency:'BRL' }}</span>
-      </div>
-    }
-      </div>
     </div>
   </div>
+}
 
-  <div class="divider-dashed">
-  <div class="total-line">
-    <div class="total-row">
-      <span>Total a Pagar:</span>
-      <strong>{{ totalWithDiscount() | currency:'BRL' }}</strong>
-    </div>
-  </div>
-
-
-  <button class="btn-checkout"
-          [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
-          (click)="preparePayment()"> <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
-
-    <span>
-      {{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}
-    </span>
-
-    @if (isLoading()) {
-      <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
-    }
-  </button>
-
-  @if (!isCashRegisterOpen() && cart().length > 0) {
-    <p style="color: #ef4444; font-size: 11px; text-align: center; margin-top: 8px; font-weight: 700; text-transform: uppercase;">
-      Abra o caixa para concluir a venda
-    </p>
-  }
-
-  <app-cash-modal
-    [isOpen]="isOpeningModalOpen()"
-    (close)="isOpeningModalOpen.set(false)"
-    (confirm)="onConfirmCashOpen($event)">
-  </app-cash-modal>
-</div>
-
+<!-- ── Modal detalhe bordado ── -->
 @if (isDetailVisible() && selectedEmbroideryDetail(); as emb) {
   <div class="modal-overlay" (click)="closeDetails()">
     <div class="detail-modal" (click)="$event.stopPropagation()">
       <div class="detail-header">
         <mat-icon>architecture</mat-icon>
         <h3>Detalhes da OS #{{ emb.id }}</h3>
-        <button class="close-btn" (click)="closeDetails()">
-          <mat-icon>close</mat-icon>
-        </button>
+        <button class="close-btn" (click)="closeDetails()"><mat-icon>close</mat-icon></button>
       </div>
       <div class="detail-body">
         <div class="detail-section">
@@ -374,14 +403,13 @@
           <div class="description-box">{{ emb.description }}</div>
         </div>
         <div class="detail-footer-info">
-          <span>Valor do Serviço: <strong>R$ {{ emb.price | number:'1.2-2' }}</strong></span>
+          <span>Valor do Serviço: <strong>{{ emb.price | brlCurrency }}</strong></span>
         </div>
       </div>
       <div class="detail-actions">
         <button class="btn-secondary" (click)="closeDetails()">VOLTAR</button>
         <button class="btn-primary" (click)="addToCart(emb); closeDetails()">
-          <mat-icon>add_shopping_cart</mat-icon>
-          ADICIONAR AO CARRINHO
+          <mat-icon>add_shopping_cart</mat-icon> ADICIONAR AO CARRINHO
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 <div class="layout">
   <div class="content content-adjustable">
     <div class="content">
+
       <div class="header">
         <div>
           <h1>
@@ -11,6 +12,7 @@
         </div>
       </div>
 
+      <!-- CARDS -->
       <div class="cards">
         <div class="card green">
           <div class="info">
@@ -34,15 +36,10 @@
           <div class="info">
             <span>Produtos Cadastrados</span>
             @if (loadingProducts()) {
-              <strong>
-                <mat-icon class="loading-spinner-mini">refresh</mat-icon>
-              </strong>
-            } @else {
-              <strong>{{ totalProducts() }}</strong>
-            }
-            @if (loadingProducts()) {
+              <strong><mat-icon class="loading-spinner-mini">refresh</mat-icon></strong>
               <small>Atualizando...</small>
             } @else {
+              <strong>{{ totalProducts() }}</strong>
               <small>Valor: {{ totalProductsValue() | currency:'BRL' }}</small>
             }
           </div>
@@ -59,8 +56,10 @@
         </div>
       </div>
 
+      <!-- SEÇÕES -->
       <div class="dashboard-sections">
 
+        <!-- ── ÚLTIMAS VENDAS DO DIA ── -->
         <div class="section-card">
           <div class="section-header">
             <h3>
@@ -78,80 +77,81 @@
                 <mat-icon class="loading-spinner">refresh</mat-icon>
                 Carregando vendas...
               </div>
-            }
-
-            @else if (!loadingToday() && todaySales().length === 0) {
+            } @else if (todaySales().length === 0) {
               <div class="empty-state">
                 <mat-icon>history_toggle_off</mat-icon>
                 <p>Nenhuma venda realizada hoje</p>
                 <small>As vendas aparecerão aqui assim que forem feitas</small>
               </div>
-            }
-
-@else if (!loadingToday() && todaySales().length > 0) {
-  <div class="table-container">
-    <div class="table-wrapper">
-      <table class="sales-table">
-        <thead>
-          <tr>
-            <th class="col-id">
-              <mat-icon>tag</mat-icon>
-              ID
-            </th>
-            <th class="col-date">
-              <mat-icon>schedule</mat-icon>
-              Horário
-            </th>
-            <th class="col-customer">
-              <mat-icon>person</mat-icon>
-              Cliente
-            </th>
-            <th class="col-total">
-              <mat-icon>payments</mat-icon>
-              Total
-            </th>
-            <th class="col-status">
-              <mat-icon>circle</mat-icon>
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (sale of todaySales(); track sale.id) {
-            <tr [class.paid]="getNormalizedStatus(sale.saleStatus) === 'paid'"
-                [class.pending]="getNormalizedStatus(sale.saleStatus) === 'pending'"
-                [class.cancelled]="getNormalizedStatus(sale.saleStatus) === 'cancelled'">
-              <td class="sale-id">
-                <strong>#{{ sale.id }}</strong>
-              </td>
-              <td class="sale-date">
-                {{ sale.dateSale | date:'HH:mm' }}
-              </td>
-              <td class="sale-customer">
-                <div class="customer-info">
-                  <strong>{{ sale.customerName }}</strong>
-                  <small class="phone">{{ sale.customerPhone }}</small>
+            } @else {
+              <div class="table-container">
+                <div class="table-wrapper">
+                  <table class="sales-table">
+                    <thead>
+                      <tr>
+                        <th class="col-id"><mat-icon>tag</mat-icon> ID</th>
+                        <th class="col-date"><mat-icon>schedule</mat-icon> Horário</th>
+                        <th class="col-customer"><mat-icon>person</mat-icon> Cliente</th>
+                        <th class="col-total"><mat-icon>payments</mat-icon> Total</th>
+                        <th class="col-status"><mat-icon>circle</mat-icon> Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (sale of salesPaged(); track sale.id) {
+                        <tr
+                          [class.paid]="getNormalizedStatus(sale.saleStatus) === 'paid'"
+                          [class.pending]="getNormalizedStatus(sale.saleStatus) === 'pending'"
+                          [class.cancelled]="getNormalizedStatus(sale.saleStatus) === 'cancelled'">
+                          <td class="sale-id"><strong>#{{ sale.id }}</strong></td>
+                          <td class="sale-date">{{ sale.dateSale | date:'HH:mm' }}</td>
+                          <td class="sale-customer">
+                            <div class="customer-info">
+                              <strong>{{ sale.customerName }}</strong>
+                              <small class="phone">{{ sale.customerPhone }}</small>
+                            </div>
+                          </td>
+                          <td class="sale-total"><strong>{{ sale.total | currency:'BRL' }}</strong></td>
+                          <td class="sale-status">
+                            <span [class]="'status-tag ' + getNormalizedStatus(sale.saleStatus)">
+                              <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
+                              {{ getStatusText(sale.saleStatus) }}
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
                 </div>
-              </td>
-              <td class="sale-total">
-                <strong>{{ sale.total | currency:'BRL' }}</strong>
-              </td>
-              <td class="sale-status">
-                <span [class]="'status-tag ' + getNormalizedStatus(sale.saleStatus)">
-                  <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
-                  {{ getStatusText(sale.saleStatus) }}
-                </span>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-}
+
+                @if (salesTotalPages() > 1) {
+                  <div class="pagination">
+                    <button class="page-btn nav" (click)="salesPrevPage()" [disabled]="salesPage() === 0">
+                      <mat-icon>chevron_left</mat-icon>
+                    </button>
+                    @for (page of salesPageNumbers(); track page) {
+                      <button
+                        class="page-btn"
+                        [class.active]="salesPage() === page"
+                        (click)="salesGoToPage(page)">
+                        {{ page + 1 }}
+                      </button>
+                    }
+                    <button class="page-btn nav" (click)="salesNextPage()" [disabled]="salesPage() === salesTotalPages() - 1">
+                      <mat-icon>chevron_right</mat-icon>
+                    </button>
+                    <span class="page-info">
+                      {{ salesPage() + 1 }} / {{ salesTotalPages() }}
+                      &nbsp;·&nbsp;
+                      {{ todaySales().length }} registros
+                    </span>
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
 
+        <!-- ── ESTOQUE BAIXO ── -->
         <div class="section-card">
           <div class="section-header">
             <h3>
@@ -173,59 +173,32 @@
                 <mat-icon class="loading-spinner">refresh</mat-icon>
                 Carregando estoque...
               </div>
-            }
-
-            @else if (!loadingLowStock() && lowStockProducts().length === 0) {
+            } @else if (lowStockProducts().length === 0) {
               <div class="empty-state">
                 <mat-icon>check_circle</mat-icon>
                 <p>Todos os produtos com estoque adequado</p>
                 <small>Nenhum produto abaixo do estoque mínimo</small>
               </div>
-            }
-
-            @else if (!loadingLowStock() && lowStockProducts().length > 0) {
+            } @else {
               <div class="table-container">
                 <div class="table-wrapper">
                   <table class="sales-table">
                     <thead>
                       <tr>
-                        <th class="col-id">
-                          <mat-icon>tag</mat-icon>
-                          ID
-                        </th>
-                        <th class="col-product">
-                          <mat-icon>inventory_2</mat-icon>
-                          Produto
-                        </th>
-                        <th class="col-stock">
-                          <mat-icon>warehouse</mat-icon>
-                          Estoque
-                        </th>
-                        <th class="col-price">
-                          <mat-icon>attach_money</mat-icon>
-                          Preço
-                        </th>
-                        <th class="col-status">
-                          <mat-icon>circle</mat-icon>
-                          Status
-                        </th>
+                        <th class="col-id"><mat-icon>tag</mat-icon> ID</th>
+                        <th class="col-product"><mat-icon>inventory_2</mat-icon> Produto</th>
+                        <th class="col-stock"><mat-icon>warehouse</mat-icon> Estoque</th>
+                        <th class="col-price"><mat-icon>attach_money</mat-icon> Preço</th>
+                        <th class="col-status"><mat-icon>circle</mat-icon> Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      @for (p of lowStockProducts(); track p.id) {
+                      @for (p of lowStockPaged(); track p.id) {
                         <tr class="low-stock">
-                          <td class="product-id">
-                            <strong>#{{ p.id }}</strong>
-                          </td>
-                          <td class="product-name">
-                            <strong>{{ p.name }}</strong>
-                          </td>
-                          <td class="product-stock">
-                            <span class="stock-badge">{{ p.stockQty }}</span>
-                          </td>
-                          <td class="product-price">
-                            <strong>{{ p.price | currency:'BRL' }}</strong>
-                          </td>
+                          <td class="product-id"><strong>#{{ p.id }}</strong></td>
+                          <td class="product-name"><strong>{{ p.name }}</strong></td>
+                          <td class="product-stock"><span class="stock-badge">{{ p.stockQty }}</span></td>
+                          <td class="product-price"><strong>{{ p.price | currency:'BRL' }}</strong></td>
                           <td class="product-status">
                             <span class="status-tag low">
                               <mat-icon class="status-icon">warning</mat-icon>
@@ -237,6 +210,30 @@
                     </tbody>
                   </table>
                 </div>
+
+                @if (lowStockTotalPages() > 1) {
+                  <div class="pagination">
+                    <button class="page-btn nav" (click)="lowStockPrevPage()" [disabled]="lowStockPage() === 0">
+                      <mat-icon>chevron_left</mat-icon>
+                    </button>
+                    @for (page of lowStockPageNumbers(); track page) {
+                      <button
+                        class="page-btn"
+                        [class.active]="lowStockPage() === page"
+                        (click)="lowStockGoToPage(page)">
+                        {{ page + 1 }}
+                      </button>
+                    }
+                    <button class="page-btn nav" (click)="lowStockNextPage()" [disabled]="lowStockPage() === lowStockTotalPages() - 1">
+                      <mat-icon>chevron_right</mat-icon>
+                    </button>
+                    <span class="page-info">
+                      {{ lowStockPage() + 1 }} / {{ lowStockTotalPages() }}
+                      &nbsp;·&nbsp;
+                      {{ lowStockProducts().length }} registros
+                    </span>
+                  </div>
+                }
               </div>
             }
           </div>

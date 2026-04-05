@@ -1226,3 +1226,260 @@ $white:       #ffffff;
   from { opacity: 0; transform: translateX(-6px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+// ─── Card Bordado Avulso ───────────────────────────────────
+// Adicione este bloco ao final do pdv.scss
+
+.card.bordado-quick-card {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-radius: 12px;
+  height: 70px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  border: 1.5px dashed #a855f7;
+  color: #7e22ce;
+  flex-shrink: 0;
+  min-width: 160px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(126, 34, 206, 0.2);
+    border-style: solid;
+
+    .add-badge { opacity: 1; }
+  }
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+    position: relative;
+
+    .bq-label {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.7;
+    }
+
+    .bq-name {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .bq-hint {
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.6;
+      margin-top: 1px;
+    }
+  }
+
+  .icon {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.1;
+    transform: rotate(-10deg);
+    z-index: 1;
+  }
+
+  .add-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #7e22ce;
+    color: #fff;
+    padding: 4px;
+    border-bottom-left-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+}
+
+// ─── Modal Bordado Avulso ──────────────────────────────────
+
+.bordado-modal {
+  background: #fff;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+  animation: fadein 0.2s ease;
+
+  .bordado-modal-header {
+    background: linear-gradient(135deg, #7e22ce, #6b21a8);
+    color: #fff;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    mat-icon { font-size: 22px; width: 22px; height: 22px; }
+
+    h3 {
+      margin: 0;
+      flex: 1;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 6px;
+      transition: opacity 0.2s, background 0.2s;
+
+      &:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+    }
+  }
+
+  .bordado-modal-body {
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .bm-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+
+        small { text-transform: none; font-weight: 400; opacity: 0.7; }
+        .required { color: #ef4444; }
+      }
+
+      input[type="text"] {
+        padding: 10px 14px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #0f172a;
+        background: #f8fafc;
+        transition: all 0.2s;
+
+        &:focus {
+          outline: none;
+          border-color: #a855f7;
+          background: #fff;
+          box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+        }
+      }
+
+      .bm-price-input {
+        display: flex;
+        align-items: center;
+        position: relative;
+
+        .bm-prefix {
+          position: absolute;
+          left: 14px;
+          font-size: 15px;
+          font-weight: 800;
+          color: #7e22ce;
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        input[type="number"] {
+          width: 100%;
+          padding: 12px 14px 12px 44px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 22px;
+          font-weight: 900;
+          color: #0f172a;
+          background: #f8fafc;
+          transition: all 0.2s;
+
+          &:focus {
+            outline: none;
+            border-color: #a855f7;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
+          }
+
+          // Remove setas do input number
+          &::-webkit-outer-spin-button,
+          &::-webkit-inner-spin-button { -webkit-appearance: none; }
+          -moz-appearance: textfield;
+        }
+      }
+    }
+  }
+
+  .bordado-modal-footer {
+    padding: 12px 18px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    gap: 10px;
+
+    button {
+      flex: 1;
+      padding: 11px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    }
+
+    .bm-btn-cancel {
+      background: #e2e8f0;
+      color: #334155;
+      &:hover { background: #cbd5e1; }
+    }
+
+    .bm-btn-confirm {
+      background: linear-gradient(135deg, #7e22ce, #6b21a8);
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(126, 34, 206, 0.3);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(126, 34, 206, 0.4);
+      }
+
+      &:disabled {
+        background: #e2e8f0;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

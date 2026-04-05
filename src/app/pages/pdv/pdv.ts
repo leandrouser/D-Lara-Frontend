@@ -7,12 +7,14 @@ import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switc
 import { CartItem } from '../../core/service/pdv.service';
 import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
 import { ProductService, CategoryEnum } from '../../core/service/product.service';
-import { SaleService, SaleResponse, SaleRequest } from '../../core/service/sale.service';
+import { SaleService, SaleResponse, SaleRequest, SaleStatus, DiscountType } from '../../core/service/sale.service';
 import { CustomerModal } from "../../shared/models/customer/customer-modal";
 import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
 import { EmbroideryService } from '../../core/service/embroidery.service';
 import { PaymentData, PaymentModal } from "../../shared/models/payment/payment-modal/payment-modal";
 import { CashService, OpenSessionRequest } from '../../core/service/cash.service';
+import { BrlCurrencyPipe } from '../../shared/pipes/brl-currency.pipe';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-pdv',
@@ -21,18 +23,20 @@ import { CashService, OpenSessionRequest } from '../../core/service/cash.service
     CommonModule,
     MatIconModule,
     MatSnackBarModule,
+    FormsModule,
     MatProgressSpinnerModule,
     CustomerModal,
     CashModalComponent,
-    PaymentModal
-],
+    PaymentModal,
+    BrlCurrencyPipe,
+  ],
   templateUrl: './pdv.html',
   styleUrls: ['./pdv.scss']
 })
 export class Pdv implements OnInit, OnDestroy {
-paymentDataForModal() {
-throw new Error('Method not implemented.');
-}
+  paymentDataForModal() {
+    throw new Error('Method not implemented.');
+  }
 
   private saleService = inject(SaleService);
   private customerService = inject(CustomerService);
@@ -41,7 +45,6 @@ throw new Error('Method not implemented.');
   private productSearchSubject = new Subject<string>();
   private productService = inject(ProductService);
   private cashService = inject(CashService);
-
   private destroy$ = new Subject<void>();
   private customerSearchSubject = new Subject<string>();
 
@@ -57,6 +60,10 @@ throw new Error('Method not implemented.');
   CategoryEnum = CategoryEnum;
   showDelivered = signal<boolean>(false);
   selectedEmbroideryDetail = signal<any | null>(null);
+  isCopiedSale = signal(false);
+  isBordadoModalOpen = signal(false);
+  bordadoPrice = signal<number | null>(null);
+  bordadoDescription = signal('');
 
   customerSearchValue = signal('');
   suggestedCustomers = signal<CustomerResponse[]>([]);
@@ -64,11 +71,13 @@ throw new Error('Method not implemented.');
   showCustomerDropdown = signal(false);
 
   productCategoryFilter = signal<'all' | CategoryEnum>('all');
+
+  private allFilteredProducts = signal<any[]>([]);
   filteredProducts = signal<any[]>([]);
   totalElements = signal(0);
   currentPage = signal(0);
   totalPages = signal(1);
-  pageSize = signal(10);
+  readonly pageSize = signal(12);
 
   saleSuggestions = signal<SaleResponse[]>([]);
   showSaleSuggestions = signal(false);
@@ -85,7 +94,6 @@ throw new Error('Method not implemented.');
   );
 
   isCashRegisterOpen = computed(() => !!this.cashService.activeSession());
-
   activeSessionId = this.cashService.activeSessionId;
 
   calculatedDiscount = computed(() => {
@@ -103,7 +111,6 @@ throw new Error('Method not implemented.');
     this.setupCustomerSearch();
     this.setupProductSearch();
     this.productSearchSubject.next('');
-
   }
 
   ngOnDestroy() {
@@ -111,10 +118,83 @@ throw new Error('Method not implemented.');
     this.destroy$.complete();
   }
 
+  openBordadoModal() {
+    this.bordadoPrice.set(null);
+    this.bordadoDescription.set('');
+    this.isBordadoModalOpen.set(true);
+  }
+  closeBordadoModal() {
+    this.isBordadoModalOpen.set(false);
+    this.bordadoPrice.set(null);
+    this.bordadoDescription.set('');
+  }
+
+  confirmAddBordado() {
+    const price = this.bordadoPrice();
+    if (!price || price <= 0) {
+      this.showWarning('Informe um valor válido para o bordado.');
+      return;
+    }
+    const desc = this.bordadoDescription().trim() || 'BORDADO AVULSO';
+    this.cart.update(items => [
+      ...items,
+      {
+        product: { id: 0, name: desc, price, barcode: '' },
+        quantity: 1,
+        total: price,
+        isEmbroidery: true,
+        embroideryId: undefined
+      }
+    ]);
+    this.snackBar.open('Bordado adicionado!', '', { duration: 1000 });
+    this.closeBordadoModal();
+  }
+
+  private applyClientPagination(products: any[]) {
+    const size = this.pageSize();
+    const page = this.currentPage();
+    const total = products.length;
+    const pages = Math.max(1, Math.ceil(total / size));
+
+    const safePage = Math.min(page, pages - 1);
+    if (safePage !== page) this.currentPage.set(safePage);
+
+    const start = safePage * size;
+    const end = start + size;
+
+    this.allFilteredProducts.set(products);
+    this.filteredProducts.set(products.slice(start, end));
+    this.totalElements.set(total);
+    this.totalPages.set(pages);
+  }
+
+   changePage(delta: number) {
+    const next = Math.max(0, Math.min(this.currentPage() + delta, this.totalPages() - 1));
+    this.currentPage.set(next);
+    if (this.productCategoryFilter() === CategoryEnum.BORDADO) this.refreshSearch();
+    else this.applyClientPagination(this.allFilteredProducts());
+  }
+
+  goToPage(page: number) {
+    this.currentPage.set(page);
+    if (this.productCategoryFilter() === CategoryEnum.BORDADO) this.refreshSearch();
+    else this.applyClientPagination(this.allFilteredProducts());
+  }
+
+  get pageNumbers(): number[] {
+    const total = this.totalPages();
+    const current = this.currentPage();
+
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+
+    const start = Math.max(0, Math.min(current - 2, total - 5));
+    return Array.from({ length: Math.min(5, total) }, (_, i) => start + i);
+  }
+
   refreshSearch() {
-  const currentTerm = (document.querySelector('.search-input-wrapper input') as HTMLInputElement)?.value || '';
-  this.productSearchSubject.next(currentTerm);
-}
+    const el = document.querySelector('.search-input-wrapper input') as HTMLInputElement;
+    this.productSearchSubject.next(el?.value || '');
+  }
 
   private setupCustomerSearch() {
     this.customerSearchSubject.pipe(
@@ -133,10 +213,7 @@ throw new Error('Method not implemented.');
         this.suggestedCustomers.set(result.content || []);
         this.showCustomerDropdown.set(this.suggestedCustomers().length > 0);
       },
-      error: (err) => {
-        console.error('Erro na busca:', err);
-        this.showCustomerDropdown.set(false);
-      }
+      error: (err) => this.showCustomerDropdown.set(false)
     });
   }
 
@@ -156,22 +233,19 @@ throw new Error('Method not implemented.');
     this.selectedCustomer.set(null);
   }
 
-  addToCart(p: any) {
+   addToCart(p: any) {
     const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
     this.cart.update(items => {
       const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
       if (existing) {
         return items.map(i => i === existing
           ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price }
-          : i
-        );
+          : i);
       }
       return [...items, {
         product: { id: p.id, name: p.name, price: p.price, barcode: p.barcode },
-        quantity: 1,
-        total: p.price,
-        isEmbroidery: isEmb,
-        embroideryId: isEmb ? p.id : null
+        quantity: 1, total: p.price, isEmbroidery: isEmb,
+        embroideryId: isEmb ? p.id : undefined
       }];
     });
     this.snackBar.open('Item adicionado!', '', { duration: 1000 });
@@ -179,64 +253,33 @@ throw new Error('Method not implemented.');
 
   updateQuantity(item: CartItem, change: number) {
     this.cart.update(prev => prev.map(i => {
-      if (i === item) {
-        const newQty = Math.max(1, i.quantity + change);
-        return { ...i, quantity: newQty, total: newQty * i.product.price };
-      }
-      return i;
+      if (i !== item) return i;
+      const newQty = Math.max(1, i.quantity + change);
+      return { ...i, quantity: newQty, total: newQty * i.product.price };
     }));
   }
 
-  removeFromCart(index: number) {
-  this.cart.update(items => {
-    const newItems = [...items];
-    newItems.splice(index, 1);
-    return newItems;
-  });
-}
+    removeFromCart(index: number) {
+    this.cart.update(items => { const n = [...items]; n.splice(index, 1); return n; });
+  }
 
   onSearchSale(query: string) {
-  console.log('--- Digitou na busca de vendas:', query); // LOG DE TESTE
-
-  const term = query.trim();
-  if (term.length < 1) {
-    console.log('Termo muito curto, ignorando...');
-    this.saleSuggestions.set([]);
-    this.showSaleSuggestions.set(false);
-    return;
+    const term = query.trim();
+    if (term.length < 1) { this.saleSuggestions.set([]); this.showSaleSuggestions.set(false); return; }
+    this.saleService.searchSales(term, 0, 10).subscribe({
+      next: (response) => { this.saleSuggestions.set(response.content || response); this.showSaleSuggestions.set(true); },
+      error: (err) => console.error('ERRO NA CHAMADA API:', err)
+    });
   }
 
-  console.log('Fazendo chamada para o serviço com o termo:', term);
-  this.saleService.searchSales(term, 0, 10).subscribe({
-    next: (response) => {
-      console.log('Sucesso! Dados recebidos:', response);
-      this.saleSuggestions.set(response.content || response);
-      this.showSaleSuggestions.set(true);
-    },
-    error: (err) => {
-      console.error('ERRO NA CHAMADA API:', err);
-    }
-  });
-}
-
-@HostListener('window:keydown', ['$event'])
+    @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-
-    if (event.key === 'F2') {
-    event.preventDefault();
-    this.searchInput()?.nativeElement.focus();
-  }
-    if (event.key === 'F10') {
-      event.preventDefault();
-      this.handleF10Press();
-    }
-
+    if (event.key === 'F2') { event.preventDefault(); this.searchInput()?.nativeElement.focus(); }
+    if (event.key === 'F10') { event.preventDefault(); this.handleF10Press(); }
     if (event.key === 'Escape') {
-      if (this.isPaymentModalOpen()) {
-        this.closePaymentModal();
-      } else if (this.isModalOpen()) {
-        this.onCloseCustomerModal();
-      }
+      if (this.isBordadoModalOpen())    this.closeBordadoModal();
+      else if (this.isPaymentModalOpen()) this.closePaymentModal();
+      else if (this.isModalOpen())        this.onCloseCustomerModal();
     }
   }
 
@@ -250,68 +293,169 @@ throw new Error('Method not implemented.');
     }
   }
 
-  selectSaleToEdit(sale: SaleResponse) {
+ selectSaleToEdit(sale: SaleResponse) {
   this.showSaleSuggestions.set(false);
-  this.activeSaleId.set(sale.id);
+
+  const isPending = sale.saleStatus === SaleStatus.PENDING;
+
+  this.activeSaleId.set(isPending ? sale.id : null);
+  this.isCopiedSale.set(!isPending);
 
   if (sale.customerName) {
     this.selectedCustomer.set({
       id: (sale as any).customerId || 0,
       name: sale.customerName,
-      phone: (sale as any).customerPhone || 'Não informado',
+      phone: sale.customerPhone || 'Não informado',
       active: true
     } as any);
   }
 
-  this.discountInput.set(sale.discountValue || 0);
-  this.discountType.set(sale.discountType === 'PERCENTAGE' ? 'percent' : 'value');
-
-  if (sale.items && sale.items.length > 0) {
-    const mappedItems: CartItem[] = sale.items.map(item => {
-      const isEmbroidery = !!item.embroideryId;
-
-      const price = item.unitPrice || 0;
-
-      return {
-        product: {
-          id: item.productId || item.embroideryId || 0,
-          name: item.description,
-          price: price,
-          stockQty: 999
-        } as any,
-        quantity: item.quantity,
-        isEmbroidery: isEmbroidery,
-        total: price * item.quantity
-      };
-    });
-
-    this.cart.set(mappedItems);
-    this.showSuccess(`Venda #${sale.id} carregada com sucesso!`);
+  if (isPending) {
+    this.discountInput.set(sale.discountValue || 0);
+    this.discountType.set(sale.discountType === DiscountType.PERCENTAGE ? 'percent' : 'value');
   } else {
-    this.showError('Esta venda não possui itens.');
+    this.discountInput.set(0);
+    this.discountType.set('value');
   }
-}
 
-  finalizeSale(status: 'PAID' | 'PENDING') {
-    if (this.cart().length === 0) return;
+  if (sale.items?.length > 0) {
+      this.cart.set(sale.items.map(item => {
+        const isEmbroidery = !!item.embroideryId;
+        const price = item.manualPrice ?? item.productPrice ?? 0;
+        return {
+          product: { id: item.productId || item.embroideryId || 0, name: item.productName || item.description || '', price, stockQty: 999 } as any,
+          quantity: item.quantity, isEmbroidery, total: price * item.quantity
+        };
+      }));
+      this.showSuccess(isPending ? `Venda #${sale.id} carregada para edição.` : `Itens da venda #${sale.id} copiados como nova venda.`);
+    } else {
+      this.showError('Esta venda não possui itens.');
+    }
+  }
 
+  resetPDV() {
+    this.cart.set([]);
+    this.activeSaleId.set(null);
+    this.isCopiedSale.set(false);
+    this.discountInput.set(0);
+    this.selectedCustomer.set(null);
+  }
+
+  changeDiscountType(type: 'value' | 'percent') { this.discountType.set(type); }
+  updateDiscountValue(event: any) { this.discountInput.set(Number(event.target.value) || 0); }
+
+  handleButtonClick() {
+    if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+  }
+
+  onConfirmCashOpen(value: number) {
+    this.cashService.openCashRegister({ value }).subscribe({
+      next: () => { this.isOpeningModalOpen.set(false); this.showSuccess('Caixa aberto com sucesso!'); },
+      error: () => this.showError('Não foi possível abrir o caixa.')
+    });
+  }
+
+  setProductFilter(filter: 'all' | CategoryEnum) {
+    this.productCategoryFilter.set(filter);
+    this.currentPage.set(0);
+    const el = document.querySelector('.search-input-wrapper input') as HTMLInputElement;
+    this.productSearchSubject.next(el?.value || '');
+  }
+
+  private lastSearchTerm = '';
+
+  openCustomerModal() {
+    this.isModalOpen.set(true);
+  }
+
+  onCloseCustomerModal() {
+    this.isModalOpen.set(false);
+  }
+
+  onCustomerAdded(newCustomer: CustomerResponse) {
+    this.isModalOpen.set(false);
+    this.selectedCustomer.set(newCustomer);
+    this.showSuccess(`Cliente ${newCustomer.name} selecionado!`);
+  }
+
+  onProductSearchInput(event: any) {
+    const val = event.target.value;
+    this.lastSearchTerm = val;
+    this.currentPage.set(0);
+    this.productSearchSubject.next(val);
+  }
+
+  private setupProductSearch() {
+    this.productSearchSubject.pipe(
+      debounceTime(400),
+      switchMap(term => {
+        this.isLoading.set(true);
+        if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
+          const status = this.showDelivered() ? 'DELIVERED' : 'PENDING';
+          return this.embroideryService.search(term, status, this.currentPage(), this.pageSize()).pipe(
+            map(res => ({
+              content: res.content.map((emb: any) => ({
+                ...emb, name: emb.customerName, description: emb.description,
+                deliveryDate: emb.deliveryDate, categoryEnum: CategoryEnum.BORDADO,
+                price: emb.price, stockQty: 0
+              })),
+              totalElements: res.totalElements, totalPages: res.totalPages, serverPaged: true
+            }))
+          );
+        } else {
+          return this.productService.findAll().pipe(
+            map(products => {
+              const termLower = term.toLowerCase();
+              let filtered = products.filter(p =>
+                p.name.toLowerCase().includes(termLower) || (p.barcode && p.barcode.includes(term))
+              );
+              const catFilter = this.productCategoryFilter();
+              if (catFilter !== 'all') filtered = filtered.filter(p => p.categoryEnum === catFilter);
+              return {
+                content: filtered, totalElements: filtered.length,
+                totalPages: Math.max(1, Math.ceil(filtered.length / this.pageSize())), serverPaged: false
+              };
+            })
+          );
+        }
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response: any) => {
+        if (response.serverPaged) {
+          this.filteredProducts.set(response.content);
+          this.allFilteredProducts.set(response.content);
+          this.totalElements.set(response.totalElements ?? response.content.length);
+          this.totalPages.set(response.totalPages ?? 1);
+        } else {
+          this.applyClientPagination(response.content);
+        }
+        this.isLoading.set(false);
+      },
+      error: () => { this.isLoading.set(false); this.filteredProducts.set([]); }
+    });
+  }
+
+  showDetails(emb: any) { this.selectedEmbroideryDetail.set(emb); this.isDetailVisible.set(true); }
+  closeDetails() { this.isDetailVisible.set(false); setTimeout(() =>
+    this.selectedEmbroideryDetail.set(null), 200); }
+
+  preparePayment() {
+    if (!this.selectedCustomer()) { this.showWarning('Por favor, selecione um cliente antes de finalizar a venda.'); return; }
+    if (this.cart().length === 0)  { this.snackBar.open('Carrinho vazio!', 'Aviso', { duration: 2000 }); return; }
     const sessionId = this.activeSessionId();
-
-    if (!sessionId) {
-    this.showError('Nenhum caixa aberto encontrado!');
-    return;
-  }
+    if (!sessionId) { this.showError('Nenhum caixa aberto encontrado!'); return; }
 
     const saleRequest: SaleRequest = {
       customerId: this.selectedCustomer()?.id || null,
-      cashSessionId: 1,
+      cashSessionId: sessionId,
       discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
       discountValue: this.discountInput(),
       items: this.cart().map(item => ({
-        productId: item.isEmbroidery ? null : item.product.id,
-        embroideryId: item.isEmbroidery ? item.product.id : null,
-        quantity: item.quantity,
-        unitPrice: item.product.price,
+        productId:   item.isEmbroidery ? undefined : item.product.id,
+        embroideryId: item.isEmbroidery ? (item.embroideryId ?? undefined) : undefined,
+        quantity:    item.quantity,
+        manualPrice: item.isEmbroidery ? item.product.price : undefined,
         description: item.product.name
       }))
     };
@@ -322,262 +466,59 @@ throw new Error('Method not implemented.');
       : this.saleService.createSale(saleRequest);
 
     action$.pipe(take(1)).subscribe({
-      next: (res) => {
-        this.snackBar.open(`Venda #${res.id} processada!`, 'OK', { duration: 3000 });
-        this.resetPDV();
+      next: (sale: SaleResponse) => {
+        this.paymentData.set({
+          saleId: sale.id, totalAmount: this.totalWithDiscount(),
+          customerName: this.selectedCustomer()?.name || 'Consumidor Final',
+          items: this.cart().map(i => ({ name: i.product.name, qty: i.quantity, price: i.product.price, total: i.total }))
+        });
+        this.isPaymentModalOpen.set(true);
+        this.isLoading.set(false);
       },
-      error: (err) => {
-        this.snackBar.open('Erro ao salvar venda.', 'Erro');
-      },
-      complete: () => this.isLoading.set(false)
+      error: () => { this.isLoading.set(false); this.snackBar.open('Erro ao gerar venda para pagamento.', 'Erro'); }
     });
   }
 
-  resetPDV() {
-    this.cart.set([]);
-    this.activeSaleId.set(null);
-    this.discountInput.set(0);
-    this.selectedCustomer.set(null);
+  handlePaymentProcessed(response: any) {
+    this.snackBar.open('Venda finalizada e paga com sucesso!', 'OK', { duration: 3000 });
+    this.resetPDV();
+    this.isPaymentModalOpen.set(false);
   }
 
-  changeDiscountType(type: 'value' | 'percent') {
-    this.discountType.set(type);
+  closePaymentModal() {
+    this.isPaymentModalOpen.set(false);
+    this.paymentData.set(null);
   }
 
-  updateDiscountValue(event: any) {
-    this.discountInput.set(Number(event.target.value) || 0);
+  isOverdue(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const delivery = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return delivery < today;
   }
 
-  handleButtonClick() {
-    if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+  showSuccess(message: string) {
+    this.snackBar.open(message, 'Fechar', {
+      duration: 3000,
+      panelClass: ['success-snackbar'],
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
+    });
   }
 
-onConfirmCashOpen(value: number) {
-  const request: OpenSessionRequest = { value: value };
-
-  this.cashService.openCashRegister(request).subscribe({
-    next: (session) => {
-      this.isOpeningModalOpen.set(false);
-      this.showSuccess('Caixa aberto com sucesso!');
-    },
-    error: (err) => {
-      console.error('Erro ao abrir caixa:', err);
-      this.showError('Não foi possível abrir o caixa.');
-    }
-  });
-}
-
-  changePage(delta: number) {
-    this.currentPage.update(p => p + delta);
-    this.refreshSearch();
+  showError(message: string) {
+    this.snackBar.open(message, 'Fechar', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
   }
 
-  setProductFilter(filter: 'all' | CategoryEnum) {
-  console.log('Filtro alterado para:', filter);
-  this.productCategoryFilter.set(filter);
-  this.currentPage.set(0);
-    const currentTerm = (document.querySelector('.search-input-wrapper input') as HTMLInputElement)?.value || '';
-    this.productSearchSubject.next(currentTerm);
-}
-
-  private lastSearchTerm = '';
-
-  openCustomerModal() {
-  this.isModalOpen.set(true);
-}
-
-onCloseCustomerModal() {
-  this.isModalOpen.set(false);
-}
-
-onCustomerAdded(newCustomer: CustomerResponse) {
-  this.isModalOpen.set(false);
-  this.selectedCustomer.set(newCustomer);
-  this.showSuccess(`Cliente ${newCustomer.name} selecionado!`);
-}
-
-onProductSearchInput(event: any) {
-  const val = event.target.value;
-  this.lastSearchTerm = val;
-  this.productSearchSubject.next(val);
-}
-
-private setupProductSearch() {
-  this.productSearchSubject.pipe(
-    debounceTime(400),
-    switchMap(term => {
-      this.isLoading.set(true);
-
-      if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
-        console.log('Buscando Bordados para:', term);
-        const status = this.showDelivered() ? 'DELIVERED' : 'PENDING';
-
-        return this.embroideryService.search(term, status, this.currentPage(), this.pageSize()).pipe(
-          map(res => ({
-            ...res,
-            content: res.content.map(emb => ({
-              ...emb,
-              name: emb.customerName,
-              description: emb.description,
-              deliveryDate: emb.deliveryDate,
-              categoryEnum: CategoryEnum.BORDADO,
-              price: emb.price,
-              stockQty: 0
-            }))
-          }))
-        );
-      } else {
-        console.log('Buscando Produtos para:', term);
-        return this.productService.findAll().pipe(
-          map(products => {
-            const termLower = term.toLowerCase();
-            let filtered = products.filter(p =>
-              p.name.toLowerCase().includes(termLower) ||
-              (p.barcode && p.barcode.includes(term))
-            );
-
-            const catFilter = this.productCategoryFilter();
-            if (catFilter !== 'all') {
-              filtered = filtered.filter(p => p.categoryEnum === catFilter);
-            }
-
-            return {
-              content: filtered,
-              totalElements: filtered.length,
-              totalPages: Math.ceil(filtered.length / this.pageSize())
-            };
-          })
-        );
-      }
-    }),
-    takeUntil(this.destroy$)
-  ).subscribe({
-    next: (response) => {
-      console.log('Resultados encontrados:', response.content.length);
-      this.filteredProducts.set(response.content || []);
-      this.totalElements.set(response.totalElements || 0);
-      this.totalPages.set(response.totalPages || 1);
-      this.isLoading.set(false);
-    },
-    error: (err) => {
-      console.error('Erro na busca:', err);
-      this.isLoading.set(false);
-      this.filteredProducts.set([]);
-    }
-  });
-}
-
-showDetails(emb: any) {
-  this.selectedEmbroideryDetail.set(emb);
-  this.isDetailVisible.set(true);
-}
-
-closeDetails() {
-  this.isDetailVisible.set(false);
-  setTimeout(() => this.selectedEmbroideryDetail.set(null), 200);
-}
-
-preparePayment() {
-  if (!this.selectedCustomer()) {
-    this.showWarning('Por favor, selecione um cliente antes de finalizar a venda.');
-    return;
+  showWarning(message: string) {
+    this.snackBar.open(message, 'Fechar', { duration: 4000 });
   }
 
-  if (this.cart().length === 0) {
-    this.snackBar.open('Carrinho vazio!', 'Aviso', { duration: 2000 });
-    return;
+  pageRangeEnd(): number {
+  return Math.min((this.currentPage() + 1) * this.pageSize(), this.totalElements());
   }
-
-  const sessionId = this.activeSessionId();
-
-  if (!sessionId) {
-    this.showError('Nenhum caixa aberto encontrado!');
-    return;
-  }
-
-  const saleRequest: SaleRequest = {
-  customerId: this.selectedCustomer()?.id || null,
-  cashSessionId: sessionId,
-  discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
-  discountValue: this.discountInput(),
-  items: this.cart().map(item => ({
-    productId: item.isEmbroidery ? null : item.product.id,
-    embroideryId: item.isEmbroidery ? item.product.id : null,
-    quantity: item.quantity,
-    manualPrice: item.isEmbroidery ? item.product.price : null,
-    description: item.product.name
-  }))
-};
-
-  this.isLoading.set(true);
-
-  const action$ = this.activeSaleId()
-    ? this.saleService.update(this.activeSaleId()!, saleRequest)
-    : this.saleService.createSale(saleRequest);
-
-  action$.pipe(take(1)).subscribe({
-    next: (sale: SaleResponse) => {
-      const data: PaymentData = {
-        saleId: sale.id,
-        totalAmount: this.totalWithDiscount(),
-        customerName: this.selectedCustomer()?.name || 'Consumidor Final',
-        items: this.cart().map(i => ({
-          name: i.product.name,
-          qty: i.quantity,
-          price: i.product.price,
-          total: i.total
-        }))
-      };
-
-      this.paymentData.set(data);
-      this.isPaymentModalOpen.set(true);
-      this.isLoading.set(false);
-    },
-    error: (err) => {
-      this.isLoading.set(false);
-      this.snackBar.open('Erro ao gerar venda para pagamento.', 'Erro');
-    }
-  });
-}
-
-handlePaymentProcessed(response: any) {
-  this.snackBar.open('Venda finalizada e paga com sucesso!', 'OK', { duration: 3000 });
-  this.resetPDV();
-  this.isPaymentModalOpen.set(false);
-}
-
-closePaymentModal() {
-  this.isPaymentModalOpen.set(false);
-  this.paymentData.set(null);
-}
-
-isOverdue(dateStr: string): boolean {
-  if (!dateStr) return false;
-  const delivery = new Date(dateStr + 'T00:00:00');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return delivery < today;
-}
-
-showSuccess(message: string) {
-  this.snackBar.open(message, 'Fechar', {
-    duration: 3000,
-    panelClass: ['success-snackbar'],
-    horizontalPosition: 'end',
-    verticalPosition: 'top'
-  });
-}
-
-showError(message: string) {
-  this.snackBar.open(message, 'Fechar', {
-    duration: 5000,
-    panelClass: ['error-snackbar']
-  });
-}
-
-showWarning(message: string) {
-  this.snackBar.open(message, 'Fechar', {
-    duration: 4000
-  });
-}
 }

@@ -41,12 +41,12 @@
         <span class="icon">🧵</span>
         <span class="menu-text">Bordados</span>
       </li>
-      <li routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
+      <li *ngIf="authService.isAdmin()" routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
         <span class="icon">💵</span>
         <span class="menu-text">Caixa</span>
       </li>
 
-      <li routerLink="/payment" routerLinkActive="active" (click)="toggleMobile()">
+      <li *ngIf="authService.isAdmin()" routerLink="/payment" routerLinkActive="active" (click)="toggleMobile()">
         <span class="icon">⚙️</span>
         <span class="menu-text" *ngIf="!collapsed()">Configurações</span>
       </li>

@@ -12,53 +12,40 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EmbroideryModal } from '../../shared/models/embroidery/embroidery-modal';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { BrlCurrencyPipe } from '../../shared/pipes/brl-currency.pipe';
+
+export type StatusFilter = 'PENDING' | 'PROCESSING' | 'COMPLETED';
 
 @Component({
   selector: 'app-embroidery',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatTableModule,
-    MatPaginatorModule, MatInputModule, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    CommonModule, ReactiveFormsModule, MatDialogModule, MatTableModule,
+    MatPaginatorModule, MatInputModule, MatButtonModule, MatIconModule,
+    MatTooltipModule, BrlCurrencyPipe
+  ],
   templateUrl: './embroidery.html',
   styleUrls: ['./embroidery.scss']
 })
 export class Embroidery implements OnInit {
 
-  displayedColumns: string[] = ['id', 'customerName', 'description', 'price', 'deliveryDate', 'actions'];
-  dataSource = signal<EmbroideryResponse[]>([]);
-
+  dataSource    = signal<EmbroideryResponse[]>([]);
   searchControl = new FormControl('');
   totalElements = signal(0);
-  currentPage = signal(0);
-  pageSize = signal(5);
-  loading = signal(false);
-  searchTerm = signal('');
+  currentPage   = signal(0);
+  pageSize      = signal(5);
+  loading       = signal(false);
+  activeFilter  = signal<StatusFilter>('PENDING');
 
   totalPages = computed(() => Math.ceil(this.totalElements() / this.pageSize()));
 
-  pendingCount = signal(0);
-  completedCount = signal(0);
-  showDelivered = signal<boolean>(false);
-
-  overdueCount = signal(0);
-  todayCount = signal(0);
-  totalRevenue = signal(0);
-  pendingRevenue = signal(0);
-
-  filteredDataSource = computed(() => {
-    const list = [...this.dataSource()];
-    const isFilteringDelivered = this.showDelivered();
-
-    if (isFilteringDelivered) {
-      return list.filter(item => item.status === 'COMPLETED');
-    } else {
-      return list
-        .filter(item => item.status === 'PENDING')
-        .sort((a, b) => {
-          if (!a.deliveryDate || !b.deliveryDate) return 0;
-          return new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime();
-        });
-    }
-  });
+  pendingCount    = signal(0);
+  processingCount = signal(0);
+  completedCount  = signal(0);
+  overdueCount    = signal(0);
+  todayCount      = signal(0);
+  totalRevenue    = signal(0);
+  pendingRevenue  = signal(0);
 
   constructor(
     private dialog: MatDialog,
@@ -81,20 +68,16 @@ export class Embroidery implements OnInit {
 
   loadData() {
     this.loading.set(true);
+    const term   = (this.searchControl.value || '').trim();
+    const status = this.activeFilter();
 
-    const term = (this.searchControl.value || '').trim();
-    const page = this.currentPage();
-    const size = this.pageSize();
-    const status = this.showDelivered() ? 'COMPLETED' : 'PENDING';
-
-    this.embroideryService.search(term, status, page, size).subscribe({
+    this.embroideryService.search(term, status, this.currentPage(), this.pageSize()).subscribe({
       next: (response) => {
         this.dataSource.set([...response.content]);
         this.totalElements.set(response.totalElements);
         this.loading.set(false);
       },
-      error: (err) => {
-        console.error('Erro na requisição API:', err);
+      error: () => {
         this.showError('Falha ao conectar com o servidor.');
         this.loading.set(false);
         this.dataSource.set([]);
@@ -103,22 +86,22 @@ export class Embroidery implements OnInit {
   }
 
   loadGlobalMetrics() {
-  this.embroideryService.getMetrics().subscribe({
-    next: (metrics) => {
-      console.log('📊 Métricas carregadas em', metrics.lastUpdated);
-      this.pendingCount.set(metrics.totalPending);
-      this.completedCount.set(metrics.totalCompleted);
-      this.overdueCount.set(metrics.overdueCount);
-      this.todayCount.set(metrics.todayDeliveries);
-      this.totalRevenue.set(metrics.totalRevenue);
-      this.pendingRevenue.set(metrics.pendingRevenue);
-    },
-    error: (err) => console.error('Erro ao carregar métricas:', err)
-  });
-}
+    this.embroideryService.getMetrics().subscribe({
+      next: (metrics) => {
+        this.pendingCount.set(metrics.totalPending);
+        this.processingCount.set(metrics.totalProcessing);
+        this.completedCount.set(metrics.totalCompleted);
+        this.overdueCount.set(metrics.overdueCount);
+        this.todayCount.set(metrics.todayDeliveries);
+        this.totalRevenue.set(metrics.totalRevenue);
+        this.pendingRevenue.set(metrics.pendingRevenue);
+      },
+      error: (err) => console.error('Erro ao carregar métricas:', err)
+    });
+  }
 
-  toggleDelivered() {
-    this.showDelivered.update(v => !v);
+  setFilter(status: StatusFilter) {
+    this.activeFilter.set(status);
     this.currentPage.set(0);
     this.loadData();
   }
@@ -129,38 +112,64 @@ export class Embroidery implements OnInit {
     this.loadData();
   }
 
-  calculateMetrics(items: EmbroideryResponse[]) {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const pageOverdue = items.filter(i => this.isOverdue(i.deliveryDate)).length;
-    const pageToday = items.filter(i => i.deliveryDate === todayStr).length;
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages()) {
+      this.currentPage.set(page);
+      this.loadData();
+    }
+  }
 
-    console.log('📄 Métricas da página atual:', {
-      atrasados: pageOverdue,
-      hoje: pageToday,
-      total: items.length
+  changePage(delta: number): void { this.goToPage(this.currentPage() + delta); }
+
+  getStartIndex(): number {
+    return this.totalElements() === 0 ? 0 : (this.currentPage() * this.pageSize()) + 1;
+  }
+
+  getEndIndex(): number {
+    const last = (this.currentPage() + 1) * this.pageSize();
+    return last > this.totalElements() ? this.totalElements() : last;
+  }
+
+  markAsReady(embroidery: EmbroideryResponse) {
+    if (!confirm(`Confirmar que o bordado #${embroidery.id} está pronto para entrega?`)) return;
+
+    this.loading.set(true);
+    this.embroideryService.updateStatus(embroidery.id, 'PROCESSING').subscribe({
+      next: () => {
+        this.showSuccess(`Bordado #${embroidery.id} marcado como Pronto!`);
+        this.loadData();
+        this.loadGlobalMetrics();
+      },
+      error: () => {
+        this.showError('Erro ao atualizar status.');
+        this.loading.set(false);
+      }
     });
   }
 
-  isOverdue(dateStr: string): boolean {
-    if (!dateStr) return false;
-    const delivery = new Date(dateStr + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return delivery < today;
+  markAsDelivered(embroidery: EmbroideryResponse) {
+    if (!confirm(`Confirmar entrega do bordado #${embroidery.id} para ${embroidery.customerName}?`)) return;
+
+    this.loading.set(true);
+    this.embroideryService.updateStatus(embroidery.id, 'COMPLETED').subscribe({
+      next: () => {
+        this.showSuccess(`Bordado #${embroidery.id} entregue com sucesso!`);
+        this.loadData();
+        this.loadGlobalMetrics();
+      },
+      error: () => {
+        this.showError('Erro ao atualizar status.');
+        this.loading.set(false);
+      }
+    });
   }
 
   openModal(data?: EmbroideryResponse): void {
     const dialogRef = this.dialog.open(EmbroideryModal, {
-      width: '600px',
-      data: data,
-      disableClose: true
+      width: '600px', data, disableClose: true
     });
-
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadData();
-        this.loadGlobalMetrics();
-      }
+      if (result) { this.loadData(); this.loadGlobalMetrics(); }
     });
   }
 
@@ -174,69 +183,55 @@ export class Embroidery implements OnInit {
     }
   }
 
-  goToPage(page: number): void {
-    if (page >= 0 && page < this.totalPages()) {
-      this.currentPage.set(page);
-      this.loadData();
-    }
+  isOverdue(dateStr: string): boolean {
+    if (!dateStr) return false;
+    const delivery = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return delivery < today;
   }
 
-  changePage(delta: number): void {
-    const nextPage = this.currentPage() + delta;
-    if (nextPage >= 0 && nextPage < this.totalPages()) {
-      this.goToPage(nextPage);
-    }
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      PENDING:    'Pendente',
+      PROCESSING: 'Pronto',
+      COMPLETED:  'Entregue',
+      CANCELED:   'Cancelado'
+    };
+    return map[status] ?? status;
   }
 
-  getStartIndex(): number {
-    return this.totalElements() === 0 ? 0 : (this.currentPage() * this.pageSize()) + 1;
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      PENDING:    'status-pending',
+      PROCESSING: 'status-processing',
+      COMPLETED:  'status-completed',
+      CANCELED:   'status-canceled'
+    };
+    return map[status] ?? '';
   }
 
-  getEndIndex(): number {
-    const last = (this.currentPage() + 1) * this.pageSize();
-    return last > this.totalElements() ? this.totalElements() : last;
-  }
-
-  markAsDelivered(embroidery: EmbroideryResponse) {
-    const confirmacao = confirm(`Confirmar entrega do bordado #${embroidery.id} para ${embroidery.customerName}?`);
-
-    if (confirmacao) {
-      this.loading.set(true);
-      this.embroideryService.updateStatus(embroidery.id, 'COMPLETED').subscribe({
-        next: () => {
-          this.showSuccess('Status atualizado para Entregue!');
-          this.loadData();
-          this.loadGlobalMetrics();
-        },
-        error: (err) => {
-          console.error('❌ ERRO:', err);
-          this.showError('Erro ao atualizar status');
-          this.loading.set(false);
-        }
-      });
-    }
-  }
-
-  refreshMetrics() {
-    this.loadGlobalMetrics();
-    this.showSuccess('Métricas atualizadas!');
+  getStatusIcon(status: string): string {
+    const map: Record<string, string> = {
+      PENDING:    'schedule',
+      PROCESSING: 'done',
+      COMPLETED:  'check_circle',
+      CANCELED:   'cancel'
+    };
+    return map[status] ?? 'help';
   }
 
   private showSuccess(message: string): void {
     this.snackBar.open(message, 'OK', {
-      duration: 3000,
-      panelClass: ['success-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
+      duration: 3000, panelClass: ['success-snackbar'],
+      horizontalPosition: 'end', verticalPosition: 'top'
     });
   }
 
   private showError(message: string): void {
     this.snackBar.open(message, 'Fechar', {
-      duration: 4000,
-      panelClass: ['error-snackbar'],
-      horizontalPosition: 'end',
-      verticalPosition: 'top'
+      duration: 4000, panelClass: ['error-snackbar'],
+      horizontalPosition: 'end', verticalPosition: 'top'
     });
   }
 }

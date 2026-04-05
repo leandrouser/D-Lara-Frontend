@@ -760,3 +760,59 @@
   animation: spin 1s linear infinite;
   font-size: 1.5rem;
 }
+
+// Paginação
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px 8px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  flex-wrap: wrap;
+
+  .page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    color: inherit;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-color, #6366f1);
+      color: #fff;
+      border-color: var(--primary-color, #6366f1);
+    }
+
+    &.active {
+      background: var(--primary-color, #6366f1);
+      color: #fff;
+      border-color: var(--primary-color, #6366f1);
+      font-weight: 600;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    &.nav mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .page-info {
+    margin-left: auto;
+    font-size: 12px;
+    opacity: 0.6;
+  }
+}

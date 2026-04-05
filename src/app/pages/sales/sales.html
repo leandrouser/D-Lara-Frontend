@@ -74,25 +74,25 @@
         </div>
 
         <div class="filter-buttons">
-          <button 
+          <button
             [class.active]="statusFilter() === 'all'"
             (click)="setFilter('all')">
             <mat-icon>apps</mat-icon>
             Todos ({{ salesStats().totalSales }})
           </button>
-          <button 
+          <button
             [class.active]="statusFilter() === 'paid'"
             (click)="setFilter('paid')">
             <mat-icon>check_circle</mat-icon>
             Pagas ({{ salesStats().paidSales }})
           </button>
-          <button 
+          <button
             [class.active]="statusFilter() === 'pending'"
             (click)="setFilter('pending')">
             <mat-icon>schedule</mat-icon>
             Pendentes ({{ salesStats().pendingSales }})
           </button>
-          <button 
+          <button
             [class.active]="statusFilter() === 'cancelled'"
             (click)="setFilter('cancelled')">
             <mat-icon>cancel</mat-icon>
@@ -117,15 +117,15 @@
 <div class="pagination-controls bottom">
   <div class="pagination-info">
     <span>
-      Mostrando {{ paginationInfo().start }} - {{ paginationInfo().end }} 
+      Mostrando {{ paginationInfo().start }} - {{ paginationInfo().end }}
       de {{ paginationInfo().total }} registros
     </span>
   </div>
-  
+
   <div class="pagination-actions">
     <div class="pagination-buttons">
-      <button 
-        class="pagination-btn" 
+      <button
+        class="pagination-btn"
         (click)="prevPage()"
         [disabled]="currentPage() === 0"> <mat-icon>chevron_left</mat-icon>
         <span class="text">Anterior</span>
@@ -136,9 +136,9 @@
           @if (page === '...') {
             <span class="page-ellipsis">...</span>
           } @else {
-            <button 
+            <button
               class="page-number"
-              [class.active]="currentPage() === ($any(page) - 1)" 
+              [class.active]="currentPage() === ($any(page) - 1)"
               (click)="goToPage($any(page))">
               {{ page }}
             </button>
@@ -146,8 +146,8 @@
         }
       </div>
 
-      <button 
-        class="pagination-btn" 
+      <button
+        class="pagination-btn"
         (click)="nextPage()"
         [disabled]="currentPage() >= totalPages() - 1"> <span class="text">Próxima</span>
         <mat-icon>chevron_right</mat-icon>
@@ -174,7 +174,7 @@
                   Cliente
                 </th>
                 <th class="col-phone">
-                  <mat-icon>customerPhone</mat-icon>
+                  <mat-icon>phone</mat-icon>
                   Telefone
                 </th>
                 <th class="col-quantity">
@@ -224,14 +224,14 @@
                 </tr>
               } @else if (!error()) {
                 @for (sale of filteredSales(); track sale.id) {
-                  <tr [class.paid]="sale.status === 'PAID'" 
-                      [class.pending]="sale.status === 'PENDING'"
-                      [class.cancelled]="sale.status === 'CANCELLED'">
+                  <tr [class.paid]="sale.saleStatus === 'PAID'"
+                      [class.pending]="sale.saleStatus === 'PENDING'"
+                      [class.cancelled]="sale.saleStatus === 'CANCELLED'">
                     <td class="sale-id">
                       <strong>#{{ sale.id }}</strong>
                     </td>
                     <td class="sale-date">
-                      {{ formatDate(sale.createdAt) }}
+                      {{ formatDate(sale.dateSale) }}
                     </td>
                     <td class="sale-customer">
                       <div class="customer-info">
@@ -254,14 +254,14 @@
                       <strong>{{ formatCurrency(sale.total) }}</strong>
                     </td>
                     <td class="sale-status">
-                      <span [class]="'status-tag ' + getStatusClass(sale.status)">
-                        <mat-icon class="status-icon">{{ getStatusIcon(sale.status) }}</mat-icon>
-                        {{ getStatusText(sale.status) }}
+                      <span [class]="'status-tag ' + getStatusClass(sale.saleStatus)">
+                        <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
+                        {{ getStatusText(sale.saleStatus) }}
                       </span>
                     </td>
                     <td class="sale-actions">
-                      <button 
-                        class="mini-btn view-btn" 
+                      <button
+                        class="mini-btn view-btn"
                         title="Visualizar detalhes"
                         (click)="viewSaleDetails(sale)">
                         <mat-icon>visibility</mat-icon>
@@ -280,8 +280,8 @@
 </div>
 
 @if (showModal() && selectedSale()) {
-  <app-sale-details-modal 
-    [sale]="selectedSale()!" 
+  <app-sale-details-modal
+    [sale]="selectedSale()!"
     (onClose)="closeModal()">
   </app-sale-details-modal>
 }
