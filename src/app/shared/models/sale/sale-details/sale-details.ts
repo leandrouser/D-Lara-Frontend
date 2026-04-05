@@ -26,15 +26,15 @@ export class SaleDetailsModalComponent {
   }
 
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
     }).format(value || 0);
   }
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '---';
-    return new Intl.DateTimeFormat('pt-BR', { 
+    return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
@@ -48,19 +48,19 @@ export class SaleDetailsModalComponent {
   }
 
   getStatusIcon(status: string): string {
-    const icons: any = { 
-      'PAID': 'check_circle', 
-      'PENDING': 'schedule', 
-      'CANCELLED': 'cancel' 
+    const icons: any = {
+      'PAID': 'check_circle',
+      'PENDING': 'schedule',
+      'CANCELLED': 'cancel'
     };
     return icons[status] || 'help_outline';
   }
 
   getStatusText(status: string): string {
-    const texts: any = { 
-      'PAID': 'Paga', 
-      'PENDING': 'Pendente', 
-      'CANCELLED': 'Cancelada' 
+    const texts: any = {
+      'PAID': 'Paga',
+      'PENDING': 'Pendente',
+      'CANCELLED': 'Cancelada'
     };
     return texts[status] || status;
   }
@@ -86,6 +86,6 @@ export class SaleDetailsModalComponent {
   }
 
   getItemTotal(item: SaleItemResponse): number {
-    return item.quantity * item.unitPrice;
+    return item.quantity * item.productPrice;
   }
 }

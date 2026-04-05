@@ -1,0 +1,98 @@
+<h2 mat-dialog-title>
+  <mat-icon>add_box</mat-icon>
+  Cadastrar Novo Produto
+</h2>
+
+<div class="next-id-badge">
+  <mat-icon>tag</mat-icon>
+  <span *ngIf="loadingNextId()">Buscando ID...</span>
+  <span *ngIf="!loadingNextId() && nextProductId()">
+    Código do produto <strong>#{{ nextProductId() }}</strong>
+  </span>
+  <span class="id-error" *ngIf="!loadingNextId() && !nextProductId()">
+    <mat-icon>warning</mat-icon> ID indisponível
+  </span>
+</div>
+
+<mat-dialog-content>
+  <form #productForm="ngForm">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome do Produto *</mat-label>
+      <input matInput name="name" [(ngModel)]="form.name" required>
+    </mat-form-field>
+
+    <!-- ── Código de Barras com validação ── -->
+    <mat-form-field appearance="outline" [class.barcode-duplicate]="barcodeExists()">
+      <mat-label>Código de Barras</mat-label>
+      <input
+        matInput
+        name="barcode"
+        [(ngModel)]="form.barcode"
+        (input)="onBarcodeInput($event)"
+        maxlength="13"
+        autocomplete="off">
+      <mat-hint align="end">{{ form.barcode.length || 0 }}/13</mat-hint>
+      <mat-icon matSuffix *ngIf="checkingBarcode()">autorenew</mat-icon>
+      <mat-icon matSuffix class="icon-error"
+        *ngIf="!checkingBarcode() && barcodeExists()">error</mat-icon>
+      <mat-icon matSuffix class="icon-success"
+        *ngIf="!checkingBarcode() && barcodeChecked() && !barcodeExists() && form.barcode">check_circle</mat-icon>
+    </mat-form-field>
+
+    <!-- ── Feedback do barcode ── -->
+    <div class="barcode-feedback">
+      <span class="checking" *ngIf="checkingBarcode()">
+        <mat-icon>autorenew</mat-icon> Verificando código...
+      </span>
+      <span class="error" *ngIf="!checkingBarcode() && barcodeExists()">
+        <mat-icon>error</mat-icon>
+        Este código já está cadastrado. Verifique o produto existente antes de continuar.
+      </span>
+      <span class="success"
+        *ngIf="!checkingBarcode() && barcodeChecked() && !barcodeExists() && form.barcode">
+        <mat-icon>check_circle</mat-icon> Código disponível
+      </span>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descrição</mat-label>
+      <textarea matInput name="description" [(ngModel)]="form.description"></textarea>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Preço (R$) *</mat-label>
+        <input matInput name="price" type="number" [(ngModel)]="form.price" required min="0">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Estoque Inicial (un) *</mat-label>
+        <input matInput name="stockQty" type="number" [(ngModel)]="form.stockQty">
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Categoria *</mat-label>
+      <mat-select name="categoryEnum" [(ngModel)]="form.categoryEnum" required>
+        <mat-option *ngFor="let category of categories" [value]="category">
+          {{ category }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close()">Sair</button>
+
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="productForm.invalid || isSaving || barcodeExists() || checkingBarcode()"
+    (click)="submitForm(productForm)">
+    <mat-icon>{{ isSaving ? 'hourglass_empty' : 'save' }}</mat-icon>
+    {{ isSaving ? 'Salvando...' : 'Salvar e Continuar' }}
+  </button>
+</mat-dialog-actions>

@@ -1,14 +1,15 @@
-import { Component, inject, ViewChild } from '@angular/core'; // Adicionei ViewChild
+import { Component, inject, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms'; // Adicionei NgForm
+import { FormsModule, NgForm } from '@angular/forms';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar'; // Opcional: para avisar que salvou
-import { CategoryEnum, ProductRequest, ProductService } from '../../../core/service/product.service'; // Importe seu serviço
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CategoryEnum, ProductRequest, ProductService } from '../../../core/service/product.service';
+import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-product-create-dialog',
@@ -22,121 +23,131 @@ import { CategoryEnum, ProductRequest, ProductService } from '../../../core/serv
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
   ],
-  template: `
-    <h2 mat-dialog-title>
-      <mat-icon>add_box</mat-icon> Cadastrar Novo Produto
-    </h2>
-    <mat-dialog-content>
-      <form #productForm="ngForm">
-
-        <mat-form-field appearance="outline">
-          <mat-label>Nome do Produto *</mat-label>
-          <input matInput name="name" [(ngModel)]="form.name" required>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Código de Barras</mat-label>
-          <input matInput name="barcode" [(ngModel)]="form.barcode">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Descrição</mat-label>
-          <textarea matInput name="description" [(ngModel)]="form.description"></textarea>
-        </mat-form-field>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Preço (R$) *</mat-label>
-            <input matInput name="price" type="number" [(ngModel)]="form.price" required min="0">
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Estoque Inicial (un) *</mat-label>
-            <input matInput name="stockQty" type="number" [(ngModel)]="form.stockQty">
-          </mat-form-field>
-        </div>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Categoria *</mat-label>
-          <mat-select name="categoryEnum" [(ngModel)]="form.categoryEnum" required>
-            <mat-option *ngFor="let category of categories" [value]="category">
-              {{ category }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-      </form>
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="dialogRef.close()">Sair</button>
-
-      <button
-        mat-raised-button
-        color="primary"
-        [disabled]="productForm.invalid || isSaving"
-        (click)="submitForm(productForm)"
-      >
-        <mat-icon>{{ isSaving ? 'hourglass_empty' : 'save' }}</mat-icon>
-        {{ isSaving ? 'Salvando...' : 'Salvar e Continuar' }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    mat-dialog-content { display: flex; flex-direction: column; gap: 10px; }
-    mat-form-field { width: 100%; margin-top: 10px; }
-    .form-row { display: flex; gap: 16px; }
-    .half-width { flex: 1; }
-    mat-dialog-title { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #3f51b5; }
-  `]
+  templateUrl: './product-modal.html',
+  styleUrls: ['./product-modal.scss'],
 })
-export class ProductCreateDialogComponent {
-  dialogRef = inject(MatDialogRef<ProductCreateDialogComponent>);
-  productService = inject(ProductService);
-  snackBar = inject(MatSnackBar);
+export class ProductCreateDialogComponent implements OnDestroy {
+  dialogRef       = inject(MatDialogRef<ProductCreateDialogComponent>);
+  productService  = inject(ProductService);
+  snackBar        = inject(MatSnackBar);
 
-  isSaving = false;
+  isSaving   = false;
   categories = Object.values(CategoryEnum);
 
-  form: ProductRequest = this.getInitialForm();
+  // ── Sinais ────────────────────────────────────────────────
+  barcodeExists   = signal(false);
+  barcodeChecked  = signal(false);
+  checkingBarcode = signal(false);
+  nextProductId   = signal<number | null>(null);
+  loadingNextId   = signal(true);
 
-  private getInitialForm(): ProductRequest {
-    return {
-      barcode: '',
-      name: '',
-      description: '',
-      price: 0,
-      stockQty: 0,
-      categoryEnum: CategoryEnum.CAMA
-    };
+  private barcodeSubject = new Subject<string>();
+  private destroy$       = new Subject<void>();
+
+  constructor() {
+    // ── Validação de barcode com debounce ─────────────────
+    this.barcodeSubject.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      switchMap(barcode => {
+        if (!barcode.trim()) {
+          this.barcodeExists.set(false);
+          this.barcodeChecked.set(false);
+          this.checkingBarcode.set(false);
+          return [];
+        }
+        this.checkingBarcode.set(true);
+        return this.productService.checkBarcodeExists(barcode);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(exists => {
+      this.barcodeExists.set(exists);
+      this.barcodeChecked.set(true);
+      this.checkingBarcode.set(false);
+    });
+
+    // ── Próximo ID ────────────────────────────────────────
+    this.loadNextId();
+  }
+
+  // ── Métodos públicos ──────────────────────────────────────
+  onBarcodeInput(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.barcodeChecked.set(false);
+    this.barcodeExists.set(false);
+    this.barcodeSubject.next(value);
   }
 
   submitForm(ngForm: NgForm) {
-    if (ngForm.invalid) return;
+    if (ngForm.invalid || this.barcodeExists()) return;
 
     this.isSaving = true;
 
     const dataToSend: ProductRequest = {
       ...this.form,
-      price: Number(this.form.price),
-      stockQty: Number(this.form.stockQty)
+      price:    Number(this.form.price),
+      stockQty: Number(this.form.stockQty),
     };
 
     this.productService.create(dataToSend).subscribe({
-      next: (res) => {
-        this.snackBar.open('Produto cadastrado com sucesso!', 'OK', { duration: 3000 });
-        this.isSaving = false;
+      next: () => {
+        this.snackBar.open('Produto cadastrado com sucesso!', 'OK', {
+          duration: 3000,
+          verticalPosition: 'top',
+          horizontalPosition: 'center',
+          panelClass: ['snack-success'],
+        });
 
+        this.isSaving = false;
+        this.barcodeExists.set(false);
+        this.barcodeChecked.set(false);
         ngForm.resetForm();
         this.form = this.getInitialForm();
+        this.loadNextId();
+
+        setTimeout(() => {
+          document.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
+        }, 100);
       },
       error: (err) => {
         console.error(err);
-        this.snackBar.open('Erro ao salvar produto.', 'Fechar', { duration: 5000 });
+        this.snackBar.open('Erro ao salvar produto.', 'Fechar', {
+          duration: 5000,
+          verticalPosition: 'top',
+          horizontalPosition: 'center',
+          panelClass: ['snack-error'],
+        });
         this.isSaving = false;
-      }
+      },
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Internos ──────────────────────────────────────────────
+  form: ProductRequest = this.getInitialForm();
+
+  private getInitialForm(): ProductRequest {
+    return {
+      barcode:      '',
+      name:         '',
+      description:  '',
+      price:        0,
+      stockQty:     0,
+      categoryEnum: CategoryEnum.CAMA,
+    };
+  }
+
+  private loadNextId() {
+    this.loadingNextId.set(true);
+    this.productService.getNextProductId().subscribe(id => {
+      this.nextProductId.set(id);
+      this.loadingNextId.set(false);
     });
   }
 }

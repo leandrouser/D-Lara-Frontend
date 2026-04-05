@@ -26,6 +26,7 @@ interface ClosingResult {
   totalUserReported: number;
   totalDiscrepancy: number;
   status: string;
+  totalDiscounts: number;
 }
 
 @Component({
@@ -126,7 +127,8 @@ submitClosing(): void {
     })),
     totalSistema: result.totalSystemExpected,
     totalInformado: result.totalUserReported,
-    totalDiferenca: result.totalDiscrepancy
+    totalDiferenca: result.totalDiscrepancy,
+    totalDescontos: result.totalDiscounts ?? 0
   };
 
   this.printService.imprimirFechamento(fechamento).subscribe({

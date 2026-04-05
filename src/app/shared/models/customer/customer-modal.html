@@ -9,6 +9,7 @@
     </div>
 
     <form (ngSubmit)="saveCustomer()" class="modal-form">
+
       <div class="form-group">
         <label for="name">Nome *</label>
         <input
@@ -19,24 +20,43 @@
           name="name"
           placeholder="Digite o nome do cliente"
           required
-          [disabled]="isLoading()"
-        >
+          [disabled]="isLoading()">
       </div>
 
+      <!-- ── Telefone com validação ── -->
       <div class="form-group">
         <label for="phone">Telefone *</label>
-        <input
-          type="tel"
-          id="phone"
-          [ngModel]="formData().phone"
-          (ngModelChange)="updateField('phone', $event)"
-          name="phone"
-          placeholder="(00) 00000-0000"
-          maxlength="15"
-          required
-          [disabled]="isLoading()"
-        >
-        <small class="hint">Formato: (00) 00000-0000</small>
+        <div class="phone-input-wrapper">
+          <input
+            type="tel"
+            id="phone"
+            [ngModel]="formData().phone"
+            (ngModelChange)="updateField('phone', $event)"
+            name="phone"
+            placeholder="(00) 00000-0000"
+            maxlength="15"
+            required
+            [disabled]="isLoading()"
+            [class.input-error]="phoneExists()"
+            [class.input-success]="phoneChecked() && !phoneExists() && formData().phone">
+          <mat-icon class="phone-icon checking" *ngIf="checkingPhone()">autorenew</mat-icon>
+          <mat-icon class="phone-icon error"    *ngIf="!checkingPhone() && phoneExists()">error</mat-icon>
+          <mat-icon class="phone-icon success"  *ngIf="!checkingPhone() && phoneChecked() && !phoneExists() && formData().phone">check_circle</mat-icon>
+        </div>
+
+        <!-- feedback -->
+        <div class="phone-feedback">
+          <span class="checking" *ngIf="checkingPhone()">
+            <mat-icon>autorenew</mat-icon> Verificando telefone...
+          </span>
+          <span class="error" *ngIf="!checkingPhone() && phoneExists()">
+            <mat-icon>error</mat-icon> Este telefone já está cadastrado.
+          </span>
+          <span class="success" *ngIf="!checkingPhone() && phoneChecked() && !phoneExists() && formData().phone">
+            <mat-icon>check_circle</mat-icon> Telefone disponível
+          </span>
+          <small class="hint" *ngIf="!checkingPhone() && !phoneChecked()">Formato: (00) 00000-0000</small>
+        </div>
       </div>
 
       <div class="form-group checkbox-group">
@@ -46,8 +66,7 @@
             [ngModel]="formData().active"
             (ngModelChange)="updateField('active', $event)"
             name="active"
-            [disabled]="isLoading()"
-          >
+            [disabled]="isLoading()">
           <span class="label-text">Cliente ativo</span>
         </label>
       </div>
@@ -58,11 +77,7 @@
       </div>
 
       <div class="modal-footer">
-        <button
-          type="button"
-          class="btn-cancel"
-          (click)="closeModal()"
-          [disabled]="isLoading()">
+        <button type="button" class="btn-cancel" (click)="closeModal()" [disabled]="isLoading()">
           Sair
         </button>
 
@@ -70,18 +85,17 @@
           type="submit"
           class="btn-save"
           [class.loading]="isLoading()"
-          [disabled]="!formData().name || !formData().phone || isLoading()">
-
+          [disabled]="!formData().name || !formData().phone || isLoading() || phoneExists() || checkingPhone()">
           <ng-container *ngIf="!isLoading()">
             <mat-icon>person_add</mat-icon>
             Salvar e Continuar
           </ng-container>
-
           <ng-container *ngIf="isLoading()">
-             <span class="spinner"></span> Salvando...
+            <span class="spinner"></span> Salvando...
           </ng-container>
         </button>
       </div>
+
     </form>
   </div>
 </div>

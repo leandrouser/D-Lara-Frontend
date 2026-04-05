@@ -202,9 +202,9 @@
   animation: shake 0.4s ease-in-out;
 
   mat-icon { font-size: 20px; width: 20px; height: 20px; }
-}
+  }
 
-.spinner {
+  .spinner {
   width: 18px;
   height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -213,29 +213,85 @@
   animation: spin 0.8s linear infinite;
   display: inline-block;
   margin-right: 8px;
-}
+  }
 
-@keyframes spin {
+  @keyframes spin {
   to { transform: rotate(360deg); }
-}
+  }
 
-@keyframes shake {
+  @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
-}
+  }
 
-/* Garante que o botão de salvar tenha um feedback visual de carregamento */
-.btn-save.loading {
+  .btn-save.loading {
   background: #60a5fa !important;
   display: flex;
   align-items: center;
   justify-content: center;
-}
+  }
 
-/* Estilo do SnackBar de Sucesso (opcional, pode ser global) */
-.success-snackbar {
+  .success-snackbar {
   background: #059669 !important;
   color: white !important;
+  }
 }
+
+.phone-input-wrapper {
+  position: relative;
+
+  input {
+    padding-right: 36px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 36px 10px 5px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    &::placeholder { color: #9ca3af; }
+  }
+
+  .phone-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+
+    &.checking { color: #64748b; animation: spin 1s linear infinite; }
+    &.error    { color: #dc2626; }
+    &.success  { color: #15803d; }
+  }
+}
+
+.input-error   { border-color: #dc2626 !important; box-shadow: 0 0 0 3px rgba(220,38,38,0.1) !important; }
+.input-success { border-color: #15803d !important; box-shadow: 0 0 0 3px rgba(21,128,61,0.1) !important; }
+
+.phone-feedback {
+  margin-top: 4px;
+  min-height: 18px;
+  font-size: 12px;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+
+  .checking { color: #64748b; }
+  .error    { color: #dc2626; font-weight: 500; }
+  .success  { color: #15803d; }
+  .hint     { color: #9ca3af; }
 }

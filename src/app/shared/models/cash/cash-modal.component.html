@@ -159,6 +159,15 @@
                [class.positive]="closingResult.totalDiscrepancy > 0"
                [class.negative]="closingResult.totalDiscrepancy < 0">
             <span class="label">Diferença Total:</span>
+            <div class="summary-item discount-total">
+              <span class="label">
+                <mat-icon style="font-size:16px;vertical-align:middle;margin-right:4px;">local_offer</mat-icon>
+                Total Descontos:
+              </span>
+              <strong class="value" style="color: #f59e0b;">
+                - {{ closingResult.totalDiscounts | currency:'BRL' }}
+              </strong>
+            </div>
             <strong class="value">
               <mat-icon *ngIf="closingResult.totalDiscrepancy > 0">arrow_upward</mat-icon>
               <mat-icon *ngIf="closingResult.totalDiscrepancy < 0">arrow_downward</mat-icon>

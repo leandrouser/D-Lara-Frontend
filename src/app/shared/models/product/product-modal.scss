@@ -1,0 +1,90 @@
+// ── Dialog Title ───────────────────────────────────────────
+mat-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #3f51b5;
+}
+
+// ── Next ID Badge ──────────────────────────────────────────
+.next-id-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  margin: 4px 24px 0;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+  strong   { font-weight: 700; }
+
+  .id-error {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #dc2626;
+  }
+}
+
+// ── Form ───────────────────────────────────────────────────
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+mat-form-field {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.half-width { flex: 1; }
+
+// ── Barcode feedback ───────────────────────────────────────
+.barcode-feedback {
+  margin: -6px 0 4px;
+  min-height: 20px;
+  font-size: 12px;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  }
+
+  .checking { color: #64748b; }
+  .error    { color: #dc2626; font-weight: 500; }
+  .success  { color: #15803d; }
+}
+
+.barcode-duplicate ::ng-deep .mat-mdc-text-field-wrapper {
+  border-color: #dc2626 !important;
+}
+
+.icon-error   { color: #dc2626; }
+.icon-success { color: #15803d; }
+
+// ── Snackbar ───────────────────────────────────────────────
+::ng-deep .mat-mdc-snack-bar-container {
+  &.snack-success .mdc-snackbar__surface {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &.snack-error .mdc-snackbar__surface {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
