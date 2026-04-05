@@ -65,6 +65,7 @@ export interface CloseSessionResponse {
   totalUserReported: number;
   totalDiscrepancy: number;
   status: 'CLOSED';
+  totalDiscounts: number;
 }
 
 export interface Transaction {

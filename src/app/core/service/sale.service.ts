@@ -11,7 +11,7 @@ export enum DiscountType {
 
 export enum SaleStatus {
   PENDING = 'PENDING',
-  COMPLETED = 'PAID',
+  PAID = 'PAID',
   CANCELLED = 'CANCELLED'
 }
 
@@ -26,11 +26,11 @@ export interface SaleItemRequest {
 export interface SaleItemResponse {
   productId?: number;
   embroideryId?: number;
-  unitPrice: number;
+  productPrice: number;
   description?: string;
   manualPrice?: number;
   quantity: number;
-  subtotal: number;
+  total: number;
   category?: CategoryEnum;
   productName: string;
   productBarcode: string;
@@ -59,7 +59,7 @@ export interface CustomerResponse {
   cpf: string;
   city: string;
   active: boolean;
-  createdAt?: string;
+  dateSale: string;
   updatedAt?: string;
 }
 
@@ -67,13 +67,13 @@ export interface SaleResponse {
   id: number;
   customerName: string;
   customerPhone?: string;
-  status: SaleStatus;
+  saleStatus: SaleStatus;
   subtotal: number;
   discountType: DiscountType;
   discountValue: number;
   discountAmount: number;
   total: number;
-  createdAt: string;
+  dateSale: string;
   items: SaleItemResponse[];
 }
 

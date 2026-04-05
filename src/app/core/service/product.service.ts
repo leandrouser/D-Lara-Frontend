@@ -147,4 +147,19 @@ export class ProductService {
   return this.http.get<ProductResponse[]>(`${this.apiUrl}/top-selling`);
 }
 
+checkBarcodeExists(barcode: string): Observable<boolean> {
+  return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, {
+    params: new HttpParams().set('search', barcode.trim()).set('size', '5')
+  }).pipe(
+    map(page => page.content.some(p => p.barcode === barcode.trim())),
+    catchError(() => of(false))
+  );
+}
+
+getNextProductId(): Observable<number> {
+  return this.http.get<number>(`${this.apiUrl}/next-id`).pipe(
+    catchError(() => of(null as any))
+  );
+}
+
 }
