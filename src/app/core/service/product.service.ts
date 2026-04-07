@@ -66,7 +66,7 @@ export interface Page<T> {
 })
 export class ProductService {
   private http = inject(HttpClient);
-  private apiUrl=`${environment.apiUrl}/products`;
+  private apiUrl = `${environment.apiUrl}/products`;
 
   create(data: ProductRequest): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(this.apiUrl, data);
@@ -84,26 +84,40 @@ export class ProductService {
     return this.http.get<ProductResponse[]>(this.apiUrl);
   }
 
-   searchPaged(
-  term: string,
-  page: number = 0,
-  size: number = 10,
-  category: string = ''
-): Observable<Page<ProductResponse>> {
+  /**
+   * Busca paginada server-side.
+   * O backend aceita um único parâmetro `search` que cobre:
+   * nome, barcode, categoria e ID numérico.
+   * Quando um filtro de categoria está ativo, ele é enviado como `search`
+   * (o backend faz o match por nome da categoria via findByNameBarcodeCategoryContainingIgnoreCase).
+   * Quando há termo de busca E categoria, o termo tem prioridade — comportamento consistente
+   * com o que o backend suporta num único campo.
+   */
+  searchPaged(
+    term: string,
+    page: number = 0,
+    size: number = 10,
+    category: string = ''
+  ): Observable<Page<ProductResponse>> {
 
-  let params = new HttpParams()
-    .set('search', term)
-    .set('page', page.toString())
-    .set('size', size.toString());
+    // Define qual valor enviar como `search`:
+    // se há um termo digitado, ele tem prioridade;
+    // caso contrário, filtra pela categoria selecionada.
+    const searchValue = term.trim() !== ''
+      ? term.trim()
+      : (category && category !== 'all' ? category.trim() : '');
 
-  if (category && category !== 'all') {
-    params = params.set('search', category.trim());
-  }
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
 
-  return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, { params })
-    .pipe(
-      map(springPage => {
-        const mappedPage: Page<ProductResponse> = {
+    if (searchValue !== '') {
+      params = params.set('search', searchValue);
+    }
+
+    return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, { params })
+      .pipe(
+        map(springPage => ({
           content: springPage.content,
           totalElements: springPage.totalElements,
           totalPages: springPage.totalPages,
@@ -111,25 +125,23 @@ export class ProductService {
           number: springPage.number,
           first: springPage.first,
           last: springPage.last
-        };
-        return mappedPage;
-      })
-    );
-}
-
-  searchProducts(search: string = ''): Observable<ProductResponse[]> {
-  let params = new HttpParams().set('size', '50');
-
-  if (search.trim()) {
-    params = params.set('search', search.trim());
+        }))
+      );
   }
 
-  return this.http.get<Page<ProductResponse>>(`${this.apiUrl}/search`, { params })
-    .pipe(
-      map(page => page.content),
-      catchError(() => of([]))
-    );
-}
+  searchProducts(search: string = ''): Observable<ProductResponse[]> {
+    let params = new HttpParams().set('size', '50');
+
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
+
+    return this.http.get<Page<ProductResponse>>(`${this.apiUrl}/search`, { params })
+      .pipe(
+        map(page => page.content),
+        catchError(() => of([]))
+      );
+  }
 
   getLowStockCount(): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/low-stock/count`);
@@ -144,22 +156,21 @@ export class ProductService {
   }
 
   getTopSellingProducts(): Observable<ProductResponse[]> {
-  return this.http.get<ProductResponse[]>(`${this.apiUrl}/top-selling`);
-}
+    return this.http.get<ProductResponse[]>(`${this.apiUrl}/top-selling`);
+  }
 
-checkBarcodeExists(barcode: string): Observable<boolean> {
-  return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, {
-    params: new HttpParams().set('search', barcode.trim()).set('size', '5')
-  }).pipe(
-    map(page => page.content.some(p => p.barcode === barcode.trim())),
-    catchError(() => of(false))
-  );
-}
+  checkBarcodeExists(barcode: string): Observable<boolean> {
+    return this.http.get<SpringPage<ProductResponse>>(`${this.apiUrl}/search`, {
+      params: new HttpParams().set('search', barcode.trim()).set('size', '5')
+    }).pipe(
+      map(page => page.content.some(p => p.barcode === barcode.trim())),
+      catchError(() => of(false))
+    );
+  }
 
-getNextProductId(): Observable<number> {
-  return this.http.get<number>(`${this.apiUrl}/next-id`).pipe(
-    catchError(() => of(null as any))
-  );
-}
-
+  getNextProductId(): Observable<number> {
+    return this.http.get<number>(`${this.apiUrl}/next-id`).pipe(
+      catchError(() => of(null as any))
+    );
+  }
 }
