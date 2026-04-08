@@ -36,7 +36,6 @@ export class ProductCreateDialogComponent implements OnDestroy {
   isSaving   = false;
   categories = Object.values(CategoryEnum);
 
-  // ── Sinais ────────────────────────────────────────────────
   barcodeExists   = signal(false);
   barcodeChecked  = signal(false);
   checkingBarcode = signal(false);
@@ -47,7 +46,6 @@ export class ProductCreateDialogComponent implements OnDestroy {
   private destroy$       = new Subject<void>();
 
   constructor() {
-    // ── Validação de barcode com debounce ─────────────────
     this.barcodeSubject.pipe(
       debounceTime(600),
       distinctUntilChanged(),
@@ -68,11 +66,9 @@ export class ProductCreateDialogComponent implements OnDestroy {
       this.checkingBarcode.set(false);
     });
 
-    // ── Próximo ID ────────────────────────────────────────
     this.loadNextId();
   }
 
-  // ── Métodos públicos ──────────────────────────────────────
   onBarcodeInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     this.barcodeChecked.set(false);
@@ -129,7 +125,7 @@ export class ProductCreateDialogComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
-  // ── Internos ──────────────────────────────────────────────
+
   form: ProductRequest = this.getInitialForm();
 
   private getInitialForm(): ProductRequest {

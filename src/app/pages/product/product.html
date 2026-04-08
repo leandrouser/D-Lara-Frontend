@@ -61,6 +61,7 @@
     </div>
   </div>
 
+  <!-- ── Search & Filters ─────────────────────────────────── -->
   <div class="search-filters">
     <div class="search-box">
       <div class="input-box">
@@ -99,25 +100,40 @@
     </div>
 
     <div class="new-product-btn">
-      <button (click)="openModal()" class="btn-primary">
+      <button
+        (click)="toggleBulkEdit()"
+        [class.btn-warning]="isBulkEditing()"
+        class="btn-secondary">
+        <mat-icon>{{ isBulkEditing() ? 'close' : 'edit_note' }}</mat-icon>
+        {{ isBulkEditing() ? 'Cancelar Massa' : 'Edição em Massa' }}
+      </button>
+
+      <button *ngIf="isBulkEditing()" (click)="saveAllChanges()" class="btn-success">
+        <mat-icon>save</mat-icon> Salvar Tudo
+      </button>
+
+      <button *ngIf="!isBulkEditing()" (click)="openModal()" class="btn-primary">
         <mat-icon>add</mat-icon>
         Novo Produto
       </button>
     </div>
   </div>
 
+  <!-- ── Loading indicator ────────────────────────────────── -->
   <div *ngIf="isLoading()" class="search-loading">
     <mat-icon class="loading-spinner">refresh</mat-icon>
     Buscando produtos...
   </div>
 
+  <!-- ── Search info bar ──────────────────────────────────── -->
   <div *ngIf="search().trim().length >= 1 && !isLoading()" class="search-info">
     <mat-icon>search</mat-icon>
     Buscando por: "{{ search() }}"
     <span>• {{ totalItems() }} resultado(s)</span>
   </div>
 
-  <div class="table-container">
+  <!-- ── Table container ──────────────────────────────────── -->
+  <div class="table-container" [class.is-bulk-editing]="isBulkEditing()">
     <div class="table-wrapper">
       <table>
         <thead>
@@ -134,6 +150,7 @@
         </thead>
 
         <tbody>
+          <!-- Loading state -->
           <tr *ngIf="isLoading() && filteredList().length === 0">
             <td colspan="8" class="loading">
               <mat-icon class="loading-spinner">refresh</mat-icon>
@@ -141,6 +158,7 @@
             </td>
           </tr>
 
+          <!-- Empty state -->
           <tr *ngIf="!isLoading() && filteredList().length === 0">
             <td colspan="8" class="empty">
               <mat-icon>search_off</mat-icon>
@@ -153,57 +171,96 @@
             </td>
           </tr>
 
+          <!-- Product rows -->
           <tr *ngFor="let p of filteredList()"
               [class.low-stock]="isLowStock(p)"
-              [class.editing]="editingProductId() === p.id">
+              [class.editing]="editingProductId() === p.id || isBulkEditing()">
 
+            <!-- ID -->
             <td class="product-id" data-label="ID">{{ p.id }}</td>
-            <td class="barcode" data-label="Código">{{ p.barcode || 'N/A' }}</td>
 
+            <!-- Código -->
+            <td class="barcode" data-label="Código">
+              <input
+                *ngIf="editingProductId() === p.id || isBulkEditing()"
+                type="text"
+                [ngModel]="isBulkEditing() ? p.barcode : editForm().barcode"
+                (ngModelChange)="isBulkEditing() ? (p.barcode = $event) : updateEditFormField('barcode', $event)"
+                class="table-input">
+              <span *ngIf="editingProductId() !== p.id && !isBulkEditing()">{{ p.barcode || 'N/A' }}</span>
+            </td>
+
+            <!-- Nome -->
             <td class="product-name" data-label="Nome">
-              <span class="name-text">{{ p.name }}</span>
+              <input
+                *ngIf="editingProductId() === p.id || isBulkEditing()"
+                type="text"
+                [ngModel]="isBulkEditing() ? p.name : editForm().name"
+                (ngModelChange)="isBulkEditing() ? (p.name = $event) : updateEditFormField('name', $event)"
+                class="table-input">
+              <span *ngIf="editingProductId() !== p.id && !isBulkEditing()" class="name-text">{{ p.name }}</span>
             </td>
 
+            <!-- Descrição -->
             <td class="product-description" data-label="Descrição">
-              <span class="description-text">{{ p.description || 'Sem descrição' }}</span>
+              <input
+                *ngIf="editingProductId() === p.id || isBulkEditing()"
+                type="text"
+                [ngModel]="isBulkEditing() ? p.description : editForm().description"
+                (ngModelChange)="isBulkEditing() ? (p.description = $event) : updateEditFormField('description', $event)"
+                class="table-input">
+              <span *ngIf="editingProductId() !== p.id && !isBulkEditing()" class="description-text">
+                {{ p.description || 'Sem descrição' }}
+              </span>
             </td>
 
+            <!-- Categoria -->
             <td class="product-category" data-label="Categoria">
-              <span class="category-tag" [class]="p.categoryEnum.toLowerCase()">
+              <select
+                *ngIf="editingProductId() === p.id || isBulkEditing()"
+                [ngModel]="isBulkEditing() ? p.categoryEnum : editForm().categoryEnum"
+                (ngModelChange)="isBulkEditing() ? (p.categoryEnum = $event) : updateEditFormField('categoryEnum', $event)"
+                class="table-input">
+                <option *ngFor="let cat of categoriesWithoutBordado" [value]="cat">
+                  {{ getCategoryLabel(cat) }}
+                </option>
+              </select>
+              <span
+                *ngIf="editingProductId() !== p.id && !isBulkEditing()"
+                class="category-tag"
+                [class]="p.categoryEnum.toLowerCase()">
                 <mat-icon>{{ getCategoryIcon(p.categoryEnum) }}</mat-icon>
                 {{ getCategoryLabel(p.categoryEnum) }}
               </span>
             </td>
 
+            <!-- Preço -->
             <td class="price-cell" data-label="Preço">
-              <div *ngIf="editingProductId() === p.id" class="edit-input">
+              <div *ngIf="editingProductId() === p.id || isBulkEditing()" class="edit-input">
+                <span class="currency">R$</span>
                 <input
                   type="number"
-                  [(ngModel)]="editForm().price"
-                  placeholder="0.00"
                   step="0.01"
-                  min="0"
-                  class="price-input"
-                >
-                <span class="currency">R$</span>
+                  class="table-input price-input"
+                  [ngModel]="isBulkEditing() ? p.price : editForm().price"
+                  (ngModelChange)="isBulkEditing() ? (p.price = $event) : updateEditFormField('price', $event)">
               </div>
-              <span *ngIf="editingProductId() !== p.id" class="price">
+              <span *ngIf="editingProductId() !== p.id && !isBulkEditing()" class="price">
                 R$ {{ p.price | number:'1.2-2' }}
               </span>
             </td>
 
+            <!-- Estoque -->
             <td class="stock-cell" data-label="Estoque">
-              <div *ngIf="editingProductId() === p.id" class="edit-input">
+              <div *ngIf="editingProductId() === p.id || isBulkEditing()" class="edit-input">
                 <input
                   type="number"
-                  [(ngModel)]="editForm().stockQty"
-                  placeholder="0"
-                  min="0"
-                  class="stock-input"
-                >
+                  class="table-input stock-input"
+                  [ngModel]="isBulkEditing() ? p.stockQty : editForm().stockQty"
+                  (ngModelChange)="isBulkEditing() ? (p.stockQty = $event) : updateEditFormField('stockQty', $event)">
                 <span class="unit">un</span>
               </div>
-              <span *ngIf="editingProductId() !== p.id" class="stock-display">
+              <span *ngIf="editingProductId() !== p.id && !isBulkEditing()" class="stock-display">
                 <span class="tag"
                       [class.active]="!isLowStock(p) && p.stockQty > 0"
                       [class.inactive]="p.stockQty === 0"
@@ -214,23 +271,23 @@
               </span>
             </td>
 
-            <td class="actions-col">
+            <!-- Ações -->
+            <td class="actions-col" data-label="Ações">
               <div *ngIf="editingProductId() === p.id" class="edit-actions">
                 <button class="mini-btn success" (click)="saveEditing()">
-                  <mat-icon>check</mat-icon>
-                  OK
+                  <mat-icon>check</mat-icon> OK
                 </button>
                 <button class="mini-btn cancel" (click)="cancelEditing()">
                   <mat-icon>close</mat-icon>
-                  Cancelar
                 </button>
               </div>
-              <button *ngIf="editingProductId() !== p.id"
-                      class="mini-btn"
-                      (click)="startEditing(p)"
-                      [disabled]="editingProductId() !== null">
-                <mat-icon>edit</mat-icon>
-                Editar
+
+              <button
+                *ngIf="editingProductId() !== p.id && !isBulkEditing()"
+                class="mini-btn"
+                (click)="startEditing(p)"
+                [disabled]="editingProductId() !== null">
+                <mat-icon>edit</mat-icon> Editar
               </button>
             </td>
           </tr>
@@ -238,50 +295,75 @@
       </table>
     </div>
 
+    <!-- ── Mobile card list (renderizado via CSS @media, mesmo DOM) ── -->
+    <!-- Os data-label nos <td> já são suficientes para o CSS card mode -->
+
     <div class="pagination-container" *ngIf="totalItems() > 0">
-      <div class="pagination-info">
-        <span>
-          Mostrando {{ getStartIndex() }} - {{ getEndIndex() }} de {{ totalItems() }} produtos
-        </span>
-      </div>
 
-      <div class="pagination-controls">
-        <div class="items-per-page">
-          <label>Itens por página:</label>
-          <select [value]="itemsPerPage()" (change)="changeItemsPerPage($event)">
-            <option value="5">5</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
-          </select>
-        </div>
+    <!-- Info -->
+    <div class="pagination-info">
+      Mostrando <strong>{{ getStartIndex() }}</strong>
+      até <strong>{{ getEndIndex() }}</strong>
+      de <strong>{{ totalItems() }}</strong>
+    </div>
 
-        <div class="pagination-buttons">
-          <button
-            class="pagination-btn"
-            (click)="previousPage()"
-            [disabled]="currentPage() === 1">
-            <mat-icon>chevron_left</mat-icon>
-          </button>
+    <!-- Controles -->
+    <div class="pagination-controls">
 
-          <ng-container *ngFor="let page of visiblePages()">
-            <button
-              *ngIf="page !== -1"
-              class="pagination-btn page-number"
-              [class.active]="page === currentPage()"
-              (click)="goToPage(page)">
-              {{ page }}
-            </button>
-            <span *ngIf="page === -1" class="pagination-ellipsis">...</span>
-          </ng-container>
+      <!-- Botão anterior -->
+      <button
+        (click)="previousPage()"
+        [disabled]="currentPage() === 1">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
 
-          <button
-            class="pagination-btn"
-            (click)="nextPage()"
-            [disabled]="currentPage() === totalPages()">
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
+      <!-- Primeira página -->
+      <button
+        *ngIf="visiblePages().includes(-1)"
+        (click)="goToPage(1)">
+        1
+      </button>
+
+      <!-- Reticências início -->
+      <span *ngIf="visiblePages()[0] === -1">...</span>
+
+      <!-- Páginas dinâmicas -->
+      <ng-container *ngFor="let page of visiblePages()">
+        <button
+          *ngIf="page !== -1"
+          (click)="goToPage(page)"
+          [class.active]="currentPage() === page">
+          {{ page }}
+        </button>
+      </ng-container>
+
+      <!-- Reticências fim -->
+      <span *ngIf="visiblePages()[visiblePages().length - 1] === -1">...</span>
+
+      <!-- Última página -->
+      <button
+        *ngIf="visiblePages().includes(-1)"
+        (click)="goToPage(totalPages())">
+        {{ totalPages() }}
+      </button>
+
+      <!-- Próxima -->
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage() === totalPages()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+
+      <!-- Itens por página -->
+      <div class="pagination-size">
+        <label>Itens por página:</label>
+        <select (change)="changeItemsPerPage($event)">
+          <option [selected]="itemsPerPage() === 5">5</option>
+          <option [selected]="itemsPerPage() === 10">10</option>
+          <option [selected]="itemsPerPage() === 20">20</option>
+          <option [selected]="itemsPerPage() === 50">50</option>
+        </select>
       </div>
     </div>
   </div>

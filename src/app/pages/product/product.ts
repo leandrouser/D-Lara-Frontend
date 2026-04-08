@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { debounceTime, distinctUntilChanged, Subject, switchMap, tap } from 'rxjs';
-import { ProductService, ProductResponse, CategoryEnum, ProductRequest, Page } from '../../core/service/product.service';
+import { ProductService, ProductResponse, CategoryEnum, ProductRequest, Page, ProductBulkRequest } from '../../core/service/product.service';
 import { ProductCreateDialogComponent } from '../../shared/models/product/product-modal';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
@@ -28,34 +28,34 @@ export class Product implements OnInit {
   private api = inject(ProductService);
   private dialog = inject(MatDialog);
 
-  // --- Estado da página server-side ---
+  isBulkEditing = signal(false);
   serverPage = signal<Page<ProductResponse> | null>(null);
   state = signal<ProductState>('idle');
   errorMessage = signal('');
 
-  // --- Filtros ---
   search = signal('');
   categoryFilter = signal<CategoryEnum | 'all'>('all');
   lowStockFilter = signal(false);
 
-  // --- Edição inline ---
   editingProductId = signal<number | null>(null);
-  editForm = signal({ price: 0, stockQty: 0 });
+  editForm = signal({
+    barcode: '',
+    name: '',
+    description: '',
+    categoryEnum: CategoryEnum.CAMA,
+    price: 0,
+    stockQty: 0
+  });
 
-  // --- Paginação ---
   currentPage = signal(1);
   itemsPerPage = signal(10);
 
-  // --- Dados derivados da página server ---
   products = computed(() => this.serverPage()?.content ?? []);
   totalItems = computed(() => this.serverPage()?.totalElements ?? 0);
   totalPages = computed(() => this.serverPage()?.totalPages ?? 0);
 
-  // --- Cards de resumo (refletem o total real retornado pelo backend na busca atual) ---
   totalProducts = computed(() => this.totalItems());
 
-  // Os contadores de categoria e estoque são calculados sobre a página atual.
-  // Se o backend expuser um endpoint /products/stats, substitua por chamadas dedicadas.
   lowStockCount = computed(() => this.products().filter(p => this.isLowStock(p)).length);
   inStockCount  = computed(() => this.products().filter(p => !this.isLowStock(p) && p.stockQty > 0).length);
 
@@ -64,7 +64,6 @@ export class Product implements OnInit {
   banhoCount   = computed(() => this.products().filter(p => p.categoryEnum === CategoryEnum.BANHO).length);
   bordadoCount = computed(() => this.products().filter(p => p.categoryEnum === CategoryEnum.BORDADO).length);
 
-  // --- Páginas visíveis na barra de paginação ---
   visiblePages = computed(() => {
     const total = this.totalPages();
     const current = this.currentPage();
@@ -102,15 +101,14 @@ export class Product implements OnInit {
     this.loadPage();
   }
 
-  // --- Carregamento central (server-side) ---
   loadPage() {
     this.state.set('loading');
 
     const term     = this.search();
-    const page     = this.currentPage() - 1;   // backend é 0-based
+    const page     = this.currentPage() - 1;
     const size     = this.itemsPerPage();
     const category = this.lowStockFilter()
-      ? ''                                       // estoque baixo é filtro local pós-busca
+      ? ''
       : (this.categoryFilter() as string);
 
     this.api.searchPaged(term, page, size, category).subscribe({
@@ -154,7 +152,6 @@ export class Product implements OnInit {
     });
   }
 
-  // --- Filtros ---
   applyCategoryFilter(category: CategoryEnum | 'all') {
     this.lowStockFilter.set(false);
     this.categoryFilter.set(category);
@@ -163,14 +160,12 @@ export class Product implements OnInit {
   }
 
   applyLowStockFilter() {
-    // Estoque baixo: busca sem filtro e aplica filtro local na exibição
     this.lowStockFilter.set(true);
     this.categoryFilter.set('all');
     this.currentPage.set(1);
     this.loadPage();
   }
 
-  // filteredList mantém compatibilidade com o template para o filtro de estoque baixo local
   filteredList = computed(() => {
     const isLowStockActive = this.lowStockFilter();
     if (!isLowStockActive) return this.products();
@@ -183,7 +178,6 @@ export class Product implements OnInit {
     this.searchSubject.next(value);
   }
 
-  // --- Paginação ---
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
@@ -221,7 +215,6 @@ export class Product implements OnInit {
     return Math.min(this.currentPage() * this.itemsPerPage(), this.totalItems());
   }
 
-  // --- Modal de criação ---
   openModal() {
     const dialogRef = this.dialog.open(ProductCreateDialogComponent, {
       width: '550px',
@@ -262,15 +255,28 @@ export class Product implements OnInit {
     });
   }
 
-  // --- Edição inline ---
   startEditing(product: ProductResponse) {
     this.editingProductId.set(product.id);
-    this.editForm.set({ price: product.price, stockQty: product.stockQty });
-  }
+    this.editForm.set({
+      barcode: product.barcode || '',
+      name: product.name,
+      description: product.description || '',
+      categoryEnum: product.categoryEnum,
+      price: product.price,
+      stockQty: product.stockQty
+    });
+   }
 
   cancelEditing() {
     this.editingProductId.set(null);
-    this.editForm.set({ price: 0, stockQty: 0 });
+    this.editForm.set({
+      barcode: '',
+      name: '',
+      description: '',
+      categoryEnum: CategoryEnum.CAMA,
+      price: 0,
+      stockQty: 0
+    });
   }
 
   saveEditing() {
@@ -279,12 +285,13 @@ export class Product implements OnInit {
 
     const formData = this.editForm();
 
-    if (formData.price < 0) {
-      alert('Por favor, informe um preço válido');
+    // Validações básicas
+    if (!formData.name.trim()) {
+      alert('O nome do produto é obrigatório');
       return;
     }
-    if (formData.stockQty < 0) {
-      alert('Por favor, informe uma quantidade válida');
+    if (formData.price < 0 || formData.stockQty < 0) {
+      alert('Valores não podem ser negativos');
       return;
     }
 
@@ -292,10 +299,10 @@ export class Product implements OnInit {
     if (!currentProduct) return;
 
     const updateData: ProductRequest = {
-      barcode: currentProduct.barcode,
-      name: currentProduct.name,
-      description: currentProduct.description,
-      categoryEnum: currentProduct.categoryEnum,
+      barcode: formData.barcode,
+      name: formData.name,
+      description: formData.description,
+      categoryEnum: formData.categoryEnum,
       price: Number(formData.price),
       stockQty: Number(formData.stockQty)
     };
@@ -304,7 +311,7 @@ export class Product implements OnInit {
       next: () => {
         this.cancelEditing();
         alert('Produto atualizado com sucesso!');
-        this.loadPage();   // recarrega para refletir os dados atualizados
+        this.loadPage();
       },
       error: err => {
         alert('Erro ao atualizar produto');
@@ -313,7 +320,6 @@ export class Product implements OnInit {
     });
   }
 
-  // --- Helpers de exibição ---
   isLowStock(product: ProductResponse): boolean {
     return product.stockQty < 5;
   }
@@ -343,4 +349,47 @@ export class Product implements OnInit {
     };
     return icons[category] || 'category';
   }
+
+  toggleBulkEdit() {
+  if (this.isBulkEditing()) {
+    this.cancelEditing(); // Limpa estados se estiver cancelando
+  }
+  this.isBulkEditing.set(!this.isBulkEditing());
+}
+
+// 3. Método para salvar todos os produtos da página atual
+saveAllChanges() {
+  this.state.set('loading');
+
+  // Mapeia os produtos da tela para o formato que o backend espera
+  const updates: ProductBulkRequest[] = this.products().map(p => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    stockQty: p.stockQty,
+    barcode: p.barcode,
+    categoryEnum: p.categoryEnum
+  }));
+
+  this.api.updateBulk(updates).subscribe({
+    next: () => {
+      alert('Todos os produtos foram atualizados!');
+      this.isBulkEditing.set(false);
+      this.loadPage();
+    },
+    error: (err) => {
+      this.state.set('error');
+      alert('Erro ao atualizar em massa.');
+      console.error(err);
+    }
+  });
+  }
+
+  updateEditFormField(field: string, value: any) {
+  this.editForm.update(prev => ({
+    ...prev,
+    [field]: value
+  }));
+}
 }

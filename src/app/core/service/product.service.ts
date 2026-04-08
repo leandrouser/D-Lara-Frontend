@@ -11,6 +11,10 @@ export enum CategoryEnum {
   BORDADO = 'BORDADO',
 }
 
+export interface ProductBulkRequest extends ProductRequest {
+  id: number;
+}
+
 export interface ProductRequest {
   barcode: string;
   name: string;
@@ -76,6 +80,10 @@ export class ProductService {
     return this.http.put<ProductResponse>(`${this.apiUrl}/${id}`, data);
   }
 
+  updateBulk(products: ProductBulkRequest[]): Observable<ProductResponse[]> {
+  return this.http.put<ProductResponse[]>(`${this.apiUrl}/bulk-update`, products);
+  }
+
   findById(id: number): Observable<ProductResponse> {
     return this.http.get<ProductResponse>(`${this.apiUrl}/${id}`);
   }
@@ -84,15 +92,6 @@ export class ProductService {
     return this.http.get<ProductResponse[]>(this.apiUrl);
   }
 
-  /**
-   * Busca paginada server-side.
-   * O backend aceita um único parâmetro `search` que cobre:
-   * nome, barcode, categoria e ID numérico.
-   * Quando um filtro de categoria está ativo, ele é enviado como `search`
-   * (o backend faz o match por nome da categoria via findByNameBarcodeCategoryContainingIgnoreCase).
-   * Quando há termo de busca E categoria, o termo tem prioridade — comportamento consistente
-   * com o que o backend suporta num único campo.
-   */
   searchPaged(
     term: string,
     page: number = 0,
@@ -100,9 +99,6 @@ export class ProductService {
     category: string = ''
   ): Observable<Page<ProductResponse>> {
 
-    // Define qual valor enviar como `search`:
-    // se há um termo digitado, ele tem prioridade;
-    // caso contrário, filtra pela categoria selecionada.
     const searchValue = term.trim() !== ''
       ? term.trim()
       : (category && category !== 'all' ? category.trim() : '');
