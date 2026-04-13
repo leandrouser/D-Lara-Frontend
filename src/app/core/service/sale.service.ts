@@ -92,14 +92,6 @@ export class SaleService {
   private http = inject(HttpClient);
 private apiUrl = `${environment.apiUrl}/sales`;
 
-  getSales(page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
-  const params = new HttpParams()
-    .set('q', '')
-    .set('page', page.toString())
-    .set('size', size.toString());
-  return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, { params });
-}
-
   getSaleById(id: number): Observable<SaleResponse> {
     return this.http.get<SaleResponse>(`${this.apiUrl}/${id}`);
   }
@@ -110,12 +102,19 @@ private apiUrl = `${environment.apiUrl}/sales`;
 
   update(id: number, saleData: SaleRequest): Observable<SaleResponse> {
     return this.http.put<SaleResponse>(`${this.apiUrl}/${id}`, saleData);
-}
+  }
 
-searchSales(term: string, page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
-  return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, {
-    params: { q: term, page: page.toString(), size: size.toString() }
-  });
+  searchSales(term: string, page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
+  const params = new HttpParams()
+    .set('q', term)
+    .set('page', page.toString())
+    .set('size', size.toString());
+
+  return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, { params });
+  }
+
+  getSales(page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
+  return this.searchSales('', page, size);
 }
 
 }

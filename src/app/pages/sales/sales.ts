@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,18 +6,22 @@ import { SaleItemResponse, SaleResponse, SaleService } from '../../core/service/
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PhoneFormatPipe } from "../../shared/pipes/phone-pipe";
 import { SaleDetailsModalComponent } from '../../shared/models/sale/sale-details/sale-details';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-sales',
   standalone: true,
-  imports: [FormsModule, CommonModule, MatIconModule, PhoneFormatPipe,
-    SaleDetailsModalComponent],
+  imports: [FormsModule, CommonModule, MatIconModule, PhoneFormatPipe, SaleDetailsModalComponent],
   templateUrl: './sales.html',
   styleUrls: ['./sales.scss'],
 })
-export class Sales implements OnInit {
+export class Sales implements OnInit, OnDestroy {
   private saleService = inject(SaleService);
   private snackBar = inject(MatSnackBar);
+
+  // Subject para o debounce da busca
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   sales = signal<SaleResponse[]>([]);
   isLoading = signal(true);
@@ -39,31 +43,55 @@ export class Sales implements OnInit {
   });
 
   ngOnInit() {
+    // Escuta o searchSubject com debounce de 400ms
+    this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(term => {
+      this.search.set(term);
+      this.currentPage.set(0);
+      this.loadSales();
+    });
+
     this.loadSales();
   }
 
-  loadSales(): void {
-    this.isLoading.set(true);
-    this.error.set('');
-
-    this.saleService.getSales(this.currentPage(), this.itemsPerPage()).subscribe({
-      next: (page) => {
-        this.sales.set(page.content);
-        this.totalPages.set(page.totalPages);
-        this.totalElements.set(page.totalElements);
-        this.calculateSalesStats(page.content);
-      },
-      error: () => this.error.set('Erro ao carregar vendas. Verifique sua conexão.'),
-      complete: () => this.isLoading.set(false)
-    });
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
+
+  // Chamado pelo (input) do campo de busca no template
+  onSearchInput(term: string) {
+    this.searchSubject.next(term);
+  }
+
+  loadSales(): void {
+  this.isLoading.set(true);
+  this.error.set('');
+
+  const term = this.search().trim();
+
+  this.saleService.searchSales(term, this.currentPage(), this.itemsPerPage()).subscribe({
+    next: (page) => {
+      this.sales.set(page.content);
+      this.totalPages.set(page.totalPages);
+      this.totalElements.set(page.totalElements);
+      this.calculateSalesStats(page.content);
+    },
+    error: () => this.error.set('Erro ao carregar vendas. Verifique sua conexão.'),
+    complete: () => this.isLoading.set(false)
+  });
+  }
+
+  // --- resto dos métodos sem alteração ---
 
   private calculateSalesStats(sales: SaleResponse[]): void {
     const today = new Date().toISOString().split('T')[0];
     const stats = sales.reduce((acc, sale) => {
       const isToday = sale.dateSale.split('T')[0] === today;
       acc.totalSales++;
-
       if (sale.saleStatus === 'PAID') {
         acc.paidSales++;
         acc.totalAmount += sale.total;
@@ -93,7 +121,7 @@ export class Sales implements OnInit {
     const status = this.statusFilter();
     return this.sales().filter(sale => {
       const matchesSearch = sale.id.toString().includes(term) ||
-                           sale.customerName?.toLowerCase().includes(term);
+                            sale.customerName?.toLowerCase().includes(term);
       const matchesStatus = status === 'all' || sale.saleStatus?.toLowerCase() === status.toLowerCase();
       return matchesSearch && matchesStatus;
     });
@@ -112,8 +140,7 @@ export class Sales implements OnInit {
     if (!dateStr) return '---';
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-    })
-    .format(new Date(dateStr));
+    }).format(new Date(dateStr));
   }
 
   getStatusClass = (status: string) => status?.toLowerCase() || 'pending';
@@ -129,7 +156,6 @@ export class Sales implements OnInit {
   }
 
   getCustomerDisplayName = (sale: any) => sale.customerName || 'Consumidor Final';
-
   getCustomerPhone = (sale: any) => sale.customerPhone || '(00) 00000-0000';
 
   getTotalItems(items: SaleItemResponse[] | undefined): number {
@@ -167,7 +193,7 @@ export class Sales implements OnInit {
   getPageNumbers(): (number | string)[] {
     const total = this.totalPages();
     const current = this.currentPage() + 1;
-    if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
     if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
     if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
     return [1, '...', current - 1, current, current + 1, '...', total];
