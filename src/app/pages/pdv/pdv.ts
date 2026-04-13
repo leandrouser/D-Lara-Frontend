@@ -407,8 +407,10 @@ export class Pdv implements OnInit, OnDestroy {
             map(products => {
               const termLower = term.toLowerCase();
               let filtered = products.filter(p =>
-                p.name.toLowerCase().includes(termLower) || (p.barcode && p.barcode.includes(term))
-              );
+ 		p.name.toLowerCase().includes(termLower) ||
+  		(p.barcode && p.barcode.includes(term)) ||
+  		p.id?.toString().includes(term)
+		);
               const catFilter = this.productCategoryFilter();
               if (catFilter !== 'all') filtered = filtered.filter(p => p.categoryEnum === catFilter);
               return {
