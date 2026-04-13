@@ -28,7 +28,7 @@ export interface PaymentItemSummary {
 }
 
 export interface PaymentMethodSplit {
-  method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
+  method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX';
   amount: number;
   isChange: boolean;
 }
@@ -45,7 +45,8 @@ export class PaymentModal implements OnChanges, OnInit {
   private printService = inject(PrintService);
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
-  paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const;
+paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const;
+
 
   @Input() paymentData: PaymentData | null = null;
   @Input() isOpen: boolean = false;
@@ -253,14 +254,14 @@ export class PaymentModal implements OnChanges, OnInit {
   }
 
   getPaymentMethodText(method: string) {
-    const map: Record<string, string> = {
-      'DINHEIRO': 'Dinheiro',
-      'CARTAO_CREDITO': 'Crédito',
-      'CARTAO_DEBITO': 'Débito',
-      'PIX': 'PIX'
-    };
-    return map[method] || method;
-  }
+  const map: Record<string, string> = {
+    'DINHEIRO': 'Dinheiro',
+    'CARD_CREDIT': 'Crédito',
+    'CARTAO_DE_DEBITO': 'Débito',
+    'PIX': 'PIX'
+  };
+  return map[method] || method;
+}
 
   formatPrice(price: number) {
     return isNaN(price) ? 'R$ 0,00' :
