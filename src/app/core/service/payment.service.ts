@@ -38,8 +38,6 @@ export interface PaymentItemRequest {
 
 export interface PaymentMultiRequest {
   saleId: number;
-  totalAmount: number;
-  changeAmount: number;
   payments: PaymentItemRequest[];
 }
 

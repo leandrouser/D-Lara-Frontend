@@ -1,4 +1,7 @@
-import { Component, EventEmitter, Input, Output, inject, signal, computed, OnChanges, OnInit } from '@angular/core';
+import {
+  Component, EventEmitter, Input, Output,
+  inject, signal, computed, OnChanges, OnInit
+} from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -42,7 +45,7 @@ export class PaymentModal implements OnChanges, OnInit {
   private printService = inject(PrintService);
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
-paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const;
+  paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const;
 
   @Input() paymentData: PaymentData | null = null;
   @Input() isOpen: boolean = false;
@@ -51,8 +54,7 @@ paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const
   @Output() close = new EventEmitter<void>();
 
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
-
-currentPaymentMethod = signal<'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX'>('DINHEIRO');
+  currentPaymentMethod = signal<'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX'>('DINHEIRO');
   currentAmount = signal<number>(0);
 
   isProcessing = signal(false);
@@ -166,105 +168,99 @@ currentPaymentMethod = signal<'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 
   }
 
   async processPayments() {
-  if (!this.paymentData || this.isProcessing() || !this.isFullyPaid()) return;
+    if (!this.paymentData || this.isProcessing() || !this.isFullyPaid()) return;
 
-  this.isProcessing.set(true);
+    this.isProcessing.set(true);
 
-  const requestBody: PaymentMultiRequest = {
-    saleId: this.paymentData.saleId,
-    totalAmount: this.paymentData.totalAmount,
-    changeAmount: this.totalChange(),
-    payments: this.selectedPaymentMethods()
-      .filter(pm => !pm.isChange)
-      .map(pm => ({
-        paymentMethodId: this.getPaymentMethodId(pm.method),
-        amountPaid: pm.amount
-      }))
-  };
+    // Envia apenas saleId e payments — o backend busca o total da venda pelo saleId
+    const requestBody: PaymentMultiRequest = {
+      saleId: this.paymentData.saleId,
+      payments: this.selectedPaymentMethods()
+        .filter(pm => !pm.isChange)
+        .map(pm => ({
+          paymentMethodId: this.getPaymentMethodId(pm.method),
+          amountPaid: pm.amount
+        }))
+    };
 
-  try {
-    const response = await new Promise<any>((resolve, reject) => {
-      this.paymentService.processMultiPayment(requestBody).subscribe({ next: resolve, error: reject });
-    });
-
-    if (response.cupom) {
-  this.lastCupom.set(response.cupom);
-}
-
-    if (response.saleCompleted && response.cupom) {
-      this.printService.imprimir(response.cupom).subscribe({
-        next: () => console.log('✅ Cupom enviado para impressão'),
-        error: (err) => console.warn('⚠️ Erro ao imprimir cupom:', err)
+    try {
+      const response = await new Promise<any>((resolve, reject) => {
+        this.paymentService.processMultiPayment(requestBody).subscribe({ next: resolve, error: reject });
       });
+
+      if (response.cupom) {
+        this.lastCupom.set(response.cupom);
+      }
+
+      if (response.saleCompleted && response.cupom) {
+        this.printService.imprimir(response.cupom).subscribe({
+          next: () => console.log('Cupom enviado para impressão'),
+          error: (err) => console.warn('Erro ao imprimir cupom:', err)
+        });
+      }
+
+      this.paymentProcessed.emit(response);
+      this.paymentSuccess.set(response);
+      setTimeout(() => this.closeModal(), 2000);
+
+    } catch (e) {
+      console.error('Erro ao processar pagamento múltiplo:', e);
+      alert('Erro ao processar pagamento.');
+    } finally {
+      this.isProcessing.set(false);
     }
-
-    this.paymentProcessed.emit(response);
-    this.paymentSuccess.set(response);
-    setTimeout(() => this.closeModal(), 2000);
-
-  } catch (e) {
-    console.error('Erro ao processar pagamento múltiplo:', e);
-    alert('Erro ao processar pagamento.');
-  } finally {
-    this.isProcessing.set(false);
   }
-}
 
   canProcessPayment = computed(() => {
-  if (this.isProcessing()) return false;
-  if (!this.isFullyPaid()) return false;
+    if (this.isProcessing()) return false;
+    if (!this.isFullyPaid()) return false;
 
-  const hasCashWithChange = this.selectedPaymentMethods().some(pm =>
-    pm.method !== 'DINHEIRO' && pm.isChange
-  );
+    const hasCashWithChange = this.selectedPaymentMethods().some(pm =>
+      pm.method !== 'DINHEIRO' && pm.isChange
+    );
 
-  return !hasCashWithChange;
-});
+    return !hasCashWithChange;
+  });
 
-validatePayments(): { valid: boolean; error?: string } {
-  const methods = this.selectedPaymentMethods()
-    .filter(pm => !pm.isChange)
-    .map(pm => pm.method);
+  validatePayments(): { valid: boolean; error?: string } {
+    const methods = this.selectedPaymentMethods()
+      .filter(pm => !pm.isChange)
+      .map(pm => pm.method);
 
-  const hasDuplicates = methods.length !== new Set(methods).size;
-  if (hasDuplicates) {
-    return { valid: false, error: 'Não é permitido adicionar o mesmo método de pagamento duas vezes' };
+    const hasDuplicates = methods.length !== new Set(methods).size;
+    if (hasDuplicates) {
+      return { valid: false, error: 'Não é permitido adicionar o mesmo método de pagamento duas vezes' };
+    }
+
+    const nonCashMethods = this.selectedPaymentMethods()
+      .filter(pm => pm.method !== 'DINHEIRO' && pm.isChange);
+
+    if (nonCashMethods.length > 0) {
+      return { valid: false, error: 'Apenas dinheiro pode gerar troco' };
+    }
+
+    return { valid: true };
   }
 
-  const nonCashMethods = this.selectedPaymentMethods()
-    .filter(pm => pm.method !== 'DINHEIRO' && pm.isChange);
-
-  if (nonCashMethods.length > 0) {
-    return { valid: false, error: 'Apenas dinheiro pode gerar troco' };
-  }
-
-  return { valid: true };
-}
-
+  // Busca o ID real do banco em vez de um mapa hardcoded
   private getPaymentMethodId(methodCode: string): number {
-  const manualMap: Record<string, number> = {
-    'DINHEIRO': 1,
-    'PIX': 2,
-    'CARTAO_CREDITO': 3,
-    'CARTAO_DEBITO': 4
-  };
-  const id = manualMap[methodCode];
-  if (!id) {
-    console.error(`Método ${methodCode} não mapeado no frontend!`);
-    return 1;
+    const method = this.dbPaymentMethods().find(m => m.code === methodCode);
+    if (!method) {
+      console.error(`Método ${methodCode} não encontrado no banco!`);
+      return 0;
+    }
+    return method.id;
   }
-  return id;
-}
 
   getPaymentMethodText(method: string) {
-  const map: Record<string, string> = {
-    'DINHEIRO': 'Dinheiro',
-    'CARTAO_CREDITO': 'Crédito',
-    'CARTAO_DEBITO': 'Débito',
-    'PIX': 'PIX'
-  };
-  return map[method] || method;
-}
+    const map: Record<string, string> = {
+      'DINHEIRO': 'Dinheiro',
+      'CARTAO_CREDITO': 'Crédito',
+      'CARTAO_DEBITO': 'Débito',
+      'PIX': 'PIX'
+    };
+    return map[method] || method;
+  }
 
   formatPrice(price: number) {
     return isNaN(price) ? 'R$ 0,00' :
@@ -277,14 +273,14 @@ validatePayments(): { valid: boolean; error?: string } {
   }
 
   reimprimir() {
-  const cupom = this.lastCupom();
-  if (!cupom) return;
+    const cupom = this.lastCupom();
+    if (!cupom) return;
 
-  this.printService.imprimir(cupom).subscribe({
-    next: () => console.log('✅ Reimpressão enviada'),
-    error: (err) => console.warn('⚠️ Erro ao reimprimir:', err)
-  });
-}
+    this.printService.imprimir(cupom).subscribe({
+      next: () => console.log('Reimpressão enviada'),
+      error: (err) => console.warn('Erro ao reimprimir:', err)
+    });
+  }
 
   private resetForm() {
     this.selectedPaymentMethods.set([]);

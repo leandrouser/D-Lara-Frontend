@@ -44,7 +44,7 @@ export interface FechamentoCaixaRequest {
 @Injectable({ providedIn: 'root' })
 export class PrintService {
   private http = inject(HttpClient);
-  private printAgentUrl = 'http://192.168.0.105:9100';
+  private printAgentUrl = 'http://192.168.0.110:9100';
 
   imprimir(cupom: CupomRequest): Observable<string> {
     return this.http.post(`${this.printAgentUrl}/imprimir`, cupom, { responseType: 'text' });
