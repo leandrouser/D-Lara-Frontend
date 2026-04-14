@@ -1,6 +1,6 @@
 import {
   Component, EventEmitter, Input, Output,
-  inject, signal, computed, OnChanges, OnInit,ViewChild, ElementRef, HostListener
+  inject, signal, computed, OnChanges, OnInit
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +28,7 @@ export interface PaymentItemSummary {
 }
 
 export interface PaymentMethodSplit {
-  method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
+  method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX';
   amount: number;
   isChange: boolean;
 }
@@ -45,7 +45,7 @@ export class PaymentModal implements OnChanges, OnInit {
   private printService = inject(PrintService);
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
-  paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const;
+paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const;
 
 
   @Input() paymentData: PaymentData | null = null;
@@ -54,18 +54,8 @@ export class PaymentModal implements OnChanges, OnInit {
   @Output() paymentProcessed = new EventEmitter<PaymentResponse>();
   @Output() close = new EventEmitter<void>();
 
-  @ViewChild('amountInput') amountInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('confirmBtn') confirmBtn!: ElementRef<HTMLButtonElement>;
-  @HostListener('keydown', ['$event'])
-  handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'F2' && this.canProcessPayment()) {
-    event.preventDefault();
-    this.processPayments();
-  }
-  }
-
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
-  currentPaymentMethod = signal<'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX'>('DINHEIRO');
+currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX'>('DINHEIRO');
   currentAmount = signal<number>(0);
 
   isProcessing = signal(false);
@@ -114,15 +104,11 @@ export class PaymentModal implements OnChanges, OnInit {
   }
 
   ngOnChanges() {
-  if (this.isOpen && this.paymentData) {
-    this.resetForm();
-    this.currentAmount.set(this.paymentData.totalAmount);
-    // Foca e seleciona o input ao abrir o modal
-    setTimeout(() => {
-      this.amountInput?.nativeElement.focus();
-      this.amountInput?.nativeElement.select();
-    }, 100);
-  }
+    if (this.isOpen && this.paymentData) {
+      this.resetForm();
+      this.currentAmount.set(this.paymentData.totalAmount);
+      this.loadPaymentMethods();
+    }
   }
 
   loadPaymentMethods() {
@@ -152,9 +138,6 @@ export class PaymentModal implements OnChanges, OnInit {
     }
 
     this.currentAmount.set(this.remainingAmount());
-     if (this.isFullyPaid()) {
-    setTimeout(() => this.confirmBtn?.nativeElement.focus(), 0);
-    }
   }
 
   addChangePayment(amount: number) {
@@ -177,13 +160,9 @@ export class PaymentModal implements OnChanges, OnInit {
     this.currentAmount.set(this.remainingAmount());
   }
 
-  selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX') {
+selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX') {
     this.currentPaymentMethod.set(method);
     this.currentAmount.set(this.remainingAmount());
-    setTimeout(() => {
-    this.amountInput?.nativeElement.select();
-    this.amountInput?.nativeElement.focus();
-  }, 0);
   }
 
   updateCurrentAmount(amount: number) {
@@ -192,6 +171,24 @@ export class PaymentModal implements OnChanges, OnInit {
 
   async processPayments() {
     if (!this.paymentData || this.isProcessing() || !this.isFullyPaid()) return;
+
+ if (this.dbPaymentMethods().length === 0) {
+    await new Promise<void>((resolve, reject) => {
+      this.paymentService.listPaymentMethods().subscribe({
+        next: methods => { this.dbPaymentMethods.set(methods); resolve(); },
+        error: reject
+      });
+    });
+  }
+
+  const methodsNotFound = this.selectedPaymentMethods()
+    .filter(pm => !pm.isChange)
+    .filter(pm => !this.dbPaymentMethods().find(m => m.code === pm.method));
+
+  if (methodsNotFound.length > 0) {
+    alert(`Método(s) não reconhecido(s): ${methodsNotFound.map(m => m.method).join(', ')}`);
+    return;
+  }
 
     this.isProcessing.set(true);
 
@@ -265,34 +262,25 @@ export class PaymentModal implements OnChanges, OnInit {
     return { valid: true };
   }
 
+  // Busca o ID real do banco em vez de um mapa hardcoded
   private getPaymentMethodId(methodCode: string): number {
-  const codeMap: Record<string, string> = {
-    'DINHEIRO':       'CASH',
-    'PIX':            'PIX',
-    'CARTAO_CREDITO': 'CREDIT_CARD',
-    'CARTAO_DEBITO':  'DEBIT_CARD',
-  };
-
-  const dbCode = codeMap[methodCode] ?? methodCode;
-  const method = this.dbPaymentMethods().find(m => m.code === dbCode);
-
-  if (!method) {
-    console.error(`Método ${methodCode} (mapped: ${dbCode}) não encontrado no banco!`);
-    return 0;
+    const method = this.dbPaymentMethods().find(m => m.code === methodCode);
+    if (!method) {
+      console.error(`Método ${methodCode} não encontrado no banco!`);
+      return 0;
+    }
+    return method.id;
   }
-
-  return method.id;
-}
 
   getPaymentMethodText(method: string) {
   const map: Record<string, string> = {
     'DINHEIRO': 'Dinheiro',
-    'CARTAO_CREDITO': 'Crédito',
-    'CARTAO_DEBITO': 'Débito',
+    'CARD_CREDIT': 'Crédito',
+    'CARTAO_DE_DEBITO': 'Débito',
     'PIX': 'PIX'
   };
   return map[method] || method;
-  }
+}
 
   formatPrice(price: number) {
     return isNaN(price) ? 'R$ 0,00' :

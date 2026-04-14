@@ -30,9 +30,9 @@
         name="barcode"
         [(ngModel)]="form.barcode"
         (input)="onBarcodeInput($event)"
-        maxlength="13"
+        maxlength="16"
         autocomplete="off">
-      <mat-hint align="end">{{ form.barcode.length || 0 }}/13</mat-hint>
+      <mat-hint align="end">{{ form.barcode.length || 0 }}/16</mat-hint>
       <mat-icon matSuffix *ngIf="checkingBarcode()">autorenew</mat-icon>
       <mat-icon matSuffix class="icon-error"
         *ngIf="!checkingBarcode() && barcodeExists()">error</mat-icon>
