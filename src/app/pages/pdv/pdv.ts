@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs';
-import { CartItem } from '../../core/service/pdv.service';
+import { CartItem, PdvService } from '../../core/service/pdv.service';
 import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
 import { ProductService, CategoryEnum } from '../../core/service/product.service';
 import { SaleService, SaleResponse, SaleRequest, SaleStatus, DiscountType } from '../../core/service/sale.service';
@@ -38,6 +38,7 @@ export class Pdv implements OnInit, OnDestroy {
     throw new Error('Method not implemented.');
   }
 
+  private pdvService = inject(PdvService);
   private saleService = inject(SaleService);
   private customerService = inject(CustomerService);
   private snackBar = inject(MatSnackBar);
@@ -50,6 +51,13 @@ export class Pdv implements OnInit, OnDestroy {
 
   searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
+  cart             = signal<CartItem[]>(this.pdvService.state().cart);
+  selectedCustomer = signal<CustomerResponse | null>(this.pdvService.state().selectedCustomer);
+  discountType     = signal<'value' | 'percent'>(this.pdvService.state().discountType);
+  discountInput    = signal<number>(this.pdvService.state().discountInput);
+  activeSaleId     = signal<number | null>(this.pdvService.state().activeSaleId);
+  isCopiedSale     = signal<boolean>(this.pdvService.state().isCopiedSale);
+
   pageTitle = signal('Frente de Caixa');
   pageSubtitle = signal('Vendas e Ordens de Serviço');
   isLoading = signal(false);
@@ -60,14 +68,12 @@ export class Pdv implements OnInit, OnDestroy {
   CategoryEnum = CategoryEnum;
   showDelivered = signal<boolean>(false);
   selectedEmbroideryDetail = signal<any | null>(null);
-  isCopiedSale = signal(false);
   isBordadoModalOpen = signal(false);
   bordadoPrice = signal<number | null>(null);
   bordadoDescription = signal('');
 
   customerSearchValue = signal('');
   suggestedCustomers = signal<CustomerResponse[]>([]);
-  selectedCustomer = signal<CustomerResponse | null>(null);
   showCustomerDropdown = signal(false);
 
   productCategoryFilter = signal<'all' | CategoryEnum>('all');
@@ -81,11 +87,6 @@ export class Pdv implements OnInit, OnDestroy {
 
   saleSuggestions = signal<SaleResponse[]>([]);
   showSaleSuggestions = signal(false);
-  activeSaleId = signal<number | null>(null);
-
-  cart = signal<CartItem[]>([]);
-  discountType = signal<'value' | 'percent'>('value');
-  discountInput = signal(0);
 
   paymentData = signal<PaymentData | null>(null);
 
@@ -108,15 +109,41 @@ export class Pdv implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    this.setupCustomerSearch();
-    this.setupProductSearch();
-    this.productSearchSubject.next('');
+  const saved = this.pdvService.state();
+  if (saved.cart.length > 0 || saved.selectedCustomer) {
+    this.cart.set(saved.cart);
+    this.selectedCustomer.set(saved.selectedCustomer);
+    this.discountType.set(saved.discountType);
+    this.discountInput.set(saved.discountInput);
+    this.activeSaleId.set(saved.activeSaleId);
+    this.isCopiedSale.set(saved.isCopiedSale);
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+  if (!this.selectedCustomer()) {
+  this.setDefaultCustomer();
   }
+
+  this.setupCustomerSearch();
+  this.setupProductSearch();
+  this.productSearchSubject.next('');
+
+  setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
+}
+
+ngOnDestroy() {
+  // Salva o estado ao sair da página
+  this.pdvService.patch({
+    cart: this.cart(),
+    selectedCustomer: this.selectedCustomer(),
+    discountType: this.discountType(),
+    discountInput: this.discountInput(),
+    activeSaleId: this.activeSaleId(),
+    isCopiedSale: this.isCopiedSale(),
+  });
+
+  this.destroy$.next();
+  this.destroy$.complete();
+}
 
   openBordadoModal() {
     this.bordadoPrice.set(null);
@@ -129,25 +156,17 @@ export class Pdv implements OnInit, OnDestroy {
     this.bordadoDescription.set('');
   }
 
-  confirmAddBordado() {
-    const price = this.bordadoPrice();
-    if (!price || price <= 0) {
-      this.showWarning('Informe um valor válido para o bordado.');
-      return;
-    }
-    const desc = this.bordadoDescription().trim() || 'BORDADO AVULSO';
-    this.cart.update(items => [
-      ...items,
-      {
-        product: { id: 0, name: desc, price, barcode: '' },
-        quantity: 1,
-        total: price,
-        isEmbroidery: true,
-        embroideryId: undefined
-      }
-    ]);
-    this.snackBar.open('Bordado adicionado!', '', { duration: 1000 });
-    this.closeBordadoModal();
+    confirmAddBordado() {
+  const price = this.bordadoPrice();
+  if (!price || price <= 0) { this.showWarning('Informe um valor válido para o bordado.'); return; }
+  const desc = this.bordadoDescription().trim() || 'BORDADO AVULSO';
+  this.cart.update(items => [...items, {
+    product: { id: 0, name: desc, price, barcode: '' },
+    quantity: 1, total: price, isEmbroidery: true, embroideryId: undefined
+  }]);
+  this.pdvService.patch({ cart: this.cart() });
+  this.snackBar.open('Bordado adicionado!', '', { duration: 1000 });
+  this.closeBordadoModal();
   }
 
   private applyClientPagination(products: any[]) {
@@ -196,6 +215,10 @@ export class Pdv implements OnInit, OnDestroy {
     this.productSearchSubject.next(el?.value || '');
   }
 
+  handleButtonClick() {
+  if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+  }
+
   private setupCustomerSearch() {
     this.customerSearchSubject.pipe(
       debounceTime(400),
@@ -209,13 +232,13 @@ export class Pdv implements OnInit, OnDestroy {
       }),
       takeUntil(this.destroy$)
     ).subscribe({
-      next: (result: any) => {
-        this.suggestedCustomers.set(result.content || []);
-        this.showCustomerDropdown.set(this.suggestedCustomers().length > 0);
-      },
-      error: (err) => this.showCustomerDropdown.set(false)
-    });
-  }
+    next: (result: any) => {
+      this.suggestedCustomers.set(result.content || []);
+      this.showCustomerDropdown.set(this.suggestedCustomers().length > 0);
+    },
+    error: () => this.showCustomerDropdown.set(false)
+  });
+}
 
   onCustomerSearchInput(event: any) {
     const val = event.target.value;
@@ -224,44 +247,49 @@ export class Pdv implements OnInit, OnDestroy {
   }
 
   selectCustomer(c: CustomerResponse) {
-    this.selectedCustomer.set(c);
-    this.showCustomerDropdown.set(false);
-    this.customerSearchValue.set('');
+  this.selectedCustomer.set(c);
+  this.pdvService.patch({ selectedCustomer: c });
+  this.showCustomerDropdown.set(false);
+  this.customerSearchValue.set('');
   }
 
   clearCustomer() {
-    this.selectedCustomer.set(null);
+  this.selectedCustomer.set(null);
+  this.pdvService.patch({ selectedCustomer: null });
   }
 
    addToCart(p: any) {
-    const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
-    this.cart.update(items => {
-      const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
-      if (existing) {
-        return items.map(i => i === existing
-          ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price }
-          : i);
-      }
-      return [...items, {
-        product: { id: p.id, name: p.name, price: p.price, barcode: p.barcode },
-        quantity: 1, total: p.price, isEmbroidery: isEmb,
-        embroideryId: isEmb ? p.id : undefined
-      }];
-    });
-    this.snackBar.open('Item adicionado!', '', { duration: 1000 });
-  }
+  const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
+  this.cart.update(items => {
+    const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
+    if (existing) {
+      return items.map(i => i === existing
+        ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price }
+        : i);
+    }
+    return [...items, {
+      product: { id: p.id, name: p.name, price: p.price, barcode: p.barcode },
+      quantity: 1, total: p.price, isEmbroidery: isEmb,
+      embroideryId: isEmb ? p.id : undefined
+    }];
+  });
+  this.pdvService.patch({ cart: this.cart() });
+  this.snackBar.open('Item adicionado!', '', { duration: 1000 });
+}
 
-  updateQuantity(item: CartItem, change: number) {
-    this.cart.update(prev => prev.map(i => {
-      if (i !== item) return i;
-      const newQty = Math.max(1, i.quantity + change);
-      return { ...i, quantity: newQty, total: newQty * i.product.price };
-    }));
-  }
+updateQuantity(item: CartItem, change: number) {
+  this.cart.update(prev => prev.map(i => {
+    if (i !== item) return i;
+    const newQty = Math.max(1, i.quantity + change);
+    return { ...i, quantity: newQty, total: newQty * i.product.price };
+  }));
+  this.pdvService.patch({ cart: this.cart() });
+}
 
-    removeFromCart(index: number) {
-    this.cart.update(items => { const n = [...items]; n.splice(index, 1); return n; });
-  }
+removeFromCart(index: number) {
+  this.cart.update(items => { const n = [...items]; n.splice(index, 1); return n; });
+  this.pdvService.patch({ cart: this.cart() });
+}
 
   onSearchSale(query: string) {
     const term = query.trim();
@@ -295,58 +323,72 @@ export class Pdv implements OnInit, OnDestroy {
 
  selectSaleToEdit(sale: SaleResponse) {
   this.showSaleSuggestions.set(false);
-
   const isPending = sale.saleStatus === SaleStatus.PENDING;
-
-  this.activeSaleId.set(isPending ? sale.id : null);
-  this.isCopiedSale.set(!isPending);
-
-  if (sale.customerName) {
-    this.selectedCustomer.set({
-      id: (sale as any).customerId || 0,
-      name: sale.customerName,
-      phone: sale.customerPhone || 'Não informado',
-      active: true
-    } as any);
-  }
-
-  if (isPending) {
-    this.discountInput.set(sale.discountValue || 0);
-    this.discountType.set(sale.discountType === DiscountType.PERCENTAGE ? 'percent' : 'value');
-  } else {
-    this.discountInput.set(0);
-    this.discountType.set('value');
-  }
+  const customer = sale.customerName
+    ? { id: (sale as any).customerId || 0, name: sale.customerName,
+        phone: sale.customerPhone || 'Não informado', active: true } as any
+    : null;
 
   if (sale.items?.length > 0) {
-      this.cart.set(sale.items.map(item => {
-        const isEmbroidery = !!item.embroideryId;
-        const price = item.manualPrice ?? item.productPrice ?? 0;
-        return {
-          product: { id: item.productId || item.embroideryId || 0, name: item.productName || item.description || '', price, stockQty: 999 } as any,
-          quantity: item.quantity, isEmbroidery, total: price * item.quantity
-        };
-      }));
-      this.showSuccess(isPending ? `Venda #${sale.id} carregada para edição.` : `Itens da venda #${sale.id} copiados como nova venda.`);
-    } else {
-      this.showError('Esta venda não possui itens.');
-    }
+    const newCart = sale.items.map(item => {
+      const isEmbroidery = !!item.embroideryId;
+      const price = item.manualPrice ?? item.productPrice ?? 0;
+      return {
+        product: { id: item.productId || item.embroideryId || 0,
+                   name: item.productName || item.description || '', price, stockQty: 999 } as any,
+        quantity: item.quantity, isEmbroidery, total: price * item.quantity
+      };
+    });
+    const newDiscountType = isPending && sale.discountType === DiscountType.PERCENTAGE ? 'percent' : 'value' as 'value' | 'percent';
+    const newDiscountInput = isPending ? (sale.discountValue || 0) : 0;
+
+    this.cart.set(newCart);
+    this.selectedCustomer.set(customer);
+    this.activeSaleId.set(isPending ? sale.id : null);
+    this.isCopiedSale.set(!isPending);
+    this.discountType.set(newDiscountType);
+    this.discountInput.set(newDiscountInput);
+
+    this.pdvService.patch({
+      cart: newCart, selectedCustomer: customer,
+      activeSaleId: isPending ? sale.id : null, isCopiedSale: !isPending,
+      discountType: newDiscountType, discountInput: newDiscountInput
+    });
+
+    this.showSuccess(isPending ? `Venda #${sale.id} carregada para edição.`
+                               : `Itens da venda #${sale.id} copiados como nova venda.`);
+  } else {
+    this.showError('Esta venda não possui itens.');
+  }
   }
 
-  resetPDV() {
-    this.cart.set([]);
-    this.activeSaleId.set(null);
-    this.isCopiedSale.set(false);
-    this.discountInput.set(0);
-    this.selectedCustomer.set(null);
+ resetPDV() {
+  this.cart.set([]);
+  this.activeSaleId.set(null);
+  this.isCopiedSale.set(false);
+  this.discountInput.set(0);
+  this.discountType.set('value');
+  this.pdvService.reset();
+  this.setDefaultCustomer();
   }
 
-  changeDiscountType(type: 'value' | 'percent') { this.discountType.set(type); }
-  updateDiscountValue(event: any) { this.discountInput.set(Number(event.target.value) || 0); }
+  changeDiscountType(type: 'value' | 'percent') {
+  this.discountType.set(type);
+  this.pdvService.patch({ discountType: type });
+}
 
-  handleButtonClick() {
-    if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+  private setDefaultCustomer() {
+    this.customerService.findById(1).subscribe({
+      next: (customer) => this.selectedCustomer.set(customer),
+      error: () => this.selectedCustomer.set({ id: 1, name: 'BALCÃO', phone: '99 99999-9999', active: true } as any)
+    });
   }
+
+updateDiscountValue(event: any) {
+  const val = Number(event.target.value) || 0;
+  this.discountInput.set(val);
+  this.pdvService.patch({ discountInput: val });
+}
 
   onConfirmCashOpen(value: number) {
     this.cashService.openCashRegister({ value }).subscribe({
@@ -392,7 +434,7 @@ export class Pdv implements OnInit, OnDestroy {
         this.isLoading.set(true);
         if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
           const status = this.showDelivered() ? 'DELIVERED' : 'PENDING';
-          return this.embroideryService.search(term, status, this.currentPage(), this.pageSize()).pipe(
+          return this.embroideryService.search(term, status, this.currentPage(), this.pageSize(), 'FALTA_PAGAMENTO').pipe(
             map(res => ({
               content: res.content.map((emb: any) => ({
                 ...emb, name: emb.customerName, description: emb.description,
@@ -448,6 +490,10 @@ export class Pdv implements OnInit, OnDestroy {
     const sessionId = this.activeSessionId();
     if (!sessionId) { this.showError('Nenhum caixa aberto encontrado!'); return; }
 
+      const customerId = (this.selectedCustomer()?.id ?? 0) > 0
+    ? this.selectedCustomer()!.id
+    : null;
+
     const saleRequest: SaleRequest = {
       customerId: this.selectedCustomer()?.id || null,
       cashSessionId: sessionId,
@@ -485,6 +531,7 @@ export class Pdv implements OnInit, OnDestroy {
     this.snackBar.open('Venda finalizada e paga com sucesso!', 'OK', { duration: 3000 });
     this.resetPDV();
     this.isPaymentModalOpen.set(false);
+    setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
   }
 
   closePaymentModal() {

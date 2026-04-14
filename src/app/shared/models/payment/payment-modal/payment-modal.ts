@@ -1,6 +1,6 @@
 import {
   Component, EventEmitter, Input, Output,
-  inject, signal, computed, OnChanges, OnInit
+  inject, signal, computed, OnChanges, OnInit,ViewChild, ElementRef, HostListener
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +28,7 @@ export interface PaymentItemSummary {
 }
 
 export interface PaymentMethodSplit {
-  method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX';
+  method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX';
   amount: number;
   isChange: boolean;
 }
@@ -45,7 +45,7 @@ export class PaymentModal implements OnChanges, OnInit {
   private printService = inject(PrintService);
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
-paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const;
+  paymentMethods = ['DINHEIRO', 'CARTAO_CREDITO', 'CARTAO_DEBITO', 'PIX'] as const;
 
 
   @Input() paymentData: PaymentData | null = null;
@@ -53,6 +53,16 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
 
   @Output() paymentProcessed = new EventEmitter<PaymentResponse>();
   @Output() close = new EventEmitter<void>();
+
+  @ViewChild('amountInput') amountInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('confirmBtn') confirmBtn!: ElementRef<HTMLButtonElement>;
+  @HostListener('keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent) {
+  if (event.key === 'F2' && this.canProcessPayment()) {
+    event.preventDefault();
+    this.processPayments();
+  }
+  }
 
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
   currentPaymentMethod = signal<'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX'>('DINHEIRO');
@@ -104,10 +114,15 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
   }
 
   ngOnChanges() {
-    if (this.isOpen && this.paymentData) {
-      this.resetForm();
-      this.currentAmount.set(this.paymentData.totalAmount);
-    }
+  if (this.isOpen && this.paymentData) {
+    this.resetForm();
+    this.currentAmount.set(this.paymentData.totalAmount);
+    // Foca e seleciona o input ao abrir o modal
+    setTimeout(() => {
+      this.amountInput?.nativeElement.focus();
+      this.amountInput?.nativeElement.select();
+    }, 100);
+  }
   }
 
   loadPaymentMethods() {
@@ -137,6 +152,9 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
     }
 
     this.currentAmount.set(this.remainingAmount());
+     if (this.isFullyPaid()) {
+    setTimeout(() => this.confirmBtn?.nativeElement.focus(), 0);
+    }
   }
 
   addChangePayment(amount: number) {
@@ -162,6 +180,10 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
   selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARTAO_CREDITO' | 'CARTAO_DEBITO' | 'PIX') {
     this.currentPaymentMethod.set(method);
     this.currentAmount.set(this.remainingAmount());
+    setTimeout(() => {
+    this.amountInput?.nativeElement.select();
+    this.amountInput?.nativeElement.focus();
+  }, 0);
   }
 
   updateCurrentAmount(amount: number) {
@@ -243,25 +265,34 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
     return { valid: true };
   }
 
-  // Busca o ID real do banco em vez de um mapa hardcoded
   private getPaymentMethodId(methodCode: string): number {
-    const method = this.dbPaymentMethods().find(m => m.code === methodCode);
-    if (!method) {
-      console.error(`Método ${methodCode} não encontrado no banco!`);
-      return 0;
-    }
-    return method.id;
+  const codeMap: Record<string, string> = {
+    'DINHEIRO':       'CASH',
+    'PIX':            'PIX',
+    'CARTAO_CREDITO': 'CREDIT_CARD',
+    'CARTAO_DEBITO':  'DEBIT_CARD',
+  };
+
+  const dbCode = codeMap[methodCode] ?? methodCode;
+  const method = this.dbPaymentMethods().find(m => m.code === dbCode);
+
+  if (!method) {
+    console.error(`Método ${methodCode} (mapped: ${dbCode}) não encontrado no banco!`);
+    return 0;
   }
+
+  return method.id;
+}
 
   getPaymentMethodText(method: string) {
   const map: Record<string, string> = {
     'DINHEIRO': 'Dinheiro',
-    'CARD_CREDIT': 'Crédito',
-    'CARTAO_DE_DEBITO': 'Débito',
+    'CARTAO_CREDITO': 'Crédito',
+    'CARTAO_DEBITO': 'Débito',
     'PIX': 'PIX'
   };
   return map[method] || method;
-}
+  }
 
   formatPrice(price: number) {
     return isNaN(price) ? 'R$ 0,00' :

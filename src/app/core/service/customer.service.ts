@@ -99,4 +99,8 @@ export class CustomerService {
     catchError(() => of(false))
   );
   }
+
+  findById(id: number): Observable<CustomerResponse> {
+  return this.http.get<CustomerResponse>(`${this.apiUrl}/${id}`);
+  }
 }

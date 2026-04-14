@@ -62,12 +62,14 @@ export class EmbroideryService {
 
   constructor(private http: HttpClient) {}
 
-  search(term: string, status: string, page: number, size: number): Observable<SpringPage<EmbroideryResponse>> {
-    const params = new HttpParams()
+  search(term: string, status: string, page: number, size: number, payment?: string): Observable<SpringPage<EmbroideryResponse>> {
+    let params = new HttpParams()
       .set('term', term)
       .set('status', status)
       .set('page', page.toString())
       .set('size', size.toString());
+
+      if (payment) params = params.set('payment', payment);
     return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/search`, { params });
   }
 

@@ -47,9 +47,9 @@
               [class.active]="currentPaymentMethod() === method"
               (click)="selectCurrentPaymentMethod(method)">
               <mat-icon *ngIf="method === 'DINHEIRO'">payments</mat-icon>
-<mat-icon *ngIf="method === 'CARTAO_CREDITO'">credit_card</mat-icon>
-<mat-icon *ngIf="method === 'CARTAO_DEBITO'">credit_score</mat-icon>
-<mat-icon *ngIf="method === 'PIX'">qr_code_2</mat-icon>
+                <mat-icon *ngIf="method === 'CARTAO_CREDITO'">credit_card</mat-icon>
+                <mat-icon *ngIf="method === 'CARTAO_DEBITO'">credit_score</mat-icon>
+                <mat-icon *ngIf="method === 'PIX'">qr_code_2</mat-icon>
               <span>{{ getPaymentMethodText(method) }}</span>
             </button>
           </div>
@@ -59,6 +59,7 @@
             <div class="input-group">
               <span class="currency-symbol">R$</span>
               <input
+                #amountInput
                 type="number"
                 [ngModel]="currentAmount()"
                 (ngModelChange)="updateCurrentAmount($event)"
@@ -141,6 +142,7 @@
       <mat-icon>print</mat-icon> Reimprimir
     </button>
     <button
+      #confirmBtn
       class="btn-confirm"
       [disabled]="!canProcessPayment()"
       (click)="processPayments()"

@@ -110,7 +110,10 @@
               <div class="card-content">
                 <div class="card-header-top">
                   <div class="header-left">
-                    <span class="p-category">{{ p.categoryEnum }}</span>
+                    <div class="p-category-row">
+                      <span class="p-id-badge">#{{ p.id }}</span>
+                      <span class="p-category">{{ p.categoryEnum }}</span>
+                    </div>
                     @if (p.categoryEnum !== CategoryEnum.BORDADO) {
                       <span class="p-stock" [class.danger]="p.stockQty <= 5">{{ p.stockQty }} em estoque</span>
                     }
@@ -119,6 +122,9 @@
                 </div>
                 <h3 class="p-name">{{ p.name }}</h3>
 
+                  @if (p.categoryEnum !== CategoryEnum.BORDADO && p.description) {
+                    <p class="p-description">{{ p.description | slice:0:50 }}{{ p.description?.length > 50 ? '...' : '' }}</p>
+                  }
                 @if (p.categoryEnum === CategoryEnum.BORDADO) {
                   <p class="p-description-hint" style="font-size:11px;color:#666;margin-bottom:4px">
                     {{ p.description | slice:0:35 }}{{ p.description?.length > 35 ? '...' : '' }}
