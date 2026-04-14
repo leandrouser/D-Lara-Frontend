@@ -5,11 +5,11 @@
       <p class="subtitle">{{ pageSubtitle() }}</p>
     </div>
     <div class="header-actions">
-      <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
-        <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
-        <span>CAIXA {{ isCashRegisterOpen() ? 'ABERTO' : 'FECHADO' }}</span>
-      </button>
-    </div>
+  <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
+    <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
+    <span>CAIXA {{ isCashRegisterOpen() ? 'ABERTO' : 'FECHADO' }}</span>
+  </button>
+</div>
   </div>
 
   <div class="main-layout">
@@ -221,22 +221,28 @@
 
       <div class="cart-wrapper">
         <div class="cart-header">
-          <div class="header-main-info">
-            <mat-icon>shopping_basket</mat-icon>
-            <h2>Resumo da Venda</h2>
-          </div>
-          @if (activeSaleId()) {
-            <span class="edit-badge pending">
-              <mat-icon>edit</mat-icon>
-              EDITANDO #{{ activeSaleId() }}
-            </span>
-          } @else if (isCopiedSale() && cart().length > 0) {
-            <span class="edit-badge copied">
-              <mat-icon>content_copy</mat-icon>
-              NOVA A PARTIR DE VENDA PAGA
-            </span>
-          }
-        </div>
+  <div class="header-main-info">
+    <mat-icon>shopping_basket</mat-icon>
+    <h2>Resumo da Venda</h2>
+  </div>
+
+  <button class="btn-clear-cart" (click)="resetPDV()" title="Limpar venda">
+    <mat-icon>delete_sweep</mat-icon>
+    <span>LIMPAR</span>
+  </button>
+
+  @if (activeSaleId()) {
+    <span class="edit-badge pending">
+      <mat-icon>edit</mat-icon>
+      EDITANDO #{{ activeSaleId() }}
+    </span>
+  } @else if (isCopiedSale() && cart().length > 0) {
+    <span class="edit-badge copied">
+      <mat-icon>content_copy</mat-icon>
+      NOVA A PARTIR DE VENDA PAGA
+    </span>
+  }
+</div>
 
         <div class="cart-content">
           @for (item of cart(); track $index) {
@@ -343,7 +349,6 @@
       </div>
     </div>
   </div>
-</div>
 
 <!-- ── Modal Bordado Avulso ── -->
 @if (isBordadoModalOpen()) {
