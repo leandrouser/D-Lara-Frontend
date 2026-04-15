@@ -24,25 +24,25 @@
         </div>
 
         <div class="card blue">
-          <div class="info">
-            <span>Vendas do Mês</span>
-            <strong>{{ monthSalesTotal() | currency:'BRL' }}</strong>
-            <small>{{ monthSalesCount() }} vendas</small>
+            <div class="info">
+              <span>Vendas do Mês</span>
+              <strong>{{ monthSalesTotal() | currency:'BRL' }}</strong>
+              <small>{{ monthSalesCount() }} vendas · Ticket médio {{ ticketMedio() | currency:'BRL' }}</small>
+            </div>
+            <mat-icon class="icon">calendar_month</mat-icon>
           </div>
-          <mat-icon class="icon">calendar_month</mat-icon>
-        </div>
 
-        <div class="card purple" (click)="refreshProductsStats()" style="cursor: pointer;">
-          <div class="info">
-            <span>Produtos Cadastrados</span>
-            @if (loadingProducts()) {
-              <strong><mat-icon class="loading-spinner-mini">refresh</mat-icon></strong>
-              <small>Atualizando...</small>
-            } @else {
-              <strong>{{ totalProducts() }}</strong>
-              <small>Valor: {{ totalProductsValue() | currency:'BRL' }}</small>
-            }
-          </div>
+          <div class="card purple" (click)="refreshProductsStats()" style="cursor: pointer;">
+            <div class="info">
+              <span>Produtos Cadastrados</span>
+              @if (loadingProducts()) {
+                <strong><mat-icon class="loading-spinner-mini">refresh</mat-icon></strong>
+                <small>Atualizando...</small>
+              } @else {
+                <strong>{{ totalProducts() }}</strong>
+                <small>Valor: {{ totalProductsValue() | currency:'BRL' }}</small>
+              }
+            </div>
           <mat-icon class="icon">inventory_2</mat-icon>
         </div>
 
@@ -56,10 +56,8 @@
         </div>
       </div>
 
-      <!-- SEÇÕES -->
       <div class="dashboard-sections">
 
-        <!-- ── ÚLTIMAS VENDAS DO DIA ── -->
         <div class="section-card">
           <div class="section-header">
             <h3>
@@ -70,6 +68,27 @@
               <mat-icon>refresh</mat-icon>
             </button>
           </div>
+
+          @if (salesByHour().length > 0) {
+            <div class="hourly-chart-card">
+              <div class="chart-header">
+                <mat-icon>bar_chart</mat-icon>
+                <span>Vendas por Hora — Hoje</span>
+              </div>
+
+              <div class="chart-bars">
+                @for (slot of salesByHour(); track slot.hour) {
+                  <div class="bar-slot" [title]="slot.hour + ': ' + (slot.total | currency:'BRL')">
+                    <div class="bar-fill"
+                        [style.height.%]="maxSalesValue() > 0 ? (slot.total / maxSalesValue()) * 100 : 0"
+                        [class.has-value]="slot.total > 0">
+                    </div>
+                    <span class="bar-label">{{ slot.hour }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
 
           <div class="section-content">
             @if (loadingToday()) {
@@ -128,13 +147,17 @@
                     <button class="page-btn nav" (click)="salesPrevPage()" [disabled]="salesPage() === 0">
                       <mat-icon>chevron_left</mat-icon>
                     </button>
-                    @for (page of salesPageNumbers(); track page) {
-                      <button
-                        class="page-btn"
-                        [class.active]="salesPage() === page"
-                        (click)="salesGoToPage(page)">
-                        {{ page + 1 }}
-                      </button>
+                    @for (page of salesPageNumbers(); track $index) {
+                      @if (page === null) {
+                        <span class="page-ellipsis">…</span>
+                      } @else {
+                        <button
+                          class="page-btn"
+                          [class.active]="salesPage() === page"
+                          (click)="salesGoToPage(page)">
+                          {{ page + 1 }}
+                        </button>
+                      }
                     }
                     <button class="page-btn nav" (click)="salesNextPage()" [disabled]="salesPage() === salesTotalPages() - 1">
                       <mat-icon>chevron_right</mat-icon>
@@ -151,7 +174,6 @@
           </div>
         </div>
 
-        <!-- ── ESTOQUE BAIXO ── -->
         <div class="section-card">
           <div class="section-header">
             <h3>
@@ -216,13 +238,17 @@
                     <button class="page-btn nav" (click)="lowStockPrevPage()" [disabled]="lowStockPage() === 0">
                       <mat-icon>chevron_left</mat-icon>
                     </button>
-                    @for (page of lowStockPageNumbers(); track page) {
-                      <button
-                        class="page-btn"
-                        [class.active]="lowStockPage() === page"
-                        (click)="lowStockGoToPage(page)">
-                        {{ page + 1 }}
-                      </button>
+                    @for (page of lowStockPageNumbers(); track $index) {
+                      @if (page === null) {
+                        <span class="page-ellipsis">…</span>
+                      } @else {
+                        <button
+                          class="page-btn"
+                          [class.active]="lowStockPage() === page"
+                          (click)="lowStockGoToPage(page)">
+                          {{ page + 1 }}
+                        </button>
+                      }
                     }
                     <button class="page-btn nav" (click)="lowStockNextPage()" [disabled]="lowStockPage() === lowStockTotalPages() - 1">
                       <mat-icon>chevron_right</mat-icon>

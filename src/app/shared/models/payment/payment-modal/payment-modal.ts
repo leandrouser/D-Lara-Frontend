@@ -1,6 +1,7 @@
 import {
   Component, EventEmitter, Input, Output,
-  inject, signal, computed, OnChanges, OnInit
+  inject, signal, computed, OnChanges, OnInit,
+  ViewChild, ElementRef, AfterViewInit
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
@@ -54,8 +55,11 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
   @Output() paymentProcessed = new EventEmitter<PaymentResponse>();
   @Output() close = new EventEmitter<void>();
 
+  @ViewChild('amountInput') amountInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('confirmBtn') confirmBtnRef!: ElementRef<HTMLButtonElement>;
+
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
-currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX'>('DINHEIRO');
+  currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX'>('DINHEIRO');
   currentAmount = signal<number>(0);
 
   isProcessing = signal(false);
@@ -108,6 +112,7 @@ currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 
       this.resetForm();
       this.currentAmount.set(this.paymentData.totalAmount);
       this.loadPaymentMethods();
+      setTimeout(() => this.focusAmountInput(), 100);
     }
   }
 
@@ -138,6 +143,22 @@ currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 
     }
 
     this.currentAmount.set(this.remainingAmount());
+
+    setTimeout(() => {
+    if (this.isFullyPaid()) {
+      this.confirmBtnRef?.nativeElement.focus();
+    } else {
+      this.focusAmountInput();
+    }
+  }, 50);
+  }
+
+  private focusAmountInput() {
+  const input = this.amountInputRef?.nativeElement;
+  if (input) {
+    input.focus();
+    input.select();
+  }
   }
 
   addChangePayment(amount: number) {
@@ -160,9 +181,10 @@ currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 
     this.currentAmount.set(this.remainingAmount());
   }
 
-selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX') {
+  selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX') {
     this.currentPaymentMethod.set(method);
     this.currentAmount.set(this.remainingAmount());
+    setTimeout(() => this.focusAmountInput(), 50);
   }
 
   updateCurrentAmount(amount: number) {
@@ -192,7 +214,6 @@ selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBIT
 
     this.isProcessing.set(true);
 
-    // Envia apenas saleId e payments — o backend busca o total da venda pelo saleId
     const requestBody: PaymentMultiRequest = {
       saleId: this.paymentData.saleId,
       payments: this.selectedPaymentMethods()
@@ -262,7 +283,6 @@ selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBIT
     return { valid: true };
   }
 
-  // Busca o ID real do banco em vez de um mapa hardcoded
   private getPaymentMethodId(methodCode: string): number {
     const method = this.dbPaymentMethods().find(m => m.code === methodCode);
     if (!method) {

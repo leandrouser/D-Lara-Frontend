@@ -38,8 +38,8 @@ interface ProductsStats {
 export class Dashboard implements OnInit {
   private http = inject(HttpClient);
   private productService = inject(ProductService);
+  readonly Math = Math;
 
-  // ── Produtos / Estoque ─────────────────────────────────────
   lowStockCount = signal(0);
   loadingLowStock = signal(true);
   lowStockProducts = signal<ProductResponse[]>([]);
@@ -56,19 +56,28 @@ export class Dashboard implements OnInit {
     Math.ceil(this.lowStockProducts().length / this.lowStockPageSize)
   );
 
-  lowStockPageNumbers = computed(() =>
-    Array.from({ length: this.lowStockTotalPages() }, (_, i) => i)
-  );
+  lowStockPageNumbers = computed(() => {
+  const total = this.lowStockTotalPages();
+  const current = this.lowStockPage();
+  return this.getPageWindow(current, total);
+  });
 
   totalProducts = signal(0);
   totalProductsValue = signal(0);
   loadingProducts = signal(true);
 
-  // ── Vendas ─────────────────────────────────────────────────
   todayPaymentsTotal = signal(0);
   todaySales = signal<SaleResponse[]>([]);
   loadingToday = signal(true);
   todaySalesTotal = signal(0);
+
+  ticketMedio = computed(() => {
+  const count = this.monthSalesCount();
+  const total = this.monthSalesTotal();
+  return count > 0 ? total / count : 0;
+  });
+
+  salesByHour = signal<{ hour: string; total: number }[]>([]);
 
   monthSalesTotal = signal(0);
   monthSalesCount = signal(0);
@@ -85,11 +94,18 @@ export class Dashboard implements OnInit {
     Math.ceil(this.todaySales().length / this.salesPageSize)
   );
 
-  salesPageNumbers = computed(() =>
-    Array.from({ length: this.salesTotalPages() }, (_, i) => i)
-  );
+  maxSalesValue = computed(() => {
+  const data = this.salesByHour();
+  if (!data || data.length === 0) return 1;
+  return Math.max(...data.map(h => h.total || 0));
+  });
 
-  // ── Lifecycle ──────────────────────────────────────────────
+  salesPageNumbers = computed(() => {
+  const total = this.salesTotalPages();
+  const current = this.salesPage();
+  return this.getPageWindow(current, total);
+  });
+
   ngOnInit() {
     this.loadLowStockProducts();
     this.loadTodayPayments();
@@ -98,7 +114,6 @@ export class Dashboard implements OnInit {
     this.loadMonthSales();
   }
 
-  // ── Produtos Stats ─────────────────────────────────────────
   loadProductsStats() {
     this.loadingProducts.set(true);
     this.http.get<ProductsStats>(`${environment.apiUrl}/products/stats`).subscribe({
@@ -120,7 +135,6 @@ export class Dashboard implements OnInit {
     this.loadProductsStats();
   }
 
-  // ── Estoque Baixo ──────────────────────────────────────────
   loadLowStockProducts() {
     this.loadingLowStock.set(true);
     this.productService.getLowStockProducts().subscribe({
@@ -154,7 +168,6 @@ export class Dashboard implements OnInit {
     this.lowStockPage.set(page);
   }
 
-  // ── Pagamentos Hoje ────────────────────────────────────────
   loadTodayPayments() {
     this.http.get<number>(`${environment.apiUrl}/payments/today/total`).subscribe({
       next: (total) => this.todayPaymentsTotal.set(total),
@@ -162,17 +175,32 @@ export class Dashboard implements OnInit {
     });
   }
 
-  // ── Vendas Hoje ────────────────────────────────────────────
   loadTodaySales() {
     this.loadingToday.set(true);
     this.http.get<SaleResponse[]>(`${environment.apiUrl}/sales/today`).subscribe({
       next: (sales) => {
         this.todaySales.set(sales);
         this.salesPage.set(0);
+
         const totalPaid = sales
           .filter(s => this.getNormalizedStatus(s.saleStatus) === 'paid')
           .reduce((sum, s) => sum + (s.total || 0), 0);
         this.todaySalesTotal.set(totalPaid);
+
+        const hourMap: Record<number, number> = {};
+        sales
+          .filter(s => this.getNormalizedStatus(s.saleStatus) === 'paid')
+          .forEach(s => {
+            const hour = new Date(s.dateSale).getHours();
+            hourMap[hour] = (hourMap[hour] || 0) + (s.total || 0);
+          });
+
+        const byHour = Array.from({ length: 24 }, (_, h) => ({
+          hour: `${h.toString().padStart(2, '0')}h`,
+          total: hourMap[h] || 0
+        })).filter((_, h) => h >= 6 && h <= 22); // mostra só horário comercial
+
+        this.salesByHour.set(byHour);
         this.loadingToday.set(false);
       },
       error: (err) => {
@@ -200,7 +228,6 @@ export class Dashboard implements OnInit {
     this.salesPage.set(page);
   }
 
-  // ── Vendas do Mês ──────────────────────────────────────────
   loadMonthSales() {
     this.http.get<number>(`${environment.apiUrl}/sales/month/total`).subscribe({
       next: (total) => this.monthSalesTotal.set(total),
@@ -216,7 +243,6 @@ export class Dashboard implements OnInit {
     this.loadMonthSales();
   }
 
-  // ── Status helpers ─────────────────────────────────────────
   getNormalizedStatus(status: string | undefined): string {
     if (!status) return 'unknown';
     const statusMap: Record<string, string> = {
@@ -246,5 +272,23 @@ export class Dashboard implements OnInit {
       case 'cancelled': return 'cancel';
       default:          return 'help';
     }
+  }
+
+  private getPageWindow(current: number, total: number): (number | null)[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+
+  const pages: (number | null)[] = [];
+  const delta = 2;
+
+  pages.push(0);
+
+  const left = Math.max(1, current - delta);
+  const right = Math.min(total - 2, current + delta);
+
+  if (left > 1) pages.push(null);
+  for (let i = left; i <= right; i++) pages.push(i);
+  if (right < total - 2) pages.push(null);
+  pages.push(total - 1);
+  return pages;
   }
 }

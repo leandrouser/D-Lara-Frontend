@@ -761,6 +761,60 @@
   font-size: 1.5rem;
 }
 
+.hourly-chart-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 14px;
+    mat-icon { color: #2563eb; font-size: 18px; width: 18px; height: 18px; }
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 80px;
+
+    .bar-slot {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      gap: 4px;
+
+      .bar-fill {
+        width: 100%;
+        background: #e2e8f0;
+        border-radius: 4px 4px 0 0;
+        min-height: 3px;
+        transition: height 0.4s ease;
+
+        &.has-value { background: linear-gradient(180deg, #2563eb, #3b82f6); }
+      }
+
+      .bar-label {
+        font-size: 9px;
+        color: #94a3b8;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
 // Paginação
 .pagination {
   display: flex;

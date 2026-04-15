@@ -146,6 +146,7 @@
       class="btn-confirm"
       [disabled]="!canProcessPayment()"
       (click)="processPayments()"
+      (keyup.enter)="processPayments()"
       [title]="!isFullyPaid() ? 'Total não atingido' : 'Finalizar venda'">
       Finalizar Venda (F2)
     </button>

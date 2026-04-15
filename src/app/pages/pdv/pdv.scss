@@ -1482,7 +1482,7 @@ $white:       #ffffff;
     }
   }
 }
-// No final do arquivo, escopo raiz
+
 .btn-clear-cart {
   display: flex;
   align-items: center;
@@ -1503,4 +1503,11 @@ $white:       #ffffff;
     background: #ef4444;
     color: #fff;
   }
+}
+
+.page-ellipsis {
+  padding: 0 4px;
+  color: #888;
+  user-select: none;
+  line-height: 32px;
 }

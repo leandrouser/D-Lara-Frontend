@@ -131,7 +131,6 @@ export class Pdv implements OnInit, OnDestroy {
 }
 
 ngOnDestroy() {
-  // Salva o estado ao sair da página
   this.pdvService.patch({
     cart: this.cart(),
     selectedCustomer: this.selectedCustomer(),
@@ -449,15 +448,22 @@ updateDiscountValue(event: any) {
             map(products => {
               const termLower = term.toLowerCase();
               let filtered = products.filter(p =>
- 		p.name.toLowerCase().includes(termLower) ||
-  		(p.barcode && p.barcode.includes(term)) ||
-  		p.id?.toString().includes(term)
-		);
+                p.name.toLowerCase().includes(termLower) ||
+                  (p.barcode && p.barcode.includes(term)) ||
+                  p.id?.toString().includes(term)
+                );
               const catFilter = this.productCategoryFilter();
               if (catFilter !== 'all') filtered = filtered.filter(p => p.categoryEnum === catFilter);
-              return {
-                content: filtered, totalElements: filtered.length,
-                totalPages: Math.max(1, Math.ceil(filtered.length / this.pageSize())), serverPaged: false
+                const exactMatch = term.trim().length > 0
+                ? products.find(p => p.barcode && p.barcode === term.trim())
+                : null;
+                return {
+                content: filtered,
+                totalElements: filtered.length,
+                totalPages: Math.max(1, Math.ceil(filtered.length / this.pageSize())),
+                serverPaged: false,
+                exactBarcode: !!exactMatch,
+                exactProduct: exactMatch || null
               };
             })
           );
@@ -473,6 +479,20 @@ updateDiscountValue(event: any) {
           this.totalPages.set(response.totalPages ?? 1);
         } else {
           this.applyClientPagination(response.content);
+          if (response.exactBarcode && response.exactProduct) {
+        const p = response.exactProduct;
+        if (p.stockQty > 0) {
+          this.addToCart(p);
+          const input = this.searchInput()?.nativeElement;
+          if (input) {
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+          }
+          this.productSearchSubject.next('');
+        } else {
+          this.showWarning(`Produto "${p.name}" sem estoque.`);
+        }
+      }
         }
         this.isLoading.set(false);
       },
