@@ -13,6 +13,7 @@ import {
   PaymentMultiRequest
 } from '../../../../core/service/payment.service';
 import { PrintService } from '../../../../core/service/print.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 export interface PaymentData {
   saleId: number;
@@ -29,7 +30,7 @@ export interface PaymentItemSummary {
 }
 
 export interface PaymentMethodSplit {
-  method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX';
+  method: string;
   amount: number;
   isChange: boolean;
 }
@@ -37,16 +38,18 @@ export interface PaymentMethodSplit {
 @Component({
   selector: 'payment-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatSnackBarModule],
   templateUrl: './payment-modal.html',
   styleUrls: ['./payment-modal.scss']
 })
 export class PaymentModal implements OnChanges, OnInit {
   private paymentService = inject(PaymentService);
   private printService = inject(PrintService);
+  private snackBar = inject(MatSnackBar);
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
-paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const;
+  
+  paymentMethods = ['DINHEIRO', 'CARTAO_DE_CREDITO', 'CARTAO_DE_DEBITO', 'PIX'] as const;
 
 
   @Input() paymentData: PaymentData | null = null;
@@ -59,8 +62,7 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
   @ViewChild('confirmBtn') confirmBtnRef!: ElementRef<HTMLButtonElement>;
 
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
-  currentPaymentMethod = signal<'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX'>('DINHEIRO');
-  currentAmount = signal<number>(0);
+  currentPaymentMethod = signal<string>('DINHEIRO');  currentAmount = signal<number>(0);
 
   isProcessing = signal(false);
   paymentSuccess = signal<PaymentResponse | null>(null);
@@ -181,10 +183,10 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
     this.currentAmount.set(this.remainingAmount());
   }
 
-  selectCurrentPaymentMethod(method: 'DINHEIRO' | 'CARD_CREDIT' | 'CARTAO_DE_DEBITO' | 'PIX') {
-    this.currentPaymentMethod.set(method);
-    this.currentAmount.set(this.remainingAmount());
-    setTimeout(() => this.focusAmountInput(), 50);
+  selectCurrentPaymentMethod(method: string) {
+  this.currentPaymentMethod.set(method as 'DINHEIRO' | 'CARTAO_DE_CREDITO' | 'CARTAO_DE_DEBITO' | 'PIX');
+  this.currentAmount.set(this.remainingAmount());
+  setTimeout(() => this.focusAmountInput(), 50);
   }
 
   updateCurrentAmount(amount: number) {
@@ -236,7 +238,11 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
       if (response.saleCompleted && response.cupom) {
         this.printService.imprimir(response.cupom).subscribe({
           next: () => console.log('Cupom enviado para impressão'),
-          error: (err) => console.warn('Erro ao imprimir cupom:', err)
+          error: () => this.snackBar.open(
+            'Venda finalizada, mas erro ao imprimir o cupom. Reimprima manualmente.',
+            'Reimprimir',
+            { duration: 6000, panelClass: ['warn-snackbar'] }
+          ).onAction().subscribe(() => this.reimprimir())
         });
       }
 
@@ -295,7 +301,7 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
   getPaymentMethodText(method: string) {
   const map: Record<string, string> = {
     'DINHEIRO': 'Dinheiro',
-    'CARD_CREDIT': 'Crédito',
+    'CARTAO_DE_CREDITO': 'Crédito',
     'CARTAO_DE_DEBITO': 'Débito',
     'PIX': 'PIX'
   };
@@ -313,12 +319,11 @@ paymentMethods = ['DINHEIRO', 'CARD_CREDIT', 'CARTAO_DE_DEBITO', 'PIX'] as const
   }
 
   reimprimir() {
-    const cupom = this.lastCupom();
+  const cupom = this.lastCupom();
     if (!cupom) return;
-
     this.printService.imprimir(cupom).subscribe({
-      next: () => console.log('Reimpressão enviada'),
-      error: (err) => console.warn('Erro ao reimprimir:', err)
+      next: () => this.snackBar.open('Cupom enviado para impressão!', '', { duration: 2000 }),
+      error: () => this.snackBar.open('Erro ao reimprimir. Verifique a impressora.', 'Fechar', { duration: 5000 })
     });
   }
 

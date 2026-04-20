@@ -47,7 +47,7 @@
               [class.active]="currentPaymentMethod() === method"
               (click)="selectCurrentPaymentMethod(method)">
               <mat-icon *ngIf="method === 'DINHEIRO'">payments</mat-icon>
-                <mat-icon *ngIf="method === 'CARD_CREDIT'">credit_card</mat-icon>
+                <mat-icon *ngIf="method === 'CARTAO_DE_CREDITO'">credit_card</mat-icon>
                 <mat-icon *ngIf="method === 'CARTAO_DE_DEBITO'">credit_score</mat-icon>
                 <mat-icon *ngIf="method === 'PIX'">qr_code_2</mat-icon>
               <span>{{ getPaymentMethodText(method) }}</span>
