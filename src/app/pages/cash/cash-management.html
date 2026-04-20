@@ -59,7 +59,9 @@
 
   <div class="action-bar" *ngIf="isCashOpen()">
     <div class="action-group">
-      <button class="btn-action supply" (click)="movementType.set('SUPPLEMENT'); showMovementForm.set(true)" [disabled]="isLoading()">
+      <button class="btn-action supply"
+        (click)="movementType.set('SUPPLY'); showMovementForm.set(true)"
+        [disabled]="isLoading()">
         <mat-icon>add_circle_outline</mat-icon>
         <span>Suprimento</span>
       </button>
@@ -76,96 +78,83 @@
     </button>
   </div>
 
-  <div class="movement-form" *ngIf="showMovementForm()">
-<h3>Nova Movimentação: {{ movementType() === 'SUPPLEMENT' ? 'Suprimento' : 'Sangria' }}</h3>
-    <div class="form-fields">
-      <input
-        type="number"
-        [ngModel]="movementValue()"
-        (ngModelChange)="movementValue.set($event)"
-        placeholder="Valor (R$)"
-        min="0"
-        step="0.01"
-        [disabled]="isLoading()">
+        <div class="movement-form" *ngIf="showMovementForm()">
+          <h3>Nova Movimentação: {{ movementType() === 'SUPPLY' ? 'Suprimento' : 'Sangria' }}</h3>
+            <div class="form-fields">
+              <input
+                type="number"
+                [ngModel]="movementValue()"
+                (ngModelChange)="movementValue.set($event)"
+                placeholder="Valor (R$)"
+                min="0"
+                step="0.01"
+                [disabled]="isLoading()">
 
-      <input
-        type="text"
-        [ngModel]="movementObservation()"
-        (ngModelChange)="movementObservation.set($event)"
-        placeholder="Observação (opcional)"
-        [disabled]="isLoading()">
-    </div>
+              <input
+                type="text"
+                [ngModel]="movementObservation()"
+                (ngModelChange)="movementObservation.set($event)"
+                placeholder="Observação (opcional)"
+                [disabled]="isLoading()">
+            </div>
 
-    <div class="form-actions">
-      <button (click)="showMovementForm.set(false)">Cancelar</button>
-      <button class="btn-confirm" (click)="addMovement()" [disabled]="movementValue() <= 0 || isLoading()">
-        <mat-icon *ngIf="!isLoading()">check</mat-icon>
-        <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
-        {{ isLoading() ? 'Registrando...' : 'Confirmar' }}
-      </button>
-    </div>
-  </div>
+            <div class="form-actions">
+              <button (click)="showMovementForm.set(false)">Cancelar</button>
+              <button class="btn-confirm" (click)="addMovement()" [disabled]="movementValue() <= 0 || isLoading()">
+                <mat-icon *ngIf="!isLoading()">check</mat-icon>
+                <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
+                {{ isLoading() ? 'Registrando...' : 'Confirmar' }}
+              </button>
+            </div>
+          </div>
 
-  <div class="table-section" *ngIf="isCashOpen()">
-    <div class="section-header">
-      <h3><mat-icon>list_alt</mat-icon> Movimentações da Sessão</h3>
-      <span class="session-badge">Sessão #{{ cashService.activeSessionId() }}</span>
-    </div>
+          <div class="table-section" *ngIf="isCashOpen()">
+            <div class="section-header">
+              <h3><mat-icon>list_alt</mat-icon> Movimentações da Sessão</h3>
+              <span class="session-badge">Sessão #{{ cashService.activeSessionId() }}</span>
+            </div>
 
-    <div class="table-container">
-      <table class="cash-table">
-        <thead>
+            <div class="table-container">
+              <table class="cash-table">
+                <thead>
           <tr>
-            <th><mat-icon>schedule</mat-icon> Data/Hora</th>
-            <th><mat-icon>category</mat-icon> Tipo</th>
-            <th><mat-icon>description</mat-icon> Observação</th>
-            <th><mat-icon>payments</mat-icon> Valor</th>
+            <th>Data/Hora</th>
+            <th>Tipo</th>
+            <th>Descrição</th>
+            <th>Método</th>
+            <th>Valor</th>
           </tr>
         </thead>
         <tbody>
-          @if (isLoading()) {
-            <tr>
-              <td colspan="4" class="loading-cell">
-                <mat-icon class="spin">refresh</mat-icon>
-                Carregando movimentações...
-              </td>
-            </tr>
-          } @else if (transactions().length === 0) {
-            <tr>
-              <td colspan="4" class="empty-cell">
-                <mat-icon>inbox</mat-icon>
-                Nenhuma movimentação registrada nesta sessão
-              </td>
-            </tr>
-          } @else {
-            @for (item of transactions(); track item.id) {
-              <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLEMENT'"
-                  [class.expense]="item.type === 'SANGRIA'">
-                <td class="date-cell">
-                  {{ item.timestamp | date: 'dd/MM/yyyy HH:mm' }}
-                </td>
-                <td class="type-cell">
-                  <span [class]="'type-badge ' + item.type.toLowerCase()">
-                    <mat-icon>
-                    {{ item.type === 'SALE' ? 'shopping_cart' :
-                       item.type === 'SUPPLEMENT' ? 'add_circle' :
-                       item.type === 'SANGRIA' ? 'remove_circle' :
-                       item.type === 'OPENING' ? 'vpn_key' : 'sync_alt' }}
+          @for (item of transactions(); track $index) {
+            <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLY' || item.type === 'OPENING'"
+                [class.expense]="item.type === 'SANGRIA' || item.type === 'CHANGE'">
+
+              <td>{{ item.timestamp | date: 'dd/MM/yyyy HH:mm' }}</td>
+
+              <td>
+                <span [class]="'type-badge ' + item.type.toLowerCase()">
+                  <mat-icon>
+                    {{ item.type === 'SALE'    ? 'shopping_cart'  :
+                      item.type === 'SUPPLY'  ? 'add_circle'     :
+                      item.type === 'SANGRIA' ? 'remove_circle'  :
+                      item.type === 'CHANGE'  ? 'sync_alt'       :
+                      item.type === 'OPENING' ? 'vpn_key'        : 'payments' }}
                   </mat-icon>
-                    {{ getTypeLabel(item.type) }}
-                  </span>
-                </td>
-                <td class="description-cell">
-                {{ item.description || '---' }}
+                  {{ getTypeLabel(item.type) }}
+                </span>
               </td>
-               <td class="value-cell"
-                  [class.positive]="item.type === 'SALE' || item.type === 'SUPPLEMENT' || item.type === 'OPENING'"
-                  [class.negative]="item.type === 'SANGRIA' || item.type === 'CHANGE'">
-                {{ (item.type === 'SANGRIA' || item.type === 'CHANGE') ? '- ' : '+ ' }}
+
+              <td>{{ item.description || '---' }}</td>
+
+              <td>{{ item.methodName }}</td>
+
+              <td [class.positive]="item.value > 0" [class.negative]="item.value < 0">
+                <!-- valor já vem negativo para SANGRIA e CHANGE do backend -->
                 {{ item.value | currency: 'BRL' }}
               </td>
-              </tr>
-            }
+
+            </tr>
           }
         </tbody>
       </table>

@@ -54,8 +54,8 @@ export interface EmbroideryMetrics {
 }
 
 export type EmbroideryStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELED';
-@Injectable({ providedIn: 'root' })
 
+@Injectable({ providedIn: 'root' })
 export class EmbroideryService {
 
   private readonly apiUrl = `${environment.apiUrl}/embroidery`;
@@ -64,12 +64,12 @@ export class EmbroideryService {
 
   search(term: string, status: string, page: number, size: number, payment?: string): Observable<SpringPage<EmbroideryResponse>> {
     let params = new HttpParams()
-      .set('term', term)
-      .set('status', status)
-      .set('page', page.toString())
-      .set('size', size.toString());
+      .set('term', term ?? '')
+      .set('status', status ?? 'PENDING')
+      .set('page', (Number.isFinite(page) && page >= 0 ? page : 0).toString())
+      .set('size', (Number.isFinite(size) && size > 0 ? size : 10).toString());
 
-      if (payment) params = params.set('payment', payment);
+    if (payment) params = params.set('payment', payment);
     return this.http.get<SpringPage<EmbroideryResponse>>(`${this.apiUrl}/search`, { params });
   }
 
@@ -82,7 +82,7 @@ export class EmbroideryService {
   }
 
   getMetrics(): Observable<EmbroideryMetrics> {
-  return this.http.get<EmbroideryMetrics>(`${this.apiUrl}/metrics`);
+    return this.http.get<EmbroideryMetrics>(`${this.apiUrl}/metrics`);
   }
 
   createWithFile(formData: FormData): Observable<EmbroideryResponse> {
@@ -93,7 +93,6 @@ export class EmbroideryService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-
   downloadFile(id: number): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/file`, {
       responseType: 'blob'
@@ -101,18 +100,17 @@ export class EmbroideryService {
   }
 
   updateWithFile(id: number, formData: FormData) {
-  return this.http.put<EmbroideryResponse>(`${this.apiUrl}/${id}`, formData);
+    return this.http.put<EmbroideryResponse>(`${this.apiUrl}/${id}`, formData);
   }
 
   updateStatus(id: number, status: string): Observable<void> {
-  const httpParams = new HttpParams().set('status', status);
-
-  return this.http.patch<void>(
-    `${this.apiUrl}/${id}/status`,
-    null,
-    { params: httpParams }
-  );
-}
+    const httpParams = new HttpParams().set('status', status);
+    return this.http.patch<void>(
+      `${this.apiUrl}/${id}/status`,
+      null,
+      { params: httpParams }
+    );
+  }
 
   findAll(page: number = 0, size: number = 5): Observable<SpringPage<EmbroideryResponse>> {
     const params = new HttpParams()

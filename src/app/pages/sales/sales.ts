@@ -7,6 +7,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { PhoneFormatPipe } from "../../shared/pipes/phone-pipe";
 import { SaleDetailsModalComponent } from '../../shared/models/sale/sale-details/sale-details';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { AuthService } from '../../core/service/auth.service';
 
 @Component({
   selector: 'app-sales',
@@ -18,10 +19,13 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 export class Sales implements OnInit, OnDestroy {
   private saleService = inject(SaleService);
   private snackBar = inject(MatSnackBar);
+  private authService = inject(AuthService);
 
-  // Subject para o debounce da busca
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
+
+  isAdmin = computed(() => this.authService.isAdmin());
+  isCancelling = signal(false);
 
   sales = signal<SaleResponse[]>([]);
   isLoading = signal(true);
@@ -43,7 +47,6 @@ export class Sales implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    // Escuta o searchSubject com debounce de 400ms
     this.searchSubject.pipe(
       debounceTime(400),
       distinctUntilChanged(),
@@ -62,7 +65,6 @@ export class Sales implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Chamado pelo (input) do campo de busca no template
   onSearchInput(term: string) {
     this.searchSubject.next(term);
   }
@@ -85,8 +87,41 @@ export class Sales implements OnInit, OnDestroy {
   });
   }
 
-  // --- resto dos métodos sem alteração ---
+  cancelSale(sale: SaleResponse, event: MouseEvent): void {
+    event.stopPropagation();
 
+    if (!this.isAdmin()) {
+      this.snackBar.open('Apenas administradores podem cancelar vendas.', 'OK', {
+        duration: 4000, panelClass: ['error-snack']
+      });
+      return;
+    }
+
+    if (sale.saleStatus === 'CANCELED') {
+      this.snackBar.open('Esta venda já está cancelada.', 'OK', { duration: 3000 });
+      return;
+    }
+
+    const confirmed = confirm(`Cancelar venda #${sale.id}? Esta ação não pode ser desfeita.`);
+    if (!confirmed) return;
+
+    this.isCancelling.set(true);
+    this.saleService.cancelSale(sale.id).subscribe({
+      next: () => {
+        this.snackBar.open(`✅ Venda #${sale.id} cancelada.`, 'OK', {
+          duration: 3000, panelClass: ['success-snack']
+        });
+        this.loadSales();
+      },
+      error: (err) => {
+        this.snackBar.open(err.error?.message || 'Erro ao cancelar venda.', 'OK', {
+          duration: 5000, panelClass: ['error-snack']
+        });
+      },
+      complete: () => this.isCancelling.set(false)
+    });
+  }
+  
   private calculateSalesStats(sales: SaleResponse[]): void {
     const today = new Date().toISOString().split('T')[0];
     const stats = sales.reduce((acc, sale) => {
@@ -99,7 +134,7 @@ export class Sales implements OnInit, OnDestroy {
       } else if (sale.saleStatus === 'PENDING') {
         acc.pendingSales++;
         acc.pendingAmount += sale.total;
-      } else if (sale.saleStatus === 'CANCELLED') {
+      } else if (sale.saleStatus === 'CANCELED') {
         acc.cancelledSales++;
       }
       return acc;
@@ -145,14 +180,22 @@ export class Sales implements OnInit, OnDestroy {
 
   getStatusClass = (status: string) => status?.toLowerCase() || 'pending';
 
-  getStatusIcon(status: string): string {
-    const icons: any = { 'PAID': 'check_circle', 'PENDING': 'schedule', 'CANCELLED': 'cancel' };
-    return icons[status] || 'help_outline';
+ getStatusIcon(status: string): string {
+  const icons: Record<string, string> = {
+    'PAID': 'check_circle',
+    'PENDING': 'schedule',
+    'CANCELED': 'cancel'
+  };
+  return icons[status] || 'help_outline';
   }
 
   getStatusText(status: string): string {
-    const texts: any = { 'PAID': 'Paga', 'PENDING': 'Pendente', 'CANCELLED': 'Cancelada' };
-    return texts[status] || status;
+  const texts: Record<string, string> = {
+    'PAID': 'Paga',
+    'PENDING': 'Pendente',
+    'CANCELED': 'Cancelada'
+  };
+  return texts[status] || status;
   }
 
   getCustomerDisplayName = (sale: any) => sale.customerName || 'Consumidor Final';

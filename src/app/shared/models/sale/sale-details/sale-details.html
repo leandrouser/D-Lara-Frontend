@@ -82,6 +82,38 @@
         </div>
       </section>
 
+      <section class="section payments-section">
+        <div class="section-header">
+          <mat-icon>payments</mat-icon>
+          <h3>Pagamentos</h3>
+        </div>
+
+        <div *ngIf="loadingPayments()" class="payments-empty">
+          <mat-icon>hourglass_empty</mat-icon>
+          <span>Carregando pagamentos...</span>
+        </div>
+
+        <div *ngIf="!loadingPayments() && payments().length === 0" class="payments-empty">
+          <mat-icon>info</mat-icon>
+          <span>Nenhum pagamento registrado</span>
+        </div>
+
+        <div *ngIf="!loadingPayments() && payments().length > 0" class="payments-list">
+          <div *ngFor="let p of payments()" class="payment-item">
+            <div class="payment-method">
+              <mat-icon>{{ getPaymentIcon(p.paymentMethod.code) }}</mat-icon>
+              <span>{{ p.paymentMethod.displayName }}</span>
+            </div>
+            <div class="payment-values">
+              <span class="payment-amount">{{ formatCurrency(p.amountPaid) }}</span>
+              <span class="payment-change" *ngIf="p.changeAmount > 0">
+                Troco: {{ formatCurrency(p.changeAmount) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="section summary-section">
         <div class="section-header">
           <mat-icon>calculate</mat-icon>

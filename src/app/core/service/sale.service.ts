@@ -12,7 +12,7 @@ export enum DiscountType {
 export enum SaleStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
-  CANCELLED = 'CANCELLED'
+  CANCELED = 'CANCELED'
 }
 
 export interface SaleItemRequest {
@@ -67,7 +67,7 @@ export interface SaleResponse {
   id: number;
   customerName: string;
   customerPhone?: string;
-  saleStatus: SaleStatus;
+  saleStatus: string;
   subtotal: number;
   discountType: DiscountType;
   discountValue: number;
@@ -75,6 +75,7 @@ export interface SaleResponse {
   total: number;
   dateSale: string;
   items: SaleItemResponse[];
+
 }
 
 export interface Page<T> {
@@ -115,6 +116,10 @@ private apiUrl = `${environment.apiUrl}/sales`;
 
   getSales(page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
   return this.searchSales('', page, size);
-}
+  }
+
+  cancelSale(saleId: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${saleId}/cancel`, {});
+  }
 
 }

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environments';
 
+export type MovementType = 'OPENING' | 'SUPPLY' | 'SANGRIA' | 'SALE' | 'CHANGE';
 
 export interface OpenSessionRequest {
   value: number;
@@ -15,9 +16,19 @@ export interface CashRegisterStatus {
 
 export interface CashTransactionRequestDTO {
   value: number;
-  type: 'SUPPLEMENT' | 'SANGRIA' | 'SALE' | 'CHANGE' | 'OPENING';
+  type: 'SUPPLY' | 'SANGRIA';
   description?: string;
-  paymentMethodId: number;
+}
+
+export interface CashMovementResponse {
+  id: number;
+  timestamp: string;
+  description: string;
+  value: number;
+  type: MovementType;
+  methodName: string;
+  sessionId: number;
+  uniqueKey: string;
 }
 
 export interface PaymentMethodCountDTO {
@@ -36,6 +47,30 @@ export interface PaymentMethodTotal {
   expectedAmount: number;
 }
 
+export interface CloseSessionResponse {
+  sessionId: number;
+  closedAt: string;
+  details: MethodComparisonDTO[];
+  totalSystemExpected: number;
+  totalUserReported: number;
+  totalDiscrepancy: number;
+  status: 'CLOSED';
+  totalDiscounts: number;
+  initialValue: number;
+  totalSalesOnly: number;
+  totalSalesCash: number;
+}
+
+export interface MethodComparisonDTO {
+  paymentMethodId: number;
+  methodName: string;
+  expectedAmount: number;
+  reportedAmount: number;
+  difference: number;
+  initialValue: number;
+  salesOnly: number;
+}
+
 export interface CashSessionResponse {
   id: number;
   openedAt: string;
@@ -47,35 +82,6 @@ export interface CashSessionResponse {
   status: 'OPEN' | 'CLOSED';
   userId: number;
   userName: string;
-}
-
-export interface MethodComparisonDTO {
-  paymentMethodId: number;
-  methodName: string;
-  expectedAmount: number;
-  reportedAmount: number;
-  difference: number;
-}
-
-export interface CloseSessionResponse {
-  sessionId: number;
-  closedAt: string;
-  details: MethodComparisonDTO[];
-  totalSystemExpected: number;
-  totalUserReported: number;
-  totalDiscrepancy: number;
-  status: 'CLOSED';
-  totalDiscounts: number;
-}
-
-export interface Transaction {
-createdAt: string|number|Date;
-  id: number;
-  value: number;
-  type: 'SUPPLEMENT' | 'SANGRIA' | 'SALE' | 'CHANGE' | 'OPENING';
-  description?: string;
-  timestamp: string;
-  sessionId: number;
 }
 
 @Injectable({
@@ -117,11 +123,11 @@ export class CashService {
 }
 
   getExpectedTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
-    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/${sessionId}/summary`);
+    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/summary`);
   }
 
   getPaymentMethodTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
-    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/${sessionId}/summary`).pipe(
+    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/summary`).pipe(
       map(totals => totals.map(t => ({
         paymentMethodId: t.paymentMethodId,
         methodName: t.methodName,
@@ -132,7 +138,7 @@ export class CashService {
 
 
   closeSession(sessionId: number, request: CloseSessionRequest): Observable<CloseSessionResponse> {
-    return this.http.post<CloseSessionResponse>(`${this.apiUrl}/${sessionId}/close`, request).pipe(
+    return this.http.post<CloseSessionResponse>(`${this.apiUrl}/session/${sessionId}/close`, request).pipe(
       tap(() => this.clearLocalSession())
     );
   }
@@ -140,11 +146,7 @@ export class CashService {
   private clearLocalSession() {
   this._activeSession.set(null);
   localStorage.removeItem('active_cash_id');
-}
-
-  getTransactionsBySession(sessionId: number): Observable<Transaction[]> {
-  return this.http.get<Transaction[]>(`${this.apiUrl}/${sessionId}/transactions`);
-}
+  }
 
   checkExistingSession() {
   this._isInitializing.set(true);
@@ -165,9 +167,9 @@ export class CashService {
       this._isInitializing.set(false);
     }
   });
-}
+  }
 
-getOpenCashRegisterStatus(): Observable<CashRegisterStatus> { // removeu userId
+  getOpenCashRegisterStatus(): Observable<CashRegisterStatus> { // removeu userId
   return this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).pipe( // era /active/${userId}
     map(session => ({
       isOpen: !!session,
@@ -175,5 +177,9 @@ getOpenCashRegisterStatus(): Observable<CashRegisterStatus> { // removeu userId
     })),
     catchError(() => of({ isOpen: false, cashMovementId: null }))
   );
-}
+  }
+
+  getMovementsBySession(sessionId: number): Observable<CashMovementResponse[]> {
+    return this.http.get<CashMovementResponse[]>(`${this.apiUrl}/session/${sessionId}/movements`);
+  }
 }

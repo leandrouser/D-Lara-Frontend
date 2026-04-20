@@ -1,6 +1,6 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs';
 import { UserService, UserRequest, UserResponse } from '../../core/service/user.service';
+import { AuthService } from '../../core/service/auth.service';
 
 @Component({
   selector: 'app-users',
@@ -17,6 +18,7 @@ import { UserService, UserRequest, UserResponse } from '../../core/service/user.
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatIconModule,
     MatSnackBarModule,
     MatFormFieldModule,
@@ -32,12 +34,28 @@ export class Users implements OnInit {
   private userService = inject(UserService);
   private snackBar = inject(MatSnackBar);
   private fb = inject(FormBuilder);
+  authService = inject(AuthService);
+  selectedUserType: string = 'OPERATOR';
 
   users = signal<UserResponse[]>([]);
   isLoading = signal(false);
   showForm = signal(false);
   editingId = signal<number | null>(null);
   hidePassword = signal(true);
+
+  filterName = signal('');
+  filterType = signal('all');
+
+   filteredUsers = computed(() => {
+    const name = this.filterName().toLowerCase().trim();
+    const type = this.filterType();
+
+    return this.users().filter(u => {
+      const matchName = !name || u.userName.toLowerCase().includes(name);
+      const matchType = type === 'all' || u.userType === type;
+      return matchName && matchType;
+    });
+    });
 
   form: FormGroup = this.fb.group({
     userName: ['', Validators.required],
@@ -55,23 +73,27 @@ export class Users implements OnInit {
       .subscribe({ next: users => this.users.set(users) });
   }
 
+  clearFilters() {
+    this.filterName.set('');
+    this.filterType.set('all');
+  }
+
   openForm(user?: UserResponse) {
+    this.selectedUserType = user?.userType || 'OPERATOR';
     this.editingId.set(user?.id || null);
     this.hidePassword.set(true);
 
-    // Se editando, senha não é obrigatória
     const passwordValidators = user
-      ? [Validators.minLength(4)]
-      : [Validators.required, Validators.minLength(4)];
+    ? [Validators.minLength(4)]
+    : [Validators.required, Validators.minLength(4)];
 
     this.form = this.fb.group({
-      userName: [user?.userName || '', Validators.required],
-      phone: [user?.phone || ''],
-      password: ['', passwordValidators],
-      userType: [user?.userType || 'OPERATOR', Validators.required]
-    });
+    userName: [user?.userName || '', Validators.required],
+    phone: [user?.phone || ''],
+    password: ['', passwordValidators],
+  });
 
-    this.showForm.set(true);
+  this.showForm.set(true);
   }
 
   closeForm() {
@@ -80,35 +102,38 @@ export class Users implements OnInit {
   }
 
   save() {
-    if (this.form.invalid) return;
+  if (this.form.invalid) return;
+  
+  const raw = this.form.value;
+  const id = this.editingId();
 
-    const value = this.form.value as UserRequest;
-    const id = this.editingId();
+  const value: UserRequest = {
+    userName: raw.userName,
+    phone: raw.phone || null,
+    password: raw.password?.trim() || null,
+    userType: this.authService.isAdmin() ? this.selectedUserType as any : 'OPERATOR',
 
-    // Remove senha se vazia ao editar
-    if (id && !value.password) {
-      delete (value as any).password;
-    }
+  };
 
-    this.isLoading.set(true);
-    const req = id
-      ? this.userService.update(id, value)
-      : this.userService.create(value);
+  this.isLoading.set(true);
+  const req = id
+    ? this.userService.update(id, value)
+    : this.userService.create(value);
 
-    req.pipe(finalize(() => this.isLoading.set(false))).subscribe({
-      next: () => {
-        this.snackBar.open(
-          id ? '✅ Usuário atualizado!' : '✅ Usuário criado!',
-          'OK', { duration: 3000 }
-        );
-        this.closeForm();
-        this.loadUsers();
-      },
-      error: err => this.snackBar.open(
-        err.error?.message || 'Erro ao salvar',
-        'OK', { duration: 4000 }
-      )
-    });
+  req.pipe(finalize(() => this.isLoading.set(false))).subscribe({
+    next: () => {
+      this.snackBar.open(
+        id ? '✅ Usuário atualizado!' : '✅ Usuário criado!',
+        'OK', { duration: 3000 }
+      );
+      this.closeForm();
+      this.loadUsers();
+    },
+    error: err => this.snackBar.open(
+      err.error?.message || 'Erro ao salvar',
+      'OK', { duration: 4000 }
+    )
+  });
   }
 
   delete(id: number) {

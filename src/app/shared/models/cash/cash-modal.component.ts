@@ -16,6 +16,8 @@ interface ClosingDetail {
   expectedAmount: number;
   reportedAmount: number;
   difference: number;
+  initialValue: number;
+  salesOnly: number;
 }
 
 interface ClosingResult {
@@ -27,6 +29,9 @@ interface ClosingResult {
   totalDiscrepancy: number;
   status: string;
   totalDiscounts: number;
+  initialValue: number;
+  totalSalesOnly: number;
+  totalSalesCash: number;
 }
 
 @Component({

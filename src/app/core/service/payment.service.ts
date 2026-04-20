@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 export interface PaymentResponse {
   id: number;
   saleId: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethodResponse;
   amountPaid: number;
   changeAmount: number;
   paymentDate: string;

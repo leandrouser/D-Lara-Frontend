@@ -93,8 +93,8 @@
             Pendentes ({{ salesStats().pendingSales }})
           </button>
           <button
-            [class.active]="statusFilter() === 'cancelled'"
-            (click)="setFilter('cancelled')">
+            [class.active]="statusFilter() === 'canceled'"
+            (click)="setFilter('canceled')">
             <mat-icon>cancel</mat-icon>
             Canceladas ({{ salesStats().cancelledSales }})
           </button>
@@ -226,7 +226,7 @@
                 @for (sale of filteredSales(); track sale.id) {
                   <tr [class.paid]="sale.saleStatus === 'PAID'"
                       [class.pending]="sale.saleStatus === 'PENDING'"
-                      [class.cancelled]="sale.saleStatus === 'CANCELLED'">
+                      [class.canceled]="sale.saleStatus === 'CANCELED'">
                     <td class="sale-id">
                       <strong>#{{ sale.id }}</strong>
                     </td>
@@ -260,6 +260,7 @@
                       </span>
                     </td>
                     <td class="sale-actions">
+                      <div class="actions-group">
                       <button
                         class="mini-btn view-btn"
                         title="Visualizar detalhes"
@@ -267,6 +268,17 @@
                         <mat-icon>visibility</mat-icon>
                         Detalhes
                       </button>
+                      @if (isAdmin() && sale.saleStatus !== 'CANCELED') {
+                        <button
+                          class="mini-btn cancel-btn"
+                          title="Cancelar venda"
+                          [disabled]="isCancelling()"
+                          (click)="cancelSale(sale, $event)">
+                          <mat-icon>cancel</mat-icon>
+                          Cancelar
+                        </button>
+                      }
+                      </div>
                     </td>
                   </tr>
                 }

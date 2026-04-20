@@ -25,6 +25,38 @@
   }
 }
 
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+
+  mat-form-field { margin-bottom: 0; }
+
+  .filter-name {
+    width: 220px;        // ✅ largura fixa menor em desktop
+    flex-shrink: 0;
+  }
+
+  .filter-type { width: 160px; }
+
+  // ✅ Em telas menores, os campos ocupam toda a linha
+  @media (max-width: 600px) {
+    .filter-name,
+    .filter-type {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.filter-count {
+  font-size: 0.82rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
 .table-container {
   background: white;
   border-radius: 12px;

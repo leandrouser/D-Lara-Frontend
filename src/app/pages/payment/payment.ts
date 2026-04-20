@@ -104,13 +104,11 @@ export class Payment implements OnInit {
   });
 
   ngOnInit() {
-    console.log('🔄 Payment Component iniciado');
     this.setupSearch();
     this.loadMethods();
   }
 
   openModal(methodToEdit?: PaymentMethodResponse) {
-    console.log('🔄 Abrindo modal via MatDialog');
 
     const dialogRef = this.dialog.open(PaymentMethodDialog, {
       width: '550px',
@@ -153,18 +151,15 @@ export class Payment implements OnInit {
   }
 
   loadMethods() {
-    console.log('🔄 loadMethods() chamado');
     this.state.set('loading');
 
     this.service.listPaymentMethods().subscribe({
       next: (methods) => {
-        console.log('✅ Dados carregados com sucesso:', methods);
         this.methods.set(methods);
         this.state.set('success');
         this.currentPage.set(1);
       },
       error: err => {
-        console.error('❌ Erro ao carregar métodos:', err);
         this.state.set('error');
         this.errorMessage.set('Erro ao carregar métodos de pagamento');
       }
@@ -172,21 +167,18 @@ export class Payment implements OnInit {
   }
 
   goToPage(page: number) {
-    console.log('🎯 Indo para página:', page);
     if (page >= 1 && page <= this.totalPages()) {
       this.currentPage.set(page);
     }
   }
 
   nextPage() {
-    console.log('➡️ Próxima página. Atual:', this.currentPage());
     if (this.currentPage() < this.totalPages()) {
       this.currentPage.update(page => page + 1);
     }
   }
 
   previousPage() {
-    console.log('⬅️ Página anterior. Atual:', this.currentPage());
     if (this.currentPage() > 1) {
       this.currentPage.update(page => page - 1);
     }
@@ -194,20 +186,17 @@ export class Payment implements OnInit {
 
   changeItemsPerPage(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
-    console.log('📏 Mudando itens por página para:', value);
     this.itemsPerPage.set(Number(value));
     this.currentPage.set(1);
   }
 
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
-    console.log('🔍 Buscando:', value);
     this.search.set(value);
     this.searchSubject.next(value);
   }
 
   applyFilter(filter: 'all' | 'active' | 'inactive') {
-    console.log('🏷️ Aplicando filtro:', filter);
     this.activeFilter.set(filter);
     this.currentPage.set(1);
   }

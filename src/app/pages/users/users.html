@@ -10,6 +10,41 @@
     </button>
   </div>
 
+  <div class="filter-bar">
+    <mat-form-field appearance="outline" class="filter-name">
+      <mat-label>Buscar usuário</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput
+            [ngModel]="filterName()"
+            (ngModelChange)="filterName.set($event)"
+            placeholder="Nome do usuário">
+      <button *ngIf="filterName()" matSuffix mat-icon-button
+              (click)="filterName.set('')">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="filter-type" [hidden]="!authService.isAdmin()">
+      <mat-label>Tipo</mat-label>
+      <mat-icon matPrefix>manage_accounts</mat-icon>
+      <mat-select [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
+        <mat-option value="all">Todos</mat-option>
+        <mat-option value="ADMIN">Administrador</mat-option>
+        <mat-option value="OPERATOR">Operador</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-stroked-button (click)="clearFilters()"
+            *ngIf="filterName() || filterType() !== 'all'">
+      <mat-icon>filter_alt_off</mat-icon>
+      Limpar
+    </button>
+
+    <span class="filter-count" *ngIf="filteredUsers().length !== users().length">
+      {{ filteredUsers().length }} de {{ users().length }} usuários
+    </span>
+  </div>
+
   <div class="table-container">
     <div *ngIf="isLoading()" class="loading">
       <mat-spinner diameter="40"></mat-spinner>
@@ -26,7 +61,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let u of users()">
+        <tr *ngFor="let u of filteredUsers()">
           <td>{{ u.id }}</td>
           <td>
             <div class="user-cell">
@@ -46,27 +81,24 @@
               <mat-icon>edit</mat-icon>
             </button>
             <button mat-icon-button color="warn" (click)="delete(u.id)"
-                    [disabled]="u.userType === 'ADMIN'" title="Excluir">
-              <mat-icon>delete</mat-icon>
+                    [disabled]="u.userType === 'ADMIN'" title="Inativar">
+              <mat-icon>person_off</mat-icon>
             </button>
           </td>
         </tr>
-        <tr *ngIf="users().length === 0">
+        <tr *ngIf="filteredUsers().length === 0">
           <td colspan="5" class="empty">
             <mat-icon>people_outline</mat-icon>
-            Nenhum usuário cadastrado
+            {{ users().length === 0 ? 'Nenhum usuário cadastrado' : 'Nenhum usuário encontrado' }}
           </td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <!-- Modal overlay -->
   <div class="modal-overlay" *ngIf="showForm()" (click)="closeForm()"></div>
 
-  <!-- Modal -->
-  <div class="modal" *ngIf="showForm()" [formGroup]="form">
-    <div class="modal-header">
+    <div class="modal" *ngIf="showForm()">    <div class="modal-header">
       <h2>
         <mat-icon>{{ editingId() ? 'edit' : 'person_add' }}</mat-icon>
         {{ editingId() ? 'Editar Usuário' : 'Novo Usuário' }}
@@ -76,7 +108,7 @@
       </button>
     </div>
 
-    <div class="modal-body">
+    <div class="modal-body" [formGroup]="form">
       <mat-form-field appearance="outline">
         <mat-label>Nome de usuário</mat-label>
         <mat-icon matPrefix>badge</mat-icon>
@@ -109,10 +141,10 @@
         </mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" *ngIf="authService.isAdmin()">
         <mat-label>Tipo de usuário</mat-label>
         <mat-icon matPrefix>manage_accounts</mat-icon>
-        <mat-select formControlName="userType">
+        <mat-select [(ngModel)]="selectedUserType" [ngModelOptions]="{standalone: true}">
           <mat-option value="OPERATOR">
             <mat-icon>person</mat-icon> Operador
           </mat-option>

@@ -451,7 +451,7 @@
       &.col-discount { width: 120px; }
       &.col-total { width: 120px; }
       &.col-status { width: 130px; }
-      &.col-actions { width: 100px; }
+      &.col-actions { width: 200px; }
     }
   }
 
@@ -501,7 +501,7 @@
         }
 
         &.sale-actions {
-          text-align: center;
+          vertical-align: middle;;
         }
       }
     }
@@ -565,6 +565,14 @@
     }
   }
 
+  .actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  }
+
   .mini-btn {
     background: #3b82f6;
     color: white;
@@ -597,7 +605,37 @@
       height: 14px;
     }
   }
-}
+  .cancel-btn {
+  background: transparent;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover:not(:disabled) {
+    background: #dc2626;
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  }
+  }
 
 @keyframes spin {
   from { transform: rotate(0deg); }

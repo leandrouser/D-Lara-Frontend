@@ -1,6 +1,7 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
   <div class="modal-content" [class.large]="modalType === 'CLOSING'" (click)="$event.stopPropagation()">
 
+    <!-- HEADER ABERTURA -->
     <div class="modal-header opening" *ngIf="modalType === 'OPENING'">
       <div class="header-title">
         <div class="icon-wrapper"><mat-icon>point_of_sale</mat-icon></div>
@@ -12,6 +13,7 @@
       <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
     </div>
 
+    <!-- HEADER FECHAMENTO -->
     <div class="modal-header closing" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
       <div class="header-title">
         <div class="icon-wrapper"><mat-icon>lock_clock</mat-icon></div>
@@ -23,6 +25,7 @@
       <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
     </div>
 
+    <!-- HEADER RELATÓRIO -->
     <div class="modal-header closing" *ngIf="modalType === 'CLOSING' && isClosingConfirmed">
       <div class="header-title">
         <div class="icon-wrapper"><mat-icon>receipt_long</mat-icon></div>
@@ -34,6 +37,7 @@
       <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
     </div>
 
+    <!-- BODY ABERTURA -->
     <div class="modal-body" *ngIf="modalType === 'OPENING'">
       <div class="info-message">
         <mat-icon class="info-icon">info</mat-icon>
@@ -47,7 +51,7 @@
         </label>
         <div class="input-wrapper">
           <span class="currency">R$</span>
-         <input
+          <input
             type="number"
             [(ngModel)]="initialValue"
             placeholder="0,00"
@@ -55,8 +59,7 @@
             step="0.01"
             autofocus
             (keyup.enter)="confirmOpen()"
-            (blur)="onBlurInitialValue()"
-          >
+            (blur)="onBlurInitialValue()">
         </div>
         <small *ngIf="initialValue === 0" class="hint">
           Você pode iniciar com R$ 0,00 se não precisar de troco
@@ -64,8 +67,8 @@
       </div>
     </div>
 
+    <!-- BODY FECHAMENTO — FORMULÁRIO -->
     <div class="modal-body" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
-
       <div class="session-info" *ngIf="session">
         <div class="info-item">
           <mat-icon>schedule</mat-icon>
@@ -94,8 +97,7 @@
               placeholder="0,00"
               step="0.01"
               min="0"
-              autocomplete="off"
-            >
+              autocomplete="off">
           </div>
         </div>
 
@@ -106,8 +108,10 @@
       </div>
     </div>
 
+    <!-- BODY FECHAMENTO — RELATÓRIO -->
     <div class="modal-body" *ngIf="modalType === 'CLOSING' && isClosingConfirmed && closingResult">
 
+      <!-- cabeçalho com data e badge -->
       <div class="result-header">
         <div class="result-date">
           <mat-icon>event</mat-icon>
@@ -121,6 +125,52 @@
         </div>
       </div>
 
+      <!-- resumo de vendas -->
+      <div class="sales-summary-card">
+        <div class="sales-summary-header">
+          <mat-icon>bar_chart</mat-icon>
+          <span>Resumo de Vendas do Dia</span>
+        </div>
+        <div class="sales-summary-body">
+          <div class="summary-row">
+            <span class="summary-label">
+              <mat-icon>account_balance_wallet</mat-icon>
+              Saldo Inicial (Fundo de Troco)
+            </span>
+            <span class="summary-value neutral">
+              {{ closingResult.initialValue | currency:'BRL' }}
+            </span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">
+              <mat-icon>shopping_cart</mat-icon>
+              Total Vendas Brutas
+            </span>
+            <span class="summary-value positive">
+{{ (closingResult.totalSalesOnly + closingResult.totalDiscounts) | currency:'BRL' }}            </span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">
+              <mat-icon>local_offer</mat-icon>
+              (-) Descontos
+            </span>
+            <span class="summary-value warning">
+              - {{ closingResult.totalDiscounts | currency:'BRL' }}
+            </span>
+          </div>
+          <div class="summary-row divider">
+            <span class="summary-label">
+              <mat-icon>trending_up</mat-icon>
+              Vendas Líquidas
+            </span>
+            <span class="summary-value positive strong">
+              {{ closingResult.totalSalesOnly | currency:'BRL' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- tabela por método -->
       <div class="reconciliation-table">
         <div class="table-header">
           <div>Método</div>
@@ -129,22 +179,32 @@
           <div class="text-right">Diferença</div>
         </div>
 
-        <div
-          class="table-row"
-          *ngFor="let detail of closingResult.details"
-          [class.has-diff]="detail.difference !== 0"
-        >
-          <div class="method-name">{{ detail.methodName }}</div>
-          <div class="value-system">{{ detail.expectedAmount | currency:'BRL' }}</div>
-          <div class="value-reported">{{ detail.reportedAmount | currency:'BRL' }}</div>
-          <div class="value-diff" [ngClass]="diffClass(detail.difference)">
-            <mat-icon *ngIf="detail.difference > 0">arrow_upward</mat-icon>
-            <mat-icon *ngIf="detail.difference < 0">arrow_downward</mat-icon>
-            <span>{{ detail.difference | currency:'BRL' }}</span>
+        <ng-container *ngFor="let detail of closingResult.details">
+          <div class="table-row" [class.has-diff]="detail.difference !== 0">
+            <div class="method-name">{{ detail.methodName }}</div>
+            <div class="value-system">{{ detail.expectedAmount | currency:'BRL' }}</div>
+            <div class="value-reported">{{ detail.reportedAmount | currency:'BRL' }}</div>
+            <div class="value-diff" [ngClass]="diffClass(detail.difference)">
+              <mat-icon *ngIf="detail.difference > 0">arrow_upward</mat-icon>
+              <mat-icon *ngIf="detail.difference < 0">arrow_downward</mat-icon>
+              <span>{{ detail.difference | currency:'BRL' }}</span>
+            </div>
           </div>
-        </div>
+          <!-- sub-linha só para DINHEIRO -->
+          <div class="table-subrow" *ngIf="detail.initialValue > 0">
+            <div class="subrow-item">
+              <mat-icon>vpn_key</mat-icon>
+              Saldo inicial: {{ detail.initialValue | currency:'BRL' }}
+            </div>
+            <div class="subrow-item">
+              <mat-icon>trending_up</mat-icon>
+              Vendas líquidas: {{ detail.salesOnly | currency:'BRL' }}
+            </div>
+          </div>
+        </ng-container>
       </div>
 
+      <!-- totais -->
       <div class="total-summary">
         <div class="summary-grid">
           <div class="summary-item">
@@ -155,19 +215,10 @@
             <span class="label">Total Informado:</span>
             <strong class="value">{{ closingResult.totalUserReported | currency:'BRL' }}</strong>
           </div>
-          <div class="summary-item total-diff"
+          <div class="summary-item"
                [class.positive]="closingResult.totalDiscrepancy > 0"
                [class.negative]="closingResult.totalDiscrepancy < 0">
             <span class="label">Diferença Total:</span>
-            <div class="summary-item discount-total">
-              <span class="label">
-                <mat-icon style="font-size:16px;vertical-align:middle;margin-right:4px;">local_offer</mat-icon>
-                Total Descontos:
-              </span>
-              <strong class="value" style="color: #f59e0b;">
-                - {{ closingResult.totalDiscounts | currency:'BRL' }}
-              </strong>
-            </div>
             <strong class="value">
               <mat-icon *ngIf="closingResult.totalDiscrepancy > 0">arrow_upward</mat-icon>
               <mat-icon *ngIf="closingResult.totalDiscrepancy < 0">arrow_downward</mat-icon>
@@ -181,16 +232,20 @@
         <mat-icon>info</mat-icon>
         <p>O caixa foi fechado com diferença. Verifique os valores e registre a ocorrência se necessário.</p>
       </div>
+
     </div>
 
+    <!-- FOOTER ABERTURA -->
     <div class="modal-footer" *ngIf="modalType === 'OPENING'">
       <button class="btn-outline" (click)="closeModal()">
         <mat-icon>close</mat-icon> Cancelar
       </button>
-        <button class="btn-primary opening" (click)="confirmOpen()" [disabled]="(initialValue ?? 0) < 0">        <mat-icon>check_circle</mat-icon> Abrir Caixa
+      <button class="btn-primary opening" (click)="confirmOpen()" [disabled]="(initialValue ?? 0) < 0">
+        <mat-icon>check_circle</mat-icon> Abrir Caixa
       </button>
     </div>
 
+    <!-- FOOTER FECHAMENTO — FORMULÁRIO -->
     <div class="modal-footer" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
       <button class="btn-outline" (click)="closeModal()">
         <mat-icon>close</mat-icon> Cancelar
