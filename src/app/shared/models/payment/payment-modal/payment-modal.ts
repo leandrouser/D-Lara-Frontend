@@ -1,7 +1,7 @@
 import {
   Component, EventEmitter, Input, Output,
   inject, signal, computed, OnChanges, OnInit,
-  ViewChild, ElementRef, AfterViewInit
+  ViewChild, ElementRef, HostListener
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
@@ -48,9 +48,8 @@ export class PaymentModal implements OnChanges, OnInit {
   private snackBar = inject(MatSnackBar);
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
-  
-  paymentMethods = ['DINHEIRO', 'CARTAO_DE_CREDITO', 'CARTAO_DE_DEBITO', 'PIX'] as const;
 
+  paymentMethods = ['DINHEIRO', 'CARTAO_DE_CREDITO', 'CARTAO_DE_DEBITO', 'PIX'] as const;
 
   @Input() paymentData: PaymentData | null = null;
   @Input() isOpen: boolean = false;
@@ -62,7 +61,8 @@ export class PaymentModal implements OnChanges, OnInit {
   @ViewChild('confirmBtn') confirmBtnRef!: ElementRef<HTMLButtonElement>;
 
   selectedPaymentMethods = signal<PaymentMethodSplit[]>([]);
-  currentPaymentMethod = signal<string>('DINHEIRO');  currentAmount = signal<number>(0);
+  currentPaymentMethod = signal<string>('DINHEIRO');
+  currentAmount = signal<number>(0);
 
   isProcessing = signal(false);
   paymentSuccess = signal<PaymentResponse | null>(null);
@@ -96,14 +96,26 @@ export class PaymentModal implements OnChanges, OnInit {
     return this.currentPaymentMethod() === 'DINHEIRO';
   });
 
-  requiredChange = computed(() => {
-    if (!this.paymentData) return 0;
-    const cashPaid = this.selectedPaymentMethods()
-      .filter(pm => pm.method === 'DINHEIRO' && !pm.isChange)
-      .reduce((sum, pm) => sum + pm.amount, 0);
-    const nonCashPaid = this.totalPaid() - cashPaid;
-    return Math.max(0, cashPaid - (this.paymentData.totalAmount - nonCashPaid));
+  requiredChange = computed(() => this.totalChange());
+
+  canProcessPayment = computed(() => {
+    if (this.isProcessing()) return false;
+    if (!this.isFullyPaid()) return false;
+    return !this.selectedPaymentMethods().some(pm => pm.method !== 'DINHEIRO' && pm.isChange);
   });
+
+  // F2 finaliza a venda quando o modal está aberto
+  @HostListener('window:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent) {
+    if (!this.isOpen) return;
+
+    if (event.key === 'F2') {
+      event.preventDefault();
+      if (this.canProcessPayment()) {
+        this.processPayments();
+      }
+    }
+  }
 
   ngOnInit() {
     this.loadPaymentMethods();
@@ -112,7 +124,7 @@ export class PaymentModal implements OnChanges, OnInit {
   ngOnChanges() {
     if (this.isOpen && this.paymentData) {
       this.resetForm();
-      this.currentAmount.set(this.paymentData.totalAmount);
+      this.currentAmount.set(this.round2(this.paymentData.totalAmount));
       this.loadPaymentMethods();
       setTimeout(() => this.focusAmountInput(), 100);
     }
@@ -128,39 +140,44 @@ export class PaymentModal implements OnChanges, OnInit {
   addPaymentMethod() {
     if (this.currentAmount() <= 0) return;
 
-    const amountToAdd = this.currentPaymentMethod() !== 'DINHEIRO'
-      ? Math.min(this.currentAmount(), this.remainingAmount())
-      : this.currentAmount();
+    const isCash = this.currentPaymentMethod() === 'DINHEIRO';
+    const effectiveAmount = this.round2(Math.min(this.currentAmount(), this.remainingAmount()));
 
-    if (amountToAdd <= 0) return;
+    if (effectiveAmount <= 0) return;
+
+    const change = isCash
+      ? this.round2(Math.max(0, this.currentAmount() - this.remainingAmount()))
+      : 0;
 
     this.selectedPaymentMethods.update(methods => [
-      ...methods,
-      { method: this.currentPaymentMethod(), amount: amountToAdd, isChange: false }
+      ...methods.filter(pm => !pm.isChange),
+      { method: this.currentPaymentMethod(), amount: effectiveAmount, isChange: false }
     ]);
 
-    if (this.currentPaymentMethod() === 'DINHEIRO' && this.requiredChange() > 0) {
-      this.selectedPaymentMethods.update(methods => methods.filter(pm => !pm.isChange));
-      this.addChangePayment(this.requiredChange());
+    if (change > 0) {
+      this.selectedPaymentMethods.update(methods => [
+        ...methods,
+        { method: 'DINHEIRO', amount: -change, isChange: true }
+      ]);
     }
 
-    this.currentAmount.set(this.remainingAmount());
+    this.currentAmount.set(this.round2(this.remainingAmount()));
 
     setTimeout(() => {
-    if (this.isFullyPaid()) {
-      this.confirmBtnRef?.nativeElement.focus();
-    } else {
-      this.focusAmountInput();
-    }
-  }, 50);
+      if (this.isFullyPaid()) {
+        this.confirmBtnRef?.nativeElement.focus();
+      } else {
+        this.focusAmountInput();
+      }
+    }, 50);
   }
 
   private focusAmountInput() {
-  const input = this.amountInputRef?.nativeElement;
-  if (input) {
-    input.focus();
-    input.select();
-  }
+    const input = this.amountInputRef?.nativeElement;
+    if (input) {
+      input.focus();
+      input.select();
+    }
   }
 
   addChangePayment(amount: number) {
@@ -173,46 +190,74 @@ export class PaymentModal implements OnChanges, OnInit {
 
   removePaymentMethod(index: number) {
     const removed = this.selectedPaymentMethods()[index];
-    this.selectedPaymentMethods.update(methods => methods.filter((_, i) => i !== index));
 
-    if (removed.method === 'DINHEIRO' && !removed.isChange) {
+    this.selectedPaymentMethods.update(methods => {
+      const withoutRemoved = methods.filter((_, i) => i !== index);
+      if (removed.method === 'DINHEIRO' && !removed.isChange) {
+        return withoutRemoved.filter(pm => !pm.isChange);
+      }
+      return withoutRemoved;
+    });
+
+    const cashEntry = this.selectedPaymentMethods().find(
+      pm => pm.method === 'DINHEIRO' && !pm.isChange
+    );
+    if (cashEntry) {
+      const newChange = this.round2(Math.max(0, cashEntry.amount - this.remainingAmount()));
       this.selectedPaymentMethods.update(methods => methods.filter(pm => !pm.isChange));
-      if (this.requiredChange() > 0) this.addChangePayment(this.requiredChange());
+      if (newChange > 0) {
+        this.addChangePayment(newChange);
+      }
     }
 
-    this.currentAmount.set(this.remainingAmount());
+    this.currentAmount.set(this.round2(this.remainingAmount()));
   }
 
   selectCurrentPaymentMethod(method: string) {
-  this.currentPaymentMethod.set(method as 'DINHEIRO' | 'CARTAO_DE_CREDITO' | 'CARTAO_DE_DEBITO' | 'PIX');
-  this.currentAmount.set(this.remainingAmount());
-  setTimeout(() => this.focusAmountInput(), 50);
+    this.currentPaymentMethod.set(method as 'DINHEIRO' | 'CARTAO_DE_CREDITO' | 'CARTAO_DE_DEBITO' | 'PIX');
+    this.currentAmount.set(this.round2(this.remainingAmount()));
+    setTimeout(() => this.focusAmountInput(), 50);
   }
 
-  updateCurrentAmount(amount: number) {
-    this.currentAmount.set(Math.max(0, amount || 0));
+  // Atualiza valor arredondando para 2 casas
+  updateCurrentAmount(value: number) {
+    this.currentAmount.set(this.round2(Math.max(0, value || 0)));
+  }
+
+  // Impede digitação de mais de 2 casas decimais no input
+  onAmountInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value;
+
+    const dotIndex = raw.indexOf('.');
+    if (dotIndex !== -1 && raw.length - dotIndex > 3) {
+      input.value = parseFloat(raw).toFixed(2);
+    }
+
+    const parsed = parseFloat(input.value) || 0;
+    this.currentAmount.set(this.round2(Math.max(0, parsed)));
   }
 
   async processPayments() {
     if (!this.paymentData || this.isProcessing() || !this.isFullyPaid()) return;
 
- if (this.dbPaymentMethods().length === 0) {
-    await new Promise<void>((resolve, reject) => {
-      this.paymentService.listPaymentMethods().subscribe({
-        next: methods => { this.dbPaymentMethods.set(methods); resolve(); },
-        error: reject
+    if (this.dbPaymentMethods().length === 0) {
+      await new Promise<void>((resolve, reject) => {
+        this.paymentService.listPaymentMethods().subscribe({
+          next: methods => { this.dbPaymentMethods.set(methods); resolve(); },
+          error: reject
+        });
       });
-    });
-  }
+    }
 
-  const methodsNotFound = this.selectedPaymentMethods()
-    .filter(pm => !pm.isChange)
-    .filter(pm => !this.dbPaymentMethods().find(m => m.code === pm.method));
+    const methodsNotFound = this.selectedPaymentMethods()
+      .filter(pm => !pm.isChange)
+      .filter(pm => !this.dbPaymentMethods().find(m => m.code === pm.method));
 
-  if (methodsNotFound.length > 0) {
-    alert(`Método(s) não reconhecido(s): ${methodsNotFound.map(m => m.method).join(', ')}`);
-    return;
-  }
+    if (methodsNotFound.length > 0) {
+      alert(`Método(s) não reconhecido(s): ${methodsNotFound.map(m => m.method).join(', ')}`);
+      return;
+    }
 
     this.isProcessing.set(true);
 
@@ -258,17 +303,6 @@ export class PaymentModal implements OnChanges, OnInit {
     }
   }
 
-  canProcessPayment = computed(() => {
-    if (this.isProcessing()) return false;
-    if (!this.isFullyPaid()) return false;
-
-    const hasCashWithChange = this.selectedPaymentMethods().some(pm =>
-      pm.method !== 'DINHEIRO' && pm.isChange
-    );
-
-    return !hasCashWithChange;
-  });
-
   validatePayments(): { valid: boolean; error?: string } {
     const methods = this.selectedPaymentMethods()
       .filter(pm => !pm.isChange)
@@ -299,18 +333,22 @@ export class PaymentModal implements OnChanges, OnInit {
   }
 
   getPaymentMethodText(method: string) {
-  const map: Record<string, string> = {
-    'DINHEIRO': 'Dinheiro',
-    'CARTAO_DE_CREDITO': 'Crédito',
-    'CARTAO_DE_DEBITO': 'Débito',
-    'PIX': 'PIX'
-  };
-  return map[method] || method;
-}
+    const map: Record<string, string> = {
+      'DINHEIRO': 'Dinheiro',
+      'CARTAO_DE_CREDITO': 'Crédito',
+      'CARTAO_DE_DEBITO': 'Débito',
+      'PIX': 'PIX'
+    };
+    return map[method] || method;
+  }
 
   formatPrice(price: number) {
     return isNaN(price) ? 'R$ 0,00' :
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Math.abs(price));
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   closeModal() {
@@ -319,7 +357,7 @@ export class PaymentModal implements OnChanges, OnInit {
   }
 
   reimprimir() {
-  const cupom = this.lastCupom();
+    const cupom = this.lastCupom();
     if (!cupom) return;
     this.printService.imprimir(cupom).subscribe({
       next: () => this.snackBar.open('Cupom enviado para impressão!', '', { duration: 2000 }),

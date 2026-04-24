@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -10,7 +11,7 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } fro
 @Component({
   selector: 'customer-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatSnackBarModule],
+  imports: [CommonModule, FormsModule, MatFormFieldModule, MatIconModule, MatButtonModule, MatSnackBarModule],
   templateUrl: './customer-modal.html',
   styleUrls: ['./customer-modal.scss']
 })

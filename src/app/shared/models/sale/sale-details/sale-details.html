@@ -129,7 +129,7 @@
           <div class="summary-row discount-row">
             <span class="summary-label">
               Desconto
-              @if (sale().discountValue > 0) {
+              @if (sale().discount > 0) {
                 <small class="discount-type">
                   ({{ getDiscountTypeText(sale().discountType) }}:
                   @if (sale().discountType === 'PERCENTAGE') {
@@ -141,7 +141,7 @@
               }
             </span>
             <span class="summary-value discount-value">
-              - {{ formatCurrency(sale().discountAmount) }}
+              - {{ formatCurrency(sale().discount) }}
             </span>
           </div>
 
@@ -160,9 +160,13 @@
         <mat-icon>close</mat-icon>
         Fechar
       </button>
-      <button class="btn-primary">
-        <mat-icon>print</mat-icon>
-        Imprimir Recibo
+      <button class="btn-primary"
+              (click)="reimprimir()"
+              [disabled]="isPrinting() || loadingPayments() || payments().length === 0"
+              [title]="payments().length === 0 ? 'Sem pagamentos registrados' : 'Reimprimir recibo'">
+        <mat-icon *ngIf="!isPrinting()">print</mat-icon>
+        <mat-icon *ngIf="isPrinting()" class="spin">autorenew</mat-icon>
+        {{ isPrinting() ? 'Imprimindo...' : 'Reimprimir Recibo' }}
       </button>
     </div>
   </div>

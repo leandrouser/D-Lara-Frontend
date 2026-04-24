@@ -4,6 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/materia
 import { EmbroideryResponse, EmbroideryService } from '../../../core/service/embroidery.service';
 import { CommonModule, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE, MAT_DATE_FORMATS } from '@angular/material/core';
@@ -32,7 +33,7 @@ export const BR_DATE_FORMATS = {
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
-    MatInputModule, MatDatepickerModule, MatNativeDateModule, MatIconModule,
+    MatFormFieldModule, MatInputModule, MatDatepickerModule, MatNativeDateModule, MatIconModule,
     MatSnackBarModule, MatCardModule, MatChipsModule, MatListModule,
     MatTooltipModule, CustomerModal
   ],

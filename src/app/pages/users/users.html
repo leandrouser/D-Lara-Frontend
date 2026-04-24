@@ -13,26 +13,27 @@
   <div class="filter-bar">
     <mat-form-field appearance="outline" class="filter-name">
       <mat-label>Buscar usuário</mat-label>
-      <mat-icon matPrefix>search</mat-icon>
+      <mat-icon matIconPrefix>search</mat-icon>
       <input matInput
-            [ngModel]="filterName()"
-            (ngModelChange)="filterName.set($event)"
-            placeholder="Nome do usuário">
-      <button *ngIf="filterName()" matSuffix mat-icon-button
-              (click)="filterName.set('')">
-        <mat-icon>close</mat-icon>
-      </button>
-    </mat-form-field>
+             [value]="filterName()"
+             (input)="filterName.set($any($event.target).value)"
+             placeholder="Nome do usuário">
+              <button *ngIf="filterName()" matIconSuffix mat-icon-button (click)="filterName.set('')">
+                <mat-icon>close</mat-icon>
+              </button>
+              </mat-form-field>
 
-    <mat-form-field appearance="outline" class="filter-type" [hidden]="!authService.isAdmin()">
-      <mat-label>Tipo</mat-label>
-      <mat-icon matPrefix>manage_accounts</mat-icon>
-      <mat-select [ngModel]="filterType()" (ngModelChange)="filterType.set($event)">
-        <mat-option value="all">Todos</mat-option>
-        <mat-option value="ADMIN">Administrador</mat-option>
-        <mat-option value="OPERATOR">Operador</mat-option>
-      </mat-select>
-    </mat-form-field>
+    @if (authService.isAdmin()) {
+      <mat-form-field appearance="outline" class="filter-type">
+        <mat-label>Tipo</mat-label>
+        <mat-icon matIconPrefix>manage_accounts</mat-icon>
+        <mat-select [value]="filterType()" (selectionChange)="filterType.set($event.value)">
+          <mat-option value="all">Todos</mat-option>
+          <mat-option value="ADMIN">Administrador</mat-option>
+          <mat-option value="OPERATOR">Operador</mat-option>
+        </mat-select>
+      </mat-form-field>
+    }
 
     <button mat-stroked-button (click)="clearFilters()"
             *ngIf="filterName() || filterType() !== 'all'">
@@ -98,7 +99,8 @@
 
   <div class="modal-overlay" *ngIf="showForm()" (click)="closeForm()"></div>
 
-    <div class="modal" *ngIf="showForm()">    <div class="modal-header">
+  <div class="modal" *ngIf="showForm()">
+    <div class="modal-header">
       <h2>
         <mat-icon>{{ editingId() ? 'edit' : 'person_add' }}</mat-icon>
         {{ editingId() ? 'Editar Usuário' : 'Novo Usuário' }}
@@ -108,57 +110,59 @@
       </button>
     </div>
 
-    <div class="modal-body" [formGroup]="form">
+    <form [formGroup]="form()">
       <mat-form-field appearance="outline">
         <mat-label>Nome de usuário</mat-label>
-        <mat-icon matPrefix>badge</mat-icon>
-        <input matInput formControlName="userName" placeholder="ex: joao.silva">
-        <mat-error *ngIf="form.get('userName')?.hasError('required')">
+        <mat-icon matIconPrefix>badge</mat-icon>
+        <input matInput type="text" formControlName="userName">
+        <mat-error *ngIf="form().get('userName')?.hasError('required')">
           Nome de usuário é obrigatório
         </mat-error>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>Telefone</mat-label>
-        <mat-icon matPrefix>phone</mat-icon>
+        <mat-icon matIconPrefix>phone</mat-icon>
         <input matInput formControlName="phone" placeholder="ex: 81999990000">
       </mat-form-field>
 
       <mat-form-field appearance="outline">
         <mat-label>{{ editingId() ? 'Nova senha (opcional)' : 'Senha' }}</mat-label>
-        <mat-icon matPrefix>lock</mat-icon>
+        <mat-icon matIconPrefix>lock</mat-icon>
         <input matInput [type]="hidePassword() ? 'password' : 'text'"
                formControlName="password">
-        <button mat-icon-button matSuffix type="button"
+        <button mat-icon-button matIconSuffix type="button"
                 (click)="hidePassword.set(!hidePassword())">
           <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
-        <mat-error *ngIf="form.get('password')?.hasError('required')">
+        <mat-error *ngIf="form().get('password')?.hasError('required')">
           Senha é obrigatória
         </mat-error>
-        <mat-error *ngIf="form.get('password')?.hasError('minlength')">
+        <mat-error *ngIf="form().get('password')?.hasError('minlength')">
           Mínimo 4 caracteres
         </mat-error>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" *ngIf="authService.isAdmin()">
-        <mat-label>Tipo de usuário</mat-label>
-        <mat-icon matPrefix>manage_accounts</mat-icon>
-        <mat-select [(ngModel)]="selectedUserType" [ngModelOptions]="{standalone: true}">
-          <mat-option value="OPERATOR">
-            <mat-icon>person</mat-icon> Operador
-          </mat-option>
-          <mat-option value="ADMIN">
-            <mat-icon>admin_panel_settings</mat-icon> Administrador
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+      @if (authService.isAdmin()) {
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de usuário</mat-label>
+          <mat-icon matIconPrefix>manage_accounts</mat-icon>
+          <mat-select formControlName="userType">
+            <mat-option value="OPERATOR">
+              <mat-icon>person</mat-icon> Operador
+            </mat-option>
+            <mat-option value="ADMIN">
+              <mat-icon>admin_panel_settings</mat-icon> Administrador
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+    </form>
 
     <div class="modal-footer">
       <button mat-button (click)="closeForm()">Cancelar</button>
       <button mat-raised-button color="primary"
-              [disabled]="form.invalid || isLoading()"
+              [disabled]="form().invalid || isLoading()"
               (click)="save()">
         <mat-spinner diameter="18" *ngIf="isLoading()"></mat-spinner>
         <mat-icon *ngIf="!isLoading()">save</mat-icon>

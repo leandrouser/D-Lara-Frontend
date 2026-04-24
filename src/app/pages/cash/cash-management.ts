@@ -132,6 +132,7 @@ export class CashManagement implements OnInit {
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: (response) => {
+            console.log('🔍 Response fechamento:', JSON.stringify(response, null, 2));
           this.showSuccess('✅ Caixa fechado com sucesso!');
           if (this.cashModal) {
             this.cashModal.setClosingResult(response);

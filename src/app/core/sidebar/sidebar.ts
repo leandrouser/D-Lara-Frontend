@@ -4,11 +4,11 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/service/auth.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
-import { PaymentMethodDialog } from '../../shared/models/payment/payment-method-dialog/payment-method-dialog';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
+  // ✅ PaymentMethodDialog REMOVIDO dos imports estáticos
   imports: [CommonModule, RouterModule, RouterLinkActive, MatIconModule],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss'],
@@ -27,23 +27,14 @@ export class Sidebar implements OnInit {
   @Output() collapsedChange = new EventEmitter<boolean>();
   @Output() openChange = new EventEmitter<boolean>();
 
-  isConfigModalOpen = signal(false);
   isMobileScreen = signal(window.innerWidth <= 768);
 
   user = this.authService.currentUser;
-
   userName = computed(() => this.user()?.name || 'Visitante');
-
   userInitial = computed(() => {
     const name = this.userName();
     return name ? name.charAt(0).toUpperCase() : '?';
   });
-
-  logout() {
-    if(confirm('Deseja realmente sair do sistema?')) {
-        this.authService.logout();
-    }
-  }
 
   private hideTimeout: any;
 
@@ -121,7 +112,18 @@ export class Sidebar implements OnInit {
     }
   }
 
-  openConfig() {
+  logout() {
+    if (confirm('Deseja realmente sair do sistema?')) {
+      this.authService.logout();
+    }
+  }
+
+  // ✅ Lazy import — carrega o módulo do dialog apenas quando chamado
+  async openConfig() {
+    const { PaymentMethodDialog } = await import(
+      '../../shared/models/payment/payment-method-dialog/payment-method-dialog'
+    );
+
     const dialogRef = this.dialog.open(PaymentMethodDialog, {
       width: '400px',
       disableClose: false
@@ -132,9 +134,5 @@ export class Sidebar implements OnInit {
         console.log('Método salvo com sucesso!');
       }
     });
-  }
-
-  onMethodSaved() {
-    console.log('Método cadastrado com sucesso!');
   }
 }

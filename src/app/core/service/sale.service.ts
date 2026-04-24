@@ -71,7 +71,7 @@ export interface SaleResponse {
   subtotal: number;
   discountType: DiscountType;
   discountValue: number;
-  discountAmount: number;
+  discount: number;
   total: number;
   dateSale: string;
   items: SaleItemResponse[];

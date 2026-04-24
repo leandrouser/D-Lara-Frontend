@@ -35,32 +35,33 @@ export class PaymentMethodDialog implements OnInit {
   private service = inject(PaymentService);
   private dialogRef = inject(MatDialogRef<PaymentMethodDialog>);
 
-  method = signal<PaymentMethodRequest>({
+  // ✅ Objeto local mutável para o formulário — sem binding direto em signal
+  form: PaymentMethodRequest = {
     code: '',
     displayName: '',
     description: '',
     active: true,
     allowsChange: false,
     allowsInstallments: false
-  });
+  };
 
   isLoading = signal(false);
-  isEdit: boolean = false;
-  private data?: PaymentMethodResponse;
+  isEdit = false;
+  private editId?: number;
   methods = signal<PaymentMethodResponse[]>([]);
 
   constructor(@Inject(MAT_DIALOG_DATA) data?: PaymentMethodResponse) {
     if (data) {
       this.isEdit = true;
-      this.data = data;
-      this.method.set({
+      this.editId = data.id;
+      this.form = {
         code: data.code,
         displayName: data.displayName,
         description: data.description,
         active: data.active,
         allowsChange: data.allowsChange,
         allowsInstallments: data.allowsInstallments
-      });
+      };
     }
   }
 
@@ -69,22 +70,20 @@ export class PaymentMethodDialog implements OnInit {
   }
 
   onSave(): void {
-    const currentMethod = this.method();
-
-    if (!currentMethod.code?.trim()) {
+    if (!this.form.code?.trim()) {
       alert('Código é obrigatório');
       return;
     }
-    if (!currentMethod.displayName?.trim()) {
+    if (!this.form.displayName?.trim()) {
       alert('Nome é obrigatório');
       return;
     }
 
     this.isLoading.set(true);
 
-    const obs$ = this.isEdit && this.data
-      ? this.service.updateMethod(this.data.id, currentMethod)
-      : this.service.createMethod(currentMethod);
+    const obs$ = this.isEdit && this.editId
+      ? this.service.updateMethod(this.editId, this.form)
+      : this.service.createMethod(this.form);
 
     obs$.subscribe({
       next: () => {
@@ -93,8 +92,7 @@ export class PaymentMethodDialog implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading.set(false);
-        const errorMessage = err.error?.message || 'Erro ao processar operação';
-        alert(errorMessage);
+        alert(err.error?.message || 'Erro ao processar operação');
         console.error('Erro:', err);
       },
       complete: () => {
@@ -107,26 +105,10 @@ export class PaymentMethodDialog implements OnInit {
     this.dialogRef.close(false);
   }
 
-  updateField(key: keyof PaymentMethodRequest, value: any): void {
-    this.method.update(current => ({
-      ...current,
-      [key]: value
-    }));
-  }
-
   loadMethods(): void {
     this.service.listPaymentMethods().subscribe({
-      next: (methods: PaymentMethodResponse[]) => {
-        this.methods.set(methods);
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error('Erro ao carregar métodos', err);
-      }
+      next: (methods: PaymentMethodResponse[]) => this.methods.set(methods),
+      error: (err: HttpErrorResponse) => console.error('Erro ao carregar métodos', err)
     });
   }
-
-  toggleOption(field: 'active' | 'allowsChange' | 'allowsInstallments') {
-  const current = this.method()[field];
-  this.updateField(field, !current);
-}
 }

@@ -20,7 +20,10 @@
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
     "typeCheckHostBindings": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    "paths": {
+      "@angular/material/form-field": ["./node_modules/@angular/material/form-field/index.d.ts"]
+    }
   },
   "files": [],
   "references": [
@@ -31,4 +34,5 @@
       "path": "./tsconfig.spec.json"
     }
   ]
+  
 }

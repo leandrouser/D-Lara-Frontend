@@ -10,8 +10,6 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 
-// Registra o locale pt-BR globalmente — habilita Intl, pipes de data,
-// número e moeda no formato brasileiro em toda a aplicação.
 import { registerLocaleData } from '@angular/common';
 import localePtBr from '@angular/common/locales/pt';
 import localePtBrExtra from '@angular/common/locales/extra/pt';

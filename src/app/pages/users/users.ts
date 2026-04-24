@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -35,7 +36,7 @@ export class Users implements OnInit {
   private snackBar = inject(MatSnackBar);
   private fb = inject(FormBuilder);
   authService = inject(AuthService);
-  selectedUserType: string = 'OPERATOR';
+  
 
   users = signal<UserResponse[]>([]);
   isLoading = signal(false);
@@ -57,12 +58,12 @@ export class Users implements OnInit {
     });
     });
 
-  form: FormGroup = this.fb.group({
+  form = signal<FormGroup>(this.fb.group({
     userName: ['', Validators.required],
     phone: [''],
     password: ['', [Validators.required, Validators.minLength(4)]],
     userType: ['OPERATOR', Validators.required]
-  });
+  }));
 
   ngOnInit() { this.loadUsers(); }
 
@@ -79,7 +80,6 @@ export class Users implements OnInit {
   }
 
   openForm(user?: UserResponse) {
-    this.selectedUserType = user?.userType || 'OPERATOR';
     this.editingId.set(user?.id || null);
     this.hidePassword.set(true);
 
@@ -87,11 +87,12 @@ export class Users implements OnInit {
     ? [Validators.minLength(4)]
     : [Validators.required, Validators.minLength(4)];
 
-    this.form = this.fb.group({
-    userName: [user?.userName || '', Validators.required],
-    phone: [user?.phone || ''],
-    password: ['', passwordValidators],
-  });
+    this.form.set(this.fb.group({
+      userName: [user?.userName || '', Validators.required],
+      phone: [user?.phone || ''],
+      password: ['', passwordValidators],
+      userType: [user?.userType || 'OPERATOR', Validators.required]
+    }));
 
   this.showForm.set(true);
   }
@@ -102,18 +103,20 @@ export class Users implements OnInit {
   }
 
   save() {
-  if (this.form.invalid) return;
+  if (this.form().invalid) return;
   
-  const raw = this.form.value;
+  const raw = this.form().value;
   const id = this.editingId();
 
   const value: UserRequest = {
-    userName: raw.userName,
-    phone: raw.phone || null,
-    password: raw.password?.trim() || null,
-    userType: this.authService.isAdmin() ? this.selectedUserType as any : 'OPERATOR',
+      userName: raw.userName,
+      phone: raw.phone || null,
+      password: raw.password?.trim() || null,
+      userType: this.authService.isAdmin()
+      ? raw.userType
+      : 'OPERATOR',
 
-  };
+      };
 
   this.isLoading.set(true);
   const req = id

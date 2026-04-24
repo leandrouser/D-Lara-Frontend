@@ -1,14 +1,16 @@
 import { Component, signal, input, output, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PhoneFormatPipe } from '../../../pipes/phone-pipe';
 import { SaleItemResponse, SaleResponse } from '../../../../core/service/sale.service';
 import { PaymentService, PaymentResponse } from '../../../../core/service/payment.service';
+import { PrintService, CupomRequest } from '../../../../core/service/print.service';
 
 @Component({
   selector: 'app-sale-details-modal',
   standalone: true,
-  imports: [CommonModule, MatIconModule, PhoneFormatPipe],
+  imports: [CommonModule, MatIconModule, MatSnackBarModule, PhoneFormatPipe],
   templateUrl: './sale-details.html',
   styleUrls: ['./sale-details.scss'],
 })
@@ -17,9 +19,12 @@ export class SaleDetailsModalComponent implements OnInit {
   onClose = output<void>();
 
   private paymentService = inject(PaymentService);
+  private printService = inject(PrintService);
+  private snackBar = inject(MatSnackBar);
 
   payments = signal<PaymentResponse[]>([]);
   loadingPayments = signal(true);
+  isPrinting = signal(false);
 
   ngOnInit() {
     this.loadingPayments.set(true);
@@ -32,6 +37,57 @@ export class SaleDetailsModalComponent implements OnInit {
     });
   }
 
+  reimprimir() {
+    if (this.isPrinting()) return;
+
+    const sale = this.sale();
+    const payments = this.payments();
+
+    if (payments.length === 0) {
+      this.snackBar.open('Nenhum pagamento encontrado para reimprimir.', 'Fechar', { duration: 3000 });
+      return;
+    }
+
+    // Calcular troco (soma dos changeAmount dos pagamentos em dinheiro)
+    const troco = payments.reduce((acc, p) => acc + (p.changeAmount || 0), 0);
+
+    const cupom: CupomRequest = {
+      numeroVenda: sale.id,
+      dataHora: sale.dateSale,
+      cliente: {
+        nome: sale.customerName || 'Consumidor Final',
+        telefone: sale.customerPhone || '',
+      },
+      itens: sale.items.map((item, index) => ({
+        sequencia: index + 1,
+        descricao: item.productName || item.description || 'Item',
+        nomeBordado: null,
+        quantidade: item.quantity,
+        valorTotal: this.getItemTotal(item),
+      })),
+      subtotal: sale.subtotal,
+      desconto: sale.discount || 0,
+      total: sale.total,
+      pagamentos: payments.map(p => ({
+        forma: p.paymentMethod.code,
+        valor: p.amountPaid,
+      })),
+      troco,
+    };
+
+    this.isPrinting.set(true);
+    this.printService.imprimir(cupom).subscribe({
+      next: () => {
+        this.snackBar.open('✅ Cupom enviado para impressão!', '', { duration: 2500 });
+        this.isPrinting.set(false);
+      },
+      error: () => {
+        this.snackBar.open('❌ Erro ao imprimir. Verifique a impressora.', 'Fechar', { duration: 5000 });
+        this.isPrinting.set(false);
+      }
+    });
+  }
+
   closeModal() { this.onClose.emit(); }
 
   handleBackdropClick(event: MouseEvent) {
@@ -41,7 +97,8 @@ export class SaleDetailsModalComponent implements OnInit {
   }
 
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    .format(value || 0);
   }
 
   formatDate(dateStr: string): string {
