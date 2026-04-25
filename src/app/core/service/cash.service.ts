@@ -37,7 +37,6 @@ export interface PaymentMethodCountDTO {
 }
 
 export interface CloseSessionRequest {
-  sessionId: number;
   reportedPayments: PaymentMethodCountDTO[];
 }
 
@@ -123,7 +122,8 @@ export class CashService {
 }
 
   getExpectedTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
-    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/summary`);
+    return this.http.get<PaymentMethodTotal[]>(
+      `${this.apiUrl}/session/${sessionId}/summary`);
   }
 
   getPaymentMethodTotals(sessionId: number): Observable<PaymentMethodTotal[]> {

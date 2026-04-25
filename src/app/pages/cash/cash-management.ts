@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
-import { CashService, OpenSessionRequest, CloseSessionRequest, CashMovementResponse } from '../../core/service/cash.service';
+import { CashService, PaymentMethodCountDTO, OpenSessionRequest, CloseSessionRequest, CashMovementResponse } from '../../core/service/cash.service';
 import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
 import { PaymentService } from '../../core/service/payment.service';
 
@@ -58,10 +58,6 @@ export class CashManagement implements OnInit {
         this.paymentMethods.set(methods.map(m => ({ id: m.id, name: m.displayName })));
       }
     });
-
-    if (this.isCashOpen()) {
-      this.loadTransactions();
-    }
   }
 
   onConfirmCashOpen(initialValue: number): void {
@@ -114,35 +110,33 @@ export class CashManagement implements OnInit {
       });
   }
 
-  onConfirmCashClosing(event: any): void {
-    const sessionId = this.cashService.activeSessionId();
-    if (!sessionId) {
-      this.showError('Sessão não encontrada');
-      return;
-    }
+  onConfirmCashClosing(event: { counts: { paymentMethodId: number; reportedValue: number }[] }): void {
+  const sessionId = this.cashService.activeSessionId();
+  if (!sessionId) {
+    this.showError('Sessão não encontrada');
+    return;
+  }
 
-    this.isLoading.set(true);
+  this.isLoading.set(true);
 
-    const request: CloseSessionRequest = {
-      sessionId: sessionId,
-      reportedPayments: event.counts
-    };
+  const request: CloseSessionRequest = {
+    reportedPayments: event.counts
+  };
 
-    this.cashService.closeSession(sessionId, request)
-      .pipe(finalize(() => this.isLoading.set(false)))
-      .subscribe({
-        next: (response) => {
-            console.log('🔍 Response fechamento:', JSON.stringify(response, null, 2));
-          this.showSuccess('✅ Caixa fechado com sucesso!');
-          if (this.cashModal) {
-            this.cashModal.setClosingResult(response);
-          }
-        },
-        error: (err) => {
-          this.showError(err.error?.message || 'Erro ao fechar caixa');
-          this.isClosingModalOpen.set(false);
+  this.cashService.closeSession(sessionId, request)
+    .pipe(finalize(() => this.isLoading.set(false)))
+    .subscribe({
+      next: (response) => {
+        this.showSuccess('✅ Caixa fechado com sucesso!');
+        if (this.cashModal) {
+          this.cashModal.setClosingResult(response);
         }
-      });
+      },
+      error: (err) => {
+        this.showError(err.error?.message || 'Erro ao fechar caixa');
+        this.isClosingModalOpen.set(false);
+      }
+    });
   }
 
   private loadTransactions(): void {
@@ -193,11 +187,14 @@ export class CashManagement implements OnInit {
   }
 
   onModalConfirm(event: any): void {
-    if (event !== null && event !== undefined && !isNaN(Number(event)) && typeof event !== 'object') {
-      this.onConfirmCashOpen(Number(event));
-    } else if (event?.type === 'CLOSING') {
-      this.onConfirmCashClosing(event);
-    }
+  if (typeof event === 'number') {
+    this.onConfirmCashOpen(event);
+    return;
+  }
+
+  if (event?.type === 'CLOSING') {
+    this.onConfirmCashClosing(event);
+  }
   }
 
   onModalClose(): void {

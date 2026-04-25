@@ -82,7 +82,6 @@ export class CashModalComponent implements OnInit, OnChanges {
 
   confirmOpen(): void {
   const value = Number(this.initialValue ?? 0);
-  console.log('>>> confirmOpen value:', value, typeof value);
 
   if (value < 0) return;
 

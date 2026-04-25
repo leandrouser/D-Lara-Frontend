@@ -32,16 +32,17 @@
   margin-bottom: 16px;
   flex-wrap: wrap;
 
+  .filter-bar {
   mat-form-field { margin-bottom: 0; }
+  }
 
   .filter-name {
-    width: 220px;        // ✅ largura fixa menor em desktop
+    width: 220px;
     flex-shrink: 0;
   }
 
   .filter-type { width: 160px; }
 
-  // ✅ Em telas menores, os campos ocupam toda a linha
   @media (max-width: 600px) {
     .filter-name,
     .filter-type {
@@ -148,7 +149,6 @@ table {
   }
 }
 
-// Modal
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -202,6 +202,7 @@ table {
 }
 
 .modal-footer {
+  border-top: 1px solid #f1f5f9;
   display: flex;
   justify-content: flex-end;
   gap: 8px;

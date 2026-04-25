@@ -956,12 +956,12 @@ $white:       #ffffff;
   padding: 10px 12px;
   background: $slate-50;
   border-radius: 10px;
-  border: 1px solid $slate-200;
+  border: 3px solid $slate-200;
 
   .input-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 
     .label-with-icon {
       display: flex;
@@ -974,17 +974,11 @@ $white:       #ffffff;
     }
   }
 
-  .discount-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
   .discount-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
+    flex-wrap: wrap;
 
     .type-selector {
       display: flex;
@@ -993,6 +987,7 @@ $white:       #ffffff;
       border-radius: 8px;
       border: 1.5px solid $slate-200;
       height: 38px;
+      flex-shrink: 0;
 
       button {
         border: none;
@@ -1020,8 +1015,8 @@ $white:       #ffffff;
       position: relative;
       display: flex;
       align-items: center;
-      flex: 1;
       min-width: 100px;
+      max-width: 100px;
 
       .prefix, .suffix {
         position: absolute;
@@ -1054,20 +1049,50 @@ $white:       #ffffff;
         }
       }
     }
+
+    .summary-item.bruto-value {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: #fef3c7;
+      padding: 10px 12px;
+      border-radius: 7px;
+      border: 1px dashed #f59e0b;
+      font-size: 13px;
+      font-weight: 700;
+      color: #92400e;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
   }
 
-  .summary-item.discount-applied {
+  .discount-applied-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #f0fdf4;
-    padding: 6px 12px;
-    border-radius: 7px;
-    border: 1px dashed #22c55e;
-    font-size: 13px;
-    font-weight: 700;
-    color: #15803d;
-    width: 100%;
+    justify-content: flex-end;
+
+    .summary-item.discount-applied {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #f0fdf4;
+      padding: 20px 26px;
+      border-radius: 10px;
+      border: 1px dashed #22c55e;
+      font-size: 13px;
+      font-weight: 700;
+      color: #15803d;
+      white-space: nowrap;
+      width: 100%;
+      box-sizing: border-box;
+
+      span:last-child {
+        font-size: 26px;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+      }
+    }
   }
 }
 
@@ -1511,3 +1536,4 @@ $white:       #ffffff;
   user-select: none;
   line-height: 32px;
 }
+

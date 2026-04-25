@@ -52,5 +52,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/payment/payment').then((m: any) => m.Payment),
     canActivate: [authGuard]
     },
+    {
+    path: 'exchange',
+    loadComponent: () =>
+        import('./pages/exchange/exchange.component').then(m => m.ExchangeComponent),
+    canActivate: [authGuard]
+    },
 
 ];

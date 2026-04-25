@@ -24,6 +24,7 @@ export interface SaleItemRequest {
 }
 
 export interface SaleItemResponse {
+  id: number;
   productId?: number;
   embroideryId?: number;
   productPrice: number;

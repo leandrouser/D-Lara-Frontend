@@ -295,26 +295,33 @@
                 <mat-icon>local_offer</mat-icon>
                 <span>Desconto</span>
               </div>
-              <div class="discount-row">
-                <div class="discount-controls">
-                  <div class="type-selector">
-                    <button [class.active]="discountType() === 'value'" (click)="changeDiscountType('value')">R$</button>
-                    <button [class.active]="discountType() === 'percent'" (click)="changeDiscountType('percent')">%</button>
-                  </div>
-                  <div class="input-wrapper">
-                    @if (discountType() === 'value') { <span class="prefix">R$</span> }
-                    <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0,00">
-                    @if (discountType() === 'percent') { <span class="suffix">%</span> }
-                  </div>
+
+              <div class="discount-controls">
+                <div class="type-selector">
+                  <button [class.active]="discountType() === 'value'" (click)="changeDiscountType('value')">R$</button>
+                  <button [class.active]="discountType() === 'percent'" (click)="changeDiscountType('percent')">%</button>
                 </div>
-                @if (calculatedDiscount() > 0) {
+                <div class="input-wrapper" style="max-width: 100px;">
+                  @if (discountType() === 'value') { <span class="prefix">R$</span> }
+                  <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0,00" style="max-width: 80px;">
+                  @if (discountType() === 'percent') { <span class="suffix">%</span> }
+                </div>
+                <div class="summary-item bruto-value">
+                  <span>Bruto</span>
+                  <span>{{ (totalWithDiscount() + calculatedDiscount()) | brlCurrency }}</span>
+                </div>
+              </div>
+
+              @if (calculatedDiscount() > 0) {
+                <div class="discount-applied-row">
                   <div class="summary-item discount-applied">
                     <span>Desconto @if (discountType() === 'percent') { ({{ discountInput() }}%) }</span>
                     <span>- {{ calculatedDiscount() | brlCurrency }}</span>
                   </div>
-                }
-              </div>
+                </div>
+              }
             </div>
+          </div>
           </div>
 
           <div class="divider-dashed">

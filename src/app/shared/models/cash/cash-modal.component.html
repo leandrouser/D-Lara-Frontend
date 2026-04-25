@@ -1,7 +1,6 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
   <div class="modal-content" [class.large]="modalType === 'CLOSING'" (click)="$event.stopPropagation()">
 
-    <!-- HEADER ABERTURA -->
     <div class="modal-header opening" *ngIf="modalType === 'OPENING'">
       <div class="header-title">
         <div class="icon-wrapper"><mat-icon>point_of_sale</mat-icon></div>
@@ -13,7 +12,6 @@
       <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
     </div>
 
-    <!-- HEADER FECHAMENTO -->
     <div class="modal-header closing" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
       <div class="header-title">
         <div class="icon-wrapper"><mat-icon>lock_clock</mat-icon></div>
@@ -25,7 +23,6 @@
       <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
     </div>
 
-    <!-- HEADER RELATÓRIO -->
     <div class="modal-header closing" *ngIf="modalType === 'CLOSING' && isClosingConfirmed">
       <div class="header-title">
         <div class="icon-wrapper"><mat-icon>receipt_long</mat-icon></div>
@@ -37,7 +34,6 @@
       <button class="close-btn" (click)="closeModal()"><mat-icon>close</mat-icon></button>
     </div>
 
-    <!-- BODY ABERTURA -->
     <div class="modal-body" *ngIf="modalType === 'OPENING'">
       <div class="info-message">
         <mat-icon class="info-icon">info</mat-icon>
@@ -67,7 +63,6 @@
       </div>
     </div>
 
-    <!-- BODY FECHAMENTO — FORMULÁRIO -->
     <div class="modal-body" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
       <div class="session-info" *ngIf="session">
         <div class="info-item">
@@ -108,10 +103,8 @@
       </div>
     </div>
 
-    <!-- BODY FECHAMENTO — RELATÓRIO -->
     <div class="modal-body" *ngIf="modalType === 'CLOSING' && isClosingConfirmed && closingResult">
 
-      <!-- cabeçalho com data e badge -->
       <div class="result-header">
         <div class="result-date">
           <mat-icon>event</mat-icon>
@@ -125,7 +118,6 @@
         </div>
       </div>
 
-      <!-- resumo de vendas -->
       <div class="sales-summary-card">
         <div class="sales-summary-header">
           <mat-icon>bar_chart</mat-icon>
@@ -170,7 +162,6 @@
         </div>
       </div>
 
-      <!-- tabela por método -->
       <div class="reconciliation-table">
         <div class="table-header">
           <div>Método</div>
@@ -190,7 +181,6 @@
               <span>{{ detail.difference | currency:'BRL' }}</span>
             </div>
           </div>
-          <!-- sub-linha só para DINHEIRO -->
           <div class="table-subrow" *ngIf="detail.initialValue > 0">
             <div class="subrow-item">
               <mat-icon>vpn_key</mat-icon>
@@ -204,7 +194,6 @@
         </ng-container>
       </div>
 
-      <!-- totais -->
       <div class="total-summary">
         <div class="summary-grid">
           <div class="summary-item">
@@ -235,7 +224,6 @@
 
     </div>
 
-    <!-- FOOTER ABERTURA -->
     <div class="modal-footer" *ngIf="modalType === 'OPENING'">
       <button class="btn-outline" (click)="closeModal()">
         <mat-icon>close</mat-icon> Cancelar
@@ -245,7 +233,6 @@
       </button>
     </div>
 
-    <!-- FOOTER FECHAMENTO — FORMULÁRIO -->
     <div class="modal-footer" *ngIf="modalType === 'CLOSING' && !isClosingConfirmed">
       <button class="btn-outline" (click)="closeModal()">
         <mat-icon>close</mat-icon> Cancelar
