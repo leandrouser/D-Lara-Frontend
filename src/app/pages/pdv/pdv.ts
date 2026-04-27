@@ -108,135 +108,135 @@
     });
 
     ngOnInit() {
-    const saved = this.pdvService.state();
-    if (saved.cart.length > 0 || saved.selectedCustomer) {
-      this.cart.set(saved.cart);
-      this.selectedCustomer.set(saved.selectedCustomer);
-      this.discountType.set(saved.discountType);
-      this.discountInput.set(saved.discountInput);
-      this.activeSaleId.set(saved.activeSaleId);
-      this.isCopiedSale.set(saved.isCopiedSale);
+      const saved = this.pdvService.state();
+      if (saved.cart.length > 0 || saved.selectedCustomer) {
+        this.cart.set(saved.cart);
+        this.selectedCustomer.set(saved.selectedCustomer);
+        this.discountType.set(saved.discountType);
+        this.discountInput.set(saved.discountInput);
+        this.activeSaleId.set(saved.activeSaleId);
+        this.isCopiedSale.set(saved.isCopiedSale);
+      }
+
+      if (!this.selectedCustomer()) {
+      this.setDefaultCustomer();
+      }
+
+      this.setupCustomerSearch();
+      this.setupProductSearch();
+      this.productSearchSubject.next('');
+
+      setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
     }
 
-    if (!this.selectedCustomer()) {
-    this.setDefaultCustomer();
-    }
+      ngOnDestroy() {
+        this.pdvService.patch({
+          cart: this.cart(),
+          selectedCustomer: this.selectedCustomer(),
+          discountType: this.discountType(),
+          discountInput: this.discountInput(),
+          activeSaleId: this.activeSaleId(),
+          isCopiedSale: this.isCopiedSale(),
+        });
 
-    this.setupCustomerSearch();
-    this.setupProductSearch();
-    this.productSearchSubject.next('');
+        this.destroy$.next();
+        this.destroy$.complete();
+      }
 
-    setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
-  }
-
-  ngOnDestroy() {
-    this.pdvService.patch({
-      cart: this.cart(),
-      selectedCustomer: this.selectedCustomer(),
-      discountType: this.discountType(),
-      discountInput: this.discountInput(),
-      activeSaleId: this.activeSaleId(),
-      isCopiedSale: this.isCopiedSale(),
-    });
-
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-    openBordadoModal() {
-      this.bordadoPrice.set(null);
-      this.bordadoDescription.set('');
-      this.isBordadoModalOpen.set(true);
-    }
-    closeBordadoModal() {
-      this.isBordadoModalOpen.set(false);
-      this.bordadoPrice.set(null);
-      this.bordadoDescription.set('');
-    }
+      openBordadoModal() {
+        this.bordadoPrice.set(null);
+        this.bordadoDescription.set('');
+        this.isBordadoModalOpen.set(true);
+      }
+      closeBordadoModal() {
+        this.isBordadoModalOpen.set(false);
+        this.bordadoPrice.set(null);
+        this.bordadoDescription.set('');
+      }
 
       confirmAddBordado() {
-    const price = this.bordadoPrice();
-    if (!price || price <= 0) { this.showWarning('Informe um valor válido para o bordado.'); return; }
-    const desc = this.bordadoDescription().trim() || 'BORDADO AVULSO';
-    this.cart.update(items => [...items, {
-      product: { id: 0, name: desc, price, barcode: '' },
-      quantity: 1, total: price, isEmbroidery: true, embroideryId: undefined
-    }]);
-    this.pdvService.patch({ cart: this.cart() });
-    this.snackBar.open('Bordado adicionado!', '', { duration: 1000 });
-    this.closeBordadoModal();
+      const price = this.bordadoPrice();
+      if (!price || price <= 0) { this.showWarning('Informe um valor válido para o bordado.'); return; }
+      const desc = this.bordadoDescription().trim() || 'BORDADO AVULSO';
+      this.cart.update(items => [...items, {
+        product: { id: 0, name: desc, price, barcode: '', stockQty: 0 },
+        quantity: 1, total: price, isEmbroidery: true, embroideryId: undefined
+      }]);
+      this.pdvService.patch({ cart: this.cart() });
+      this.snackBar.open('Bordado adicionado!', '', { duration: 1000 });
+      this.closeBordadoModal();
+      }
+
+      private applyClientPagination(products: any[]) {
+        const size = this.pageSize();
+        const page = this.currentPage();
+        const total = products.length;
+        const pages = Math.max(1, Math.ceil(total / size));
+
+        const safePage = Math.min(page, pages - 1);
+        if (safePage !== page) this.currentPage.set(safePage);
+
+        const start = safePage * size;
+        const end = start + size;
+
+        this.allFilteredProducts.set(products);
+        this.filteredProducts.set(products.slice(start, end));
+        this.totalElements.set(total);
+        this.totalPages.set(pages);
+      }
+
+      changePage(delta: number) {
+        const next = Math.max(0, Math.min(this.currentPage() + delta, this.totalPages() - 1));
+        this.currentPage.set(next);
+        if (this.productCategoryFilter() === CategoryEnum.BORDADO) this.refreshSearch();
+        else this.applyClientPagination(this.allFilteredProducts());
+      }
+
+      goToPage(page: number) {
+        this.currentPage.set(page);
+        if (this.productCategoryFilter() === CategoryEnum.BORDADO) this.refreshSearch();
+        else this.applyClientPagination(this.allFilteredProducts());
+      }
+
+      get pageNumbers(): number[] {
+        const total = this.totalPages();
+        const current = this.currentPage();
+
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+
+        const start = Math.max(0, Math.min(current - 2, total - 5));
+        return Array.from({ length: Math.min(5, total) }, (_, i) => start + i);
+      }
+
+      refreshSearch() {
+        const el = document.querySelector('.search-input-wrapper input') as HTMLInputElement;
+        this.productSearchSubject.next(el?.value || '');
+      }
+
+      handleButtonClick() {
+      if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+      }
+
+      private setupCustomerSearch() {
+        this.customerSearchSubject.pipe(
+          debounceTime(400),
+          distinctUntilChanged(),
+          switchMap(term => {
+            if (term.trim().length < 2) {
+              this.showCustomerDropdown.set(false);
+              return of({ content: [] });
+            }
+            return this.customerService.searchPaged(term, 0, 8);
+          }),
+          takeUntil(this.destroy$)
+        ).subscribe({
+        next: (result: any) => {
+          this.suggestedCustomers.set(result.content || []);
+          this.showCustomerDropdown.set(this.suggestedCustomers().length > 0);
+        },
+        error: () => this.showCustomerDropdown.set(false)
+      });
     }
-
-    private applyClientPagination(products: any[]) {
-      const size = this.pageSize();
-      const page = this.currentPage();
-      const total = products.length;
-      const pages = Math.max(1, Math.ceil(total / size));
-
-      const safePage = Math.min(page, pages - 1);
-      if (safePage !== page) this.currentPage.set(safePage);
-
-      const start = safePage * size;
-      const end = start + size;
-
-      this.allFilteredProducts.set(products);
-      this.filteredProducts.set(products.slice(start, end));
-      this.totalElements.set(total);
-      this.totalPages.set(pages);
-    }
-
-    changePage(delta: number) {
-      const next = Math.max(0, Math.min(this.currentPage() + delta, this.totalPages() - 1));
-      this.currentPage.set(next);
-      if (this.productCategoryFilter() === CategoryEnum.BORDADO) this.refreshSearch();
-      else this.applyClientPagination(this.allFilteredProducts());
-    }
-
-    goToPage(page: number) {
-      this.currentPage.set(page);
-      if (this.productCategoryFilter() === CategoryEnum.BORDADO) this.refreshSearch();
-      else this.applyClientPagination(this.allFilteredProducts());
-    }
-
-    get pageNumbers(): number[] {
-      const total = this.totalPages();
-      const current = this.currentPage();
-
-      if (total <= 7) return Array.from({ length: total }, (_, i) => i);
-
-      const start = Math.max(0, Math.min(current - 2, total - 5));
-      return Array.from({ length: Math.min(5, total) }, (_, i) => start + i);
-    }
-
-    refreshSearch() {
-      const el = document.querySelector('.search-input-wrapper input') as HTMLInputElement;
-      this.productSearchSubject.next(el?.value || '');
-    }
-
-    handleButtonClick() {
-    if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
-    }
-
-    private setupCustomerSearch() {
-      this.customerSearchSubject.pipe(
-        debounceTime(400),
-        distinctUntilChanged(),
-        switchMap(term => {
-          if (term.trim().length < 2) {
-            this.showCustomerDropdown.set(false);
-            return of({ content: [] });
-          }
-          return this.customerService.searchPaged(term, 0, 8);
-        }),
-        takeUntil(this.destroy$)
-      ).subscribe({
-      next: (result: any) => {
-        this.suggestedCustomers.set(result.content || []);
-        this.showCustomerDropdown.set(this.suggestedCustomers().length > 0);
-      },
-      error: () => this.showCustomerDropdown.set(false)
-    });
-  }
 
     onCustomerSearchInput(event: any) {
       const val = event.target.value;
@@ -258,6 +258,18 @@
 
     addToCart(p: any) {
     const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
+    if (!isEmb) {
+      const itemNoCarrinho = this.cart().find(i => i.product.id === p.id && !i.isEmbroidery);
+      const qtdNoCarrinho = itemNoCarrinho?.quantity ?? 0;
+
+      if (p.stockQty <= qtdNoCarrinho) {
+        this.showWarning(
+          `Estoque insuficiente para "${p.name}". Disponível: ${p.stockQty}, já no carrinho: ${qtdNoCarrinho}.`
+        );
+        return;
+      }
+    }
+
     this.cart.update(items => {
       const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
       if (existing) {
@@ -266,8 +278,16 @@
           : i);
       }
       return [...items, {
-        product: { id: p.id, name: p.name, price: p.price, barcode: p.barcode },
-        quantity: 1, total: p.price, isEmbroidery: isEmb,
+        product: {
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          barcode: p.barcode,
+          stockQty: p.stockQty ?? 0
+        },
+        quantity: 1,
+        total: p.price,
+        isEmbroidery: isEmb,
         embroideryId: isEmb ? p.id : undefined
       }];
     });
@@ -276,11 +296,22 @@
   }
 
   updateQuantity(item: CartItem, change: number) {
+    if (change > 0 && !item.isEmbroidery) {
+      const estoqueDisponivel = item.product.stockQty;
+      if (item.quantity >= estoqueDisponivel) {
+        this.showWarning(
+          `Limite de estoque atingido para "${item.product.name}". Disponível: ${estoqueDisponivel}.`
+        );
+        return;
+      }
+    }
+
     this.cart.update(prev => prev.map(i => {
       if (i !== item) return i;
       const newQty = Math.max(1, i.quantity + change);
       return { ...i, quantity: newQty, total: newQty * i.product.price };
     }));
+
     this.pdvService.patch({ cart: this.cart() });
   }
 
@@ -518,10 +549,9 @@
           const qty = response.forcedQty ?? 1;
 
           if (p.stockQty > 0) {
-            // Adiciona N vezes respeitando a quantidade
             for (let i = 0; i < qty; i++) this.addToCart(p);
 
-            this.beepSuccess(); // ← beep de sucesso
+            this.beepSuccess();
 
             const input = this.searchInput()?.nativeElement;
             if (input) { input.value = ''; input.dispatchEvent(new Event('input')); }
@@ -559,11 +589,11 @@
         discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
         discountValue: this.discountInput(),
         items: this.cart().map(item => ({
-          productId:   item.isEmbroidery ? undefined : item.product.id,
-          embroideryId: item.isEmbroidery ? (item.embroideryId ?? undefined) : undefined,
-          quantity:    item.quantity,
-          manualPrice: item.isEmbroidery ? item.product.price : undefined,
-          description: item.product.name
+          productId:    item.isEmbroidery ? null : item.product.id,
+          embroideryId: item.isEmbroidery ? (item.embroideryId ?? null) : null,
+          quantity:     item.quantity,
+          manualPrice:  item.isEmbroidery ? item.product.price : null,
+          description:  item.product.name
         }))
       };
 
@@ -589,7 +619,15 @@
     this.isPaymentModalOpen.set(true);
     this.isLoading.set(false);
     },
-        error: () => { this.isLoading.set(false); this.snackBar.open('Erro ao gerar venda para pagamento.', 'Erro'); }
+        error: (err) => {
+          this.isLoading.set(false);
+          const msg = err?.error?.message;
+          if (err?.status === 422 && msg) {
+            this.showError(msg);
+          } else {
+            this.showError('Erro ao gerar venda para pagamento.');
+          }
+        }
       });
     }
 

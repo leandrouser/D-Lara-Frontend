@@ -17,7 +17,6 @@
       <div class="top-controls">
         <div class="customer-selection-row">
 
-          <!-- Busca de cliente -->
           <div class="customer-selection-area">
             <div class="search-filters compact">
               <div class="search-box">
@@ -61,7 +60,6 @@
             </div>
           </div>
 
-          <!-- Card cliente selecionado -->
           @if (selectedCustomer(); as customer) {
             <div class="card selected-item-card purple" (click)="clearCustomer()" title="Clique para remover">
               <div class="info">
@@ -74,7 +72,6 @@
             </div>
           }
 
-          <!-- ── Card Bordado Avulso ── -->
           <div class="card bordado-quick-card" (click)="openBordadoModal()" title="Adicionar bordado com valor livre">
             <div class="info">
               <span class="bq-label">Bordado</span>
@@ -196,10 +193,19 @@
     <div class="right-side">
       <div class="sale-recovery-area">
         <div class="recovery-input-container">
-          <div class="recovery-input">
-            <mat-icon>search</mat-icon>
-            <input type="text" placeholder="Buscar venda..." (input)="onSearchSale($any($event.target).value)">
+
+          <div class="recovery-row">
+            <div class="recovery-input">
+              <mat-icon>search</mat-icon>
+              <input type="text" placeholder="Buscar venda..."
+                    (input)="onSearchSale($any($event.target).value)">
+            </div>
+            <button class="btn-clear-cart" (click)="resetPDV()" title="Limpar venda">
+              <mat-icon>delete_sweep</mat-icon>
+              <span>LIMPAR</span>
+            </button>
           </div>
+
           @if (showSaleSuggestions() && saleSuggestions().length > 0) {
             <div class="suggestions-dropdown">
               @for (sale of saleSuggestions(); track sale.id) {
@@ -216,33 +222,29 @@
               }
             </div>
           }
+
         </div>
       </div>
 
       <div class="cart-wrapper">
         <div class="cart-header">
-  <div class="header-main-info">
-    <mat-icon>shopping_basket</mat-icon>
-    <h2>Resumo da Venda</h2>
-  </div>
+          <div class="header-main-info">
+            <mat-icon>shopping_basket</mat-icon>
+            <h2>Resumo da Venda</h2>
+          </div>
 
-  <button class="btn-clear-cart" (click)="resetPDV()" title="Limpar venda">
-    <mat-icon>delete_sweep</mat-icon>
-    <span>LIMPAR</span>
-  </button>
-
-  @if (activeSaleId()) {
-    <span class="edit-badge pending">
-      <mat-icon>edit</mat-icon>
-      EDITANDO #{{ activeSaleId() }}
-    </span>
-  } @else if (isCopiedSale() && cart().length > 0) {
-    <span class="edit-badge copied">
-      <mat-icon>content_copy</mat-icon>
-      NOVA A PARTIR DE VENDA PAGA
-    </span>
-  }
-</div>
+          @if (activeSaleId()) {
+            <span class="edit-badge pending">
+              <mat-icon>edit</mat-icon>
+              EDITANDO #{{ activeSaleId() }}
+            </span>
+          } @else if (isCopiedSale() && cart().length > 0) {
+            <span class="edit-badge copied">
+              <mat-icon>content_copy</mat-icon>
+              NOVA A PARTIR DE VENDA PAGA
+            </span>
+          }
+        </div>
 
         <div class="cart-content">
           @for (item of cart(); track $index) {
@@ -301,28 +303,26 @@
                   <button [class.active]="discountType() === 'value'" (click)="changeDiscountType('value')">R$</button>
                   <button [class.active]="discountType() === 'percent'" (click)="changeDiscountType('percent')">%</button>
                 </div>
-                <div class="input-wrapper" style="max-width: 100px;">
+
+                <div class="input-wrapper">
                   @if (discountType() === 'value') { <span class="prefix">R$</span> }
-                  <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0,00" style="max-width: 80px;">
+                  <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0">
                   @if (discountType() === 'percent') { <span class="suffix">%</span> }
                 </div>
+
                 <div class="summary-item bruto-value">
                   <span>Bruto</span>
                   <span>{{ (totalWithDiscount() + calculatedDiscount()) | brlCurrency }}</span>
                 </div>
-              </div>
 
-              @if (calculatedDiscount() > 0) {
-                <div class="discount-applied-row">
+                @if (calculatedDiscount() > 0) {
                   <div class="summary-item discount-applied">
-                    <span>Desconto @if (discountType() === 'percent') { ({{ discountInput() }}%) }</span>
-                    <span>- {{ calculatedDiscount() | brlCurrency }}</span>
+                    <span>- @if (discountType() === 'percent') { {{ discountInput() }}% }</span>
+                    <span>{{ calculatedDiscount() | brlCurrency }}</span>
                   </div>
-                </div>
-              }
-            </div>
-          </div>
-          </div>
+                }
+              </div>
+          
 
           <div class="divider-dashed">
             <div class="total-line">
@@ -357,7 +357,6 @@
     </div>
   </div>
 
-<!-- ── Modal Bordado Avulso ── -->
 @if (isBordadoModalOpen()) {
   <div class="modal-overlay" (click)="closeBordadoModal()">
     <div class="bordado-modal" (click)="$event.stopPropagation()">
@@ -402,7 +401,6 @@
   </div>
 }
 
-<!-- ── Modal detalhe bordado ── -->
 @if (isDetailVisible() && selectedEmbroideryDetail(); as emb) {
   <div class="modal-overlay" (click)="closeDetails()">
     <div class="detail-modal" (click)="$event.stopPropagation()">
