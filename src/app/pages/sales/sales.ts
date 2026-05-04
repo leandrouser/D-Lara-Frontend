@@ -54,7 +54,7 @@ export class Sales implements OnInit, OnDestroy {
     ).subscribe(term => {
       this.search.set(term);
       this.currentPage.set(0);
-      this.loadSales();
+      this.loadSales(term);
     });
 
     this.loadSales();
@@ -69,21 +69,25 @@ export class Sales implements OnInit, OnDestroy {
     this.searchSubject.next(term);
   }
 
-  loadSales(): void {
+  loadSales(termOverride?: string): void {
   this.isLoading.set(true);
   this.error.set('');
 
-  const term = this.search().trim();
+  const term = (termOverride !== undefined ? termOverride : this.search()).trim();
+  const status = this.statusFilter();
 
-  this.saleService.searchSales(term, this.currentPage(), this.itemsPerPage()).subscribe({
+  this.saleService.searchSales(term, this.currentPage(), this.itemsPerPage(), status).subscribe({
     next: (page) => {
       this.sales.set(page.content);
       this.totalPages.set(page.totalPages);
       this.totalElements.set(page.totalElements);
-      this.calculateSalesStats(page.content);
     },
     error: () => this.error.set('Erro ao carregar vendas. Verifique sua conexão.'),
     complete: () => this.isLoading.set(false)
+  });
+
+  this.saleService.searchSales(term, 0, 9999, 'all').subscribe({
+    next: (page) => this.calculateSalesStats(page.content)
   });
   }
 
@@ -152,14 +156,11 @@ export class Sales implements OnInit, OnDestroy {
   });
 
   filteredSales = computed(() => {
-    const term = this.search().toLowerCase();
-    const status = this.statusFilter();
-    return this.sales().filter(sale => {
-      const matchesSearch = sale.id.toString().includes(term) ||
-                            sale.customerName?.toLowerCase().includes(term);
-      const matchesStatus = status === 'all' || sale.saleStatus?.toLowerCase() === status.toLowerCase();
-      return matchesSearch && matchesStatus;
-    });
+  const term = this.search().toLowerCase();
+  return this.sales().filter(sale =>
+    sale.id.toString().includes(term) ||
+    sale.customerName?.toLowerCase().includes(term)
+  );
   });
 
   getAverageTicket(): number {

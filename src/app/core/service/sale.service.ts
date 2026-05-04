@@ -106,11 +106,15 @@ private apiUrl = `${environment.apiUrl}/sales`;
     return this.http.put<SaleResponse>(`${this.apiUrl}/${id}`, saleData);
   }
 
-  searchSales(term: string, page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
-  const params = new HttpParams()
+  searchSales(term: string, page: number = 0, size: number = 10, status?: string): Observable<Page<SaleResponse>> {
+  let params = new HttpParams()
     .set('q', term)
     .set('page', page.toString())
     .set('size', size.toString());
+
+  if (status && status !== 'all') {
+    params = params.set('status', status.toUpperCase());
+  }
 
   return this.http.get<Page<SaleResponse>>(`${this.apiUrl}/search`, { params });
   }

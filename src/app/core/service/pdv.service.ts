@@ -4,10 +4,17 @@ import { inject, Injectable, signal, computed, effect } from '@angular/core';
 import { environment } from '../../../environments/environments';
 import { Observable } from 'rxjs';
 import { CustomerResponse } from './customer.service';
-import { DiscountType } from './sale.service';
+
+export interface CartProduct {
+  id: number;
+  name: string;
+  price: number;
+  barcode: string;
+  stockQty: number;
+}
 
 export interface CartItem {
-  product: any;
+  product: CartProduct;
   quantity: number;
   total: number;
   isEmbroidery?: boolean;

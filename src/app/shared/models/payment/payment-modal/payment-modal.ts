@@ -87,8 +87,8 @@ export class PaymentModal implements OnChanges, OnInit {
   });
 
   isFullyPaid = computed(() =>
-    this.totalPaid() >= (this.paymentData?.totalAmount || 0)
-  );
+    this.round2(this.totalPaid()) >= this.round2(this.paymentData?.totalAmount || 0)
+);
 
   canAddMorePayments = computed(() => {
     if (this.isProcessing()) return false;
@@ -104,7 +104,6 @@ export class PaymentModal implements OnChanges, OnInit {
     return !this.selectedPaymentMethods().some(pm => pm.method !== 'DINHEIRO' && pm.isChange);
   });
 
-  // F2 finaliza a venda quando o modal está aberto
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent) {
     if (!this.isOpen) return;

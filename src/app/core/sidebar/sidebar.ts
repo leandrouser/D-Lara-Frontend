@@ -8,7 +8,6 @@ import { MatDialog } from '@angular/material/dialog';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  // ✅ PaymentMethodDialog REMOVIDO dos imports estáticos
   imports: [CommonModule, RouterModule, RouterLinkActive, MatIconModule],
   templateUrl: './sidebar.html',
   styleUrls: ['./sidebar.scss'],
@@ -118,7 +117,6 @@ export class Sidebar implements OnInit {
     }
   }
 
-  // ✅ Lazy import — carrega o módulo do dialog apenas quando chamado
   async openConfig() {
     const { PaymentMethodDialog } = await import(
       '../../shared/models/payment/payment-method-dialog/payment-method-dialog'

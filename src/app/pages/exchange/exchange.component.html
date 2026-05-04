@@ -100,12 +100,10 @@
               </button>
             </div>
 
-            @if (saleError()) {
-              <div class="alert alert-error">
-                <mat-icon>error_outline</mat-icon>
-                {{ saleError() }}
-              </div>
-            }
+            <div *ngIf="saleError()" class="alert alert-warning">
+                <mat-icon>warning</mat-icon>
+                <span>{{ saleError() }}</span>
+            </div>
 
             <!-- Dados da venda encontrada -->
             @if (sale()) {

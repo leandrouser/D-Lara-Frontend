@@ -68,7 +68,7 @@
               type="text"
               placeholder="Buscar por ID, cliente ou produto..."
               [value]="search()"
-              (input)="search.set($any($event.target).value)"
+              (input)="onSearchInput($any($event.target).value)"
             />
           </div>
         </div>
