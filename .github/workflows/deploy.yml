@@ -1,9 +1,7 @@
 ﻿name: Deploy Frontend
-
 on:
   push:
     branches: [main]
-
 jobs:
   deploy:
     runs-on: self-hosted
@@ -19,3 +17,5 @@ jobs:
         run: C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
       - name: Copiar para NGINX
         run: xcopy /E /I /Y "dist\dlara-frontend\browser" "C:\nginx\html\pdv"
+      - name: Recarregar NGINX
+        run: C:\nginx\nginx.exe -s reload
