@@ -93,7 +93,7 @@ export interface PaymentMethodSummary {
 export interface CashSummaryResponse {
   sessionId: number;
   totalSales: number;
-  totalSupply: number;
+  totalSupplement: number;
   totalSangria: number;
   totalChange: number;
   paymentMethods: PaymentMethodSummary[];

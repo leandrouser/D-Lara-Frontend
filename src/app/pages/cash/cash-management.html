@@ -60,8 +60,8 @@
 
   <div class="action-bar" *ngIf="isCashOpen()">
     <div class="action-group">
-      <button class="btn-action supply"
-        (click)="movementType.set('SUPPLY'); showMovementForm.set(true)"
+      <button class="btn-action supplement"
+        (click)="movementType.set('SUPPLEMENT'); showMovementForm.set(true)"
         [disabled]="isLoading()">
         <mat-icon>add_circle_outline</mat-icon>
         <span>Suprimento</span>
@@ -87,7 +87,7 @@
   </div>
 
   <div class="movement-form" *ngIf="showMovementForm()">
-    <h3>Nova Movimentação: {{ movementType() === 'SUPPLY' ? 'Suprimento' : 'Sangria' }}</h3>
+    <h3>Nova Movimentação: {{ movementType() === 'SUPPLEMENT' ? 'Suprimento' : 'Sangria' }}</h3>
     <div class="form-fields">
       <input
         type="number"
@@ -146,14 +146,14 @@
           </thead>
           <tbody>
             @for (item of transactions(); track $index) {
-              <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLY' || item.type === 'OPENING'"
+              <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLEMENT' || item.type === 'OPENING'"
                   [class.expense]="item.type === 'SANGRIA' || item.type === 'CHANGE'">
                 <td>{{ item.timestamp | date: 'dd/MM/yyyy HH:mm' }}</td>
                 <td>
                   <span [class]="'type-badge ' + item.type.toLowerCase()">
                     <mat-icon>
                       {{ item.type === 'SALE'    ? 'shopping_cart'  :
-                         item.type === 'SUPPLY'  ? 'add_circle'     :
+                         item.type === 'SUPPLEMENT'  ? 'add_circle'     :
                          item.type === 'SANGRIA' ? 'remove_circle'  :
                          item.type === 'CHANGE'  ? 'sync_alt'       :
                          item.type === 'OPENING' ? 'vpn_key'        : 'payments' }}
@@ -195,11 +195,11 @@
               <strong>{{ formatCurrency(summary.totalSales) }}</strong>
             </div>
           </div>
-          <div class="summary-card supply">
+          <div class="summary-card supplement">
             <mat-icon>add_circle</mat-icon>
             <div>
               <span class="summary-label">Suprimentos</span>
-              <strong>{{ formatCurrency(summary.totalSupply) }}</strong>
+              <strong>{{ formatCurrency(summary.totalSupplement) }}</strong>
             </div>
           </div>
           <div class="summary-card expense">
