@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environments';
 
-export type MovementType = 'OPENING' | 'SUPPLY' | 'SANGRIA' | 'SALE' | 'CHANGE';
+export type MovementType = 'OPENING' | 'SUPPLEMENT' | 'SANGRIA' | 'SALE' | 'CHANGE';
 
 export interface OpenSessionRequest {
   value: number;
@@ -16,7 +16,7 @@ export interface CashRegisterStatus {
 
 export interface CashTransactionRequestDTO {
   value: number;
-  type: 'SUPPLY' | 'SANGRIA';
+  type: 'SUPPLEMENT' | 'SANGRIA';
   description?: string;
 }
 

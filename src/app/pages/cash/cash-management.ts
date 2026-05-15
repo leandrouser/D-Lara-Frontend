@@ -39,7 +39,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   isClosingModalOpen = signal(false);
 
   transactions = signal<CashMovementResponse[]>([]);
-  movementType = signal<'SUPPLY' | 'SANGRIA'>('SUPPLY');
+  movementType = signal<'SUPPLEMENT' | 'SANGRIA'>('SUPPLEMENT');
   movementValue = signal<number>(0);
   movementObservation = signal<string>('');
   showMovementForm = signal(false);
@@ -323,7 +323,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       'SALE': 'Venda',
-      'SUPPLY': 'Suprimento',
+      'SUPPLEMENT': 'Suprimento',
       'SANGRIA': 'Sangria',
       'CHANGE': 'Troco',
       'OPENING': 'Abertura'
