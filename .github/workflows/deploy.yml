@@ -1,4 +1,4 @@
-﻿name: Deploy Frontend
+﻿name: Recarregar NGINX
 on:
   push:
     branches: [main]
@@ -18,4 +18,4 @@ jobs:
       - name: Copiar para NGINX
         run: xcopy /E /I /Y "dist\dlara-frontend\browser" "C:\nginx\html\pdv"
       - name: Recarregar NGINX
-        run: C:\nginx\nginx.exe -s reload
+        run: cd C:\nginx && nginx.exe -s reload
