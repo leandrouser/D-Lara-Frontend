@@ -1,4 +1,4 @@
-﻿name: Recarregar NGINX
+﻿name: Deploy Frontend
 on:
   push:
     branches: [main]
@@ -15,6 +15,8 @@ jobs:
         run: npm install
       - name: Build Angular
         run: C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
+      - name: Limpar NGINX
+        run: if exist "C:\nginx\html\pdv" rmdir /S /Q "C:\nginx\html\pdv" && mkdir "C:\nginx\html\pdv"
       - name: Copiar para NGINX
         run: xcopy /E /I /Y "dist\dlara-frontend\browser" "C:\nginx\html\pdv"
       - name: Recarregar NGINX
