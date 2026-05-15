@@ -83,6 +83,23 @@ export interface CashSessionResponse {
   userName: string;
 }
 
+// ─── Novo: resposta do endpoint /summary ─────────────────────────────────────
+export interface PaymentMethodSummary {
+  paymentMethodId: number;
+  methodName: string;
+  expectedAmount: number;
+}
+
+export interface CashSummaryResponse {
+  sessionId: number;
+  totalSales: number;
+  totalSupply: number;
+  totalSangria: number;
+  totalChange: number;
+  paymentMethods: PaymentMethodSummary[];
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Injectable({
   providedIn: 'root'
 })
@@ -113,17 +130,21 @@ export class CashService {
   }
 
   createManualTransaction(sessionId: number, request: CashTransactionRequestDTO): Observable<void> {
-  return this.http.post<void>(`${this.apiUrl}/movement`, {
-    value: request.value,
-    type: request.type,
-    description: request.description,
-    sessionId: sessionId
-  });
-}
+    return this.http.post<void>(`${this.apiUrl}/movement`, {
+      value: request.value,
+      type: request.type,
+      description: request.description,
+      sessionId: sessionId
+    });
+  }
+
+  /** Retorna o resumo completo da sessão (breakdown por método de pagamento + totais) */
+  getSessionSummary(sessionId: number): Observable<CashSummaryResponse> {
+    return this.http.get<CashSummaryResponse>(`${this.apiUrl}/session/${sessionId}/summary`);
+  }
 
   getExpectedTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
-    return this.http.get<PaymentMethodTotal[]>(
-      `${this.apiUrl}/session/${sessionId}/summary`);
+    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/summary`);
   }
 
   getPaymentMethodTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
@@ -136,7 +157,6 @@ export class CashService {
     );
   }
 
-
   closeSession(sessionId: number, request: CloseSessionRequest): Observable<CloseSessionResponse> {
     return this.http.post<CloseSessionResponse>(`${this.apiUrl}/session/${sessionId}/close`, request).pipe(
       tap(() => this.clearLocalSession())
@@ -144,39 +164,39 @@ export class CashService {
   }
 
   private clearLocalSession() {
-  this._activeSession.set(null);
-  localStorage.removeItem('active_cash_id');
+    this._activeSession.set(null);
+    localStorage.removeItem('active_cash_id');
   }
 
   checkExistingSession() {
-  this._isInitializing.set(true);
-  this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).subscribe({
-    next: (session) => {
-      if (session) {
-        this._activeSession.set(session);
-        localStorage.setItem('active_cash_id', session.id.toString());
-      } else {
-        this.clearLocalSession();
+    this._isInitializing.set(true);
+    this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).subscribe({
+      next: (session) => {
+        if (session) {
+          this._activeSession.set(session);
+          localStorage.setItem('active_cash_id', session.id.toString());
+        } else {
+          this.clearLocalSession();
+        }
+        this._isInitializing.set(false);
+      },
+      error: (err) => {
+        if (err.status === 404 || err.status === 204) {
+          this.clearLocalSession();
+        }
+        this._isInitializing.set(false);
       }
-      this._isInitializing.set(false);
-    },
-    error: (err) => {
-      if (err.status === 404 || err.status === 204) {
-        this.clearLocalSession();
-      }
-      this._isInitializing.set(false);
-    }
-  });
+    });
   }
 
-  getOpenCashRegisterStatus(): Observable<CashRegisterStatus> { // removeu userId
-  return this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).pipe( // era /active/${userId}
-    map(session => ({
-      isOpen: !!session,
-      cashMovementId: session?.id || null
-    })),
-    catchError(() => of({ isOpen: false, cashMovementId: null }))
-  );
+  getOpenCashRegisterStatus(): Observable<CashRegisterStatus> {
+    return this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).pipe(
+      map(session => ({
+        isOpen: !!session,
+        cashMovementId: session?.id || null
+      })),
+      catchError(() => of({ isOpen: false, cashMovementId: null }))
+    );
   }
 
   getMovementsBySession(sessionId: number): Observable<CashMovementResponse[]> {

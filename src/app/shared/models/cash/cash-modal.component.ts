@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, OnInit, OnChanges, QueryList, SimpleChanges, ViewChild, ViewChildren, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { FechamentoCaixaRequest, PrintService } from '../../../core/service/print.service';
@@ -42,6 +42,8 @@ interface ClosingResult {
   styleUrls: ['./cash-modal.component.scss']
 })
 export class CashModalComponent implements OnInit, OnChanges {
+  @ViewChild('initialValueInput') initialValueInput?: ElementRef<HTMLInputElement>;
+  @ViewChildren('closingCountInput') closingCountInputs?: QueryList<ElementRef<HTMLInputElement>>;
 
   @Input() isOpen = false;
   @Input() modalType: 'OPENING' | 'CLOSING' = 'OPENING';
@@ -75,8 +77,13 @@ export class CashModalComponent implements OnInit, OnChanges {
       this.initializeClosingCounts();
     }
 
+    if (changes['isOpen']?.currentValue === true || changes['modalType']) {
+      this.focusFirstInput();
+    }
+
     if (changes['paymentMethods'] && this.modalType === 'CLOSING' && !this.isClosingConfirmed) {
       this.initializeClosingCounts();
+      this.focusFirstInput();
     }
   }
 
@@ -152,6 +159,19 @@ submitClosing(): void {
     this.closingResult = null;
     this.isClosingConfirmed = false;
     this.isLoading = false;
+  }
+
+  private focusFirstInput(): void {
+    if (!this.isOpen) return;
+
+    setTimeout(() => {
+      const input = this.modalType === 'OPENING'
+        ? this.initialValueInput?.nativeElement
+        : this.closingCountInputs?.first?.nativeElement;
+
+      input?.focus();
+      input?.select();
+    });
   }
 
   diffClass(difference: number): string {

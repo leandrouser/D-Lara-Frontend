@@ -48,6 +48,7 @@
         <div class="input-wrapper">
           <span class="currency">R$</span>
           <input
+            #initialValueInput
             type="number"
             [(ngModel)]="initialValue"
             placeholder="0,00"
@@ -86,6 +87,7 @@
           <div class="input-wrapper">
             <span class="currency">R$</span>
             <input
+              #closingCountInput
               type="number"
               [value]="method.physicalAmount || ''"
               (change)="updateCount(method.id, $event)"

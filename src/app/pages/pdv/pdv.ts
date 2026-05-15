@@ -3,7 +3,7 @@
   import { MatIconModule } from '@angular/material/icon';
   import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
-  import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs';
+  import { Subject, of, take, takeUntil, debounceTime, distinctUntilChanged, switchMap, map, finalize } from 'rxjs';
   import { CartItem, PdvService } from '../../core/service/pdv.service';
   import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
   import { ProductService, CategoryEnum } from '../../core/service/product.service';
@@ -12,7 +12,8 @@
   import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
   import { EmbroideryService } from '../../core/service/embroidery.service';
   import { PaymentData, PaymentModal } from "../../shared/models/payment/payment-modal/payment-modal";
-  import { CashService, OpenSessionRequest } from '../../core/service/cash.service';
+  import { CashService, CloseSessionRequest } from '../../core/service/cash.service';
+  import { PaymentService } from '../../core/service/payment.service';
   import { BrlCurrencyPipe } from '../../shared/pipes/brl-currency.pipe';
   import { FormsModule } from '@angular/forms';
 
@@ -45,9 +46,12 @@
     private embroideryService = inject(EmbroideryService);
     private productSearchSubject = new Subject<string>();
     private productService = inject(ProductService);
-    private cashService = inject(CashService);
+    public cashService = inject(CashService);
+    private paymentService = inject(PaymentService);
     private destroy$ = new Subject<void>();
     private customerSearchSubject = new Subject<string>();
+
+    @ViewChild(CashModalComponent) cashModal!: CashModalComponent;
 
     searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
@@ -62,6 +66,7 @@
     pageSubtitle = signal('Vendas e Ordens de Serviço');
     isLoading = signal(false);
     isOpeningModalOpen = signal(false);
+    isClosingModalOpen = signal(false);
     isPaymentModalOpen = signal(false);
     isModalOpen = signal(false);
     isDetailVisible = signal(false);
@@ -88,6 +93,7 @@
     showSaleSuggestions = signal(false);
 
     paymentData = signal<PaymentData | null>(null);
+    paymentMethods = signal<{ id: number, name: string }[]>([]);
 
     subtotal = computed(() =>
       this.cart().reduce((acc, item) => acc + item.total, 0)
@@ -124,6 +130,7 @@
 
       this.setupCustomerSearch();
       this.setupProductSearch();
+      this.loadPaymentMethods();
       this.productSearchSubject.next('');
 
       setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
@@ -214,7 +221,21 @@
       }
 
       handleButtonClick() {
-      if (!this.isCashRegisterOpen()) this.isOpeningModalOpen.set(true);
+      if (this.isCashRegisterOpen()) {
+        this.isClosingModalOpen.set(true);
+        return;
+      }
+
+      this.isOpeningModalOpen.set(true);
+      }
+
+      private loadPaymentMethods() {
+        this.paymentService.listPaymentMethods().subscribe({
+          next: (methods) => {
+            this.paymentMethods.set(methods.map(m => ({ id: m.id, name: m.displayName })));
+          },
+          error: () => this.showError('Não foi possível carregar os métodos de pagamento.')
+        });
       }
 
       private setupCustomerSearch() {
@@ -439,6 +460,46 @@
         next: () => { this.isOpeningModalOpen.set(false); this.showSuccess('Caixa aberto com sucesso!'); },
         error: () => this.showError('Não foi possível abrir o caixa.')
       });
+    }
+
+    onConfirmCashClosing(event: { counts: { paymentMethodId: number; reportedValue: number }[] }) {
+      const sessionId = this.activeSessionId();
+      if (!sessionId) {
+        this.showError('Sessão não encontrada');
+        return;
+      }
+
+      this.isLoading.set(true);
+      const request: CloseSessionRequest = { reportedPayments: event.counts };
+
+      this.cashService.closeSession(sessionId, request)
+        .pipe(finalize(() => this.isLoading.set(false)))
+        .subscribe({
+          next: (response) => {
+            this.showSuccess('Caixa fechado com sucesso!');
+            this.cashModal?.setClosingResult(response);
+          },
+          error: (err) => {
+            this.showError(err.error?.message || 'Erro ao fechar caixa');
+            this.isClosingModalOpen.set(false);
+          }
+        });
+    }
+
+    onCashModalConfirm(event: number | { type: 'CLOSING'; counts: { paymentMethodId: number; reportedValue: number }[] }) {
+      if (typeof event === 'number') {
+        this.onConfirmCashOpen(event);
+        return;
+      }
+
+      if (event?.type === 'CLOSING') {
+        this.onConfirmCashClosing(event);
+      }
+    }
+
+    onCashModalClose() {
+      this.isOpeningModalOpen.set(false);
+      this.isClosingModalOpen.set(false);
     }
 
     setProductFilter(filter: 'all' | CategoryEnum) {

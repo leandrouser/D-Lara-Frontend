@@ -6,8 +6,8 @@
     </div>
     <div class="header-actions">
   <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
-    <mat-icon>{{ isCashRegisterOpen() ? 'lock_open' : 'lock' }}</mat-icon>
-    <span>CAIXA {{ isCashRegisterOpen() ? 'ABERTO' : 'FECHADO' }}</span>
+    <mat-icon>{{ isCashRegisterOpen() ? 'lock' : 'lock_open' }}</mat-icon>
+    <span>{{ isCashRegisterOpen() ? 'FECHAR CAIXA' : 'ABRIR CAIXA' }}</span>
   </button>
 </div>
   </div>
@@ -347,9 +347,12 @@
             }
 
             <app-cash-modal
-              [isOpen]="isOpeningModalOpen()"
-              (close)="isOpeningModalOpen.set(false)"
-              (confirm)="onConfirmCashOpen($event)">
+              [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
+              [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
+              [session]="cashService.activeSession()"
+              [paymentMethods]="paymentMethods()"
+              (close)="onCashModalClose()"
+              (confirm)="onCashModalConfirm($event)">
             </app-cash-modal>
           </div>
         </div>
