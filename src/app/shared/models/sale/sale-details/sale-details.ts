@@ -73,10 +73,11 @@ export class SaleDetailsModalComponent implements OnInit {
         valor: p.amountPaid,
       })),
       troco,
+      reimpressao: true,
     };
 
     this.isPrinting.set(true);
-    this.printService.imprimir(cupom).subscribe({
+    this.printService.reimprimir(cupom).subscribe({
       next: () => {
         this.snackBar.open('✅ Cupom enviado para impressão!', '', { duration: 2500 });
         this.isPrinting.set(false);
