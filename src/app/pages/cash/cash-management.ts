@@ -217,7 +217,6 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
     this.showSuccess('✅ CSV exportado com sucesso!');
   }
 
-  // ─── Existentes ───────────────────────────────────────────────────────────
   onConfirmCashOpen(initialValue: number): void {
     if (initialValue < 0) {
       this.showError('O valor inicial não pode ser negativo');
@@ -264,6 +263,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
           this.resetMovementForm();
           this.loadTransactions();
           this.loadSummary();
+	  this.cashService.checkExistingSession();
         },
         error: (err) => this.showError(err.error?.message || 'Erro na transação')
       });
