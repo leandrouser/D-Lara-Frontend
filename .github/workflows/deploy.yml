@@ -1,23 +1,38 @@
-﻿name: Deploy Frontend
+name: Deploy PDV Frontend
+
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+
 jobs:
   deploy:
-    runs-on: self-hosted
-    defaults:
-      run:
-        shell: cmd
+    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout código
         uses: actions/checkout@v4
-      - name: Instalar dependencias
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependências
         run: npm install
+
       - name: Build Angular
-        run: C:\Users\hlsil\AppData\Roaming\npm\ng.cmd build --configuration production
-      - name: Limpar NGINX
-        run: if exist "C:\nginx\html\pdv" rmdir /S /Q "C:\nginx\html\pdv" && mkdir "C:\nginx\html\pdv"
-      - name: Copiar para NGINX
-        run: xcopy /E /I /Y "dist\dlara-frontend\browser" "C:\nginx\html\pdv"
-      - name: Recarregar NGINX
-        run: cd C:\nginx && nginx.exe -s reload
+        run: npx ng build --configuration=production
+
+      - name: Deploy no VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/pdv
+            git pull origin main
+            npm install
+            npx ng build --configuration=production
+            systemctl reload nginx
