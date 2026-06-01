@@ -53,16 +53,52 @@
     background: #eef2ff;
     .icon-wrapper { background: #c7d2fe; mat-icon { color: #4338ca; } }
     h2, .subtitle { color: #312e81; }
-    .close-btn { background: #c7d2fe; color: #4338ca;
-      &:hover { background: #a5b4fc; } }
+    .close-btn { background: #e49999; color: #4338ca;
+      &:hover { background: #e51f1f; } }
   }
 
-  &.closing {
+   &.closing {
     background: #fff7ed;
     .icon-wrapper { background: #fed7aa; mat-icon { color: #c2410c; } }
     h2, .subtitle { color: #7c2d12; }
-    .close-btn { background: #fed7aa; color: #c2410c;
-      &:hover { background: #fdba74; } }
+    
+    .close-btn { 
+      background: #dc2626;
+      border-radius: 8px;
+      
+      &:hover { background: #b91c1c; }
+
+      .close-icon {
+        font-size: 16px;
+        color: #ffffff;
+        font-weight: 700;
+        line-height: 1;
+      }
+    }
+  }
+
+   .close-btn {
+    background: #dc2626;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover { background: #b91c1c; }
+
+    .close-icon {
+      font-size: 18px;
+      color: #ffffff !important;
+      font-weight: 900;
+      line-height: 1;
+      font-family: Arial, sans-serif;
+      display: block;
+    }
   }
 }
 
@@ -95,21 +131,6 @@
   margin: 2px 0 0;
   font-size: 0.8rem;
   opacity: 0.75;
-}
-
-.close-btn {
-  border: none;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-  flex-shrink: 0;
-
-  mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 
 // ── BODY ────────────────────────────────────────────────────
@@ -530,7 +551,7 @@ button {
   }
 
   &.closing {
-    background: #2563eb;
+    background: #081e4e;
     &:hover:not(:disabled) { background: #1d4ed8; }
   }
 
