@@ -60,8 +60,8 @@
 
   <div class="action-bar" *ngIf="isCashOpen()">
     <div class="action-group">
-      <button class="btn-action supply"
-        (click)="movementType.set('SUPPLY'); showMovementForm.set(true)"
+      <button class="btn-action supplement"
+        (click)="movementType.set('SUPPLEMENT'); showMovementForm.set(true)"
         [disabled]="isLoading()">
         <mat-icon>add_circle_outline</mat-icon>
         <span>Suprimento</span>
@@ -87,7 +87,7 @@
   </div>
 
   <div class="movement-form" *ngIf="showMovementForm()">
-    <h3>Nova Movimentação: {{ movementType() === 'SUPPLY' ? 'Suprimento' : 'Sangria' }}</h3>
+    <h3>Nova Movimentação: {{ movementType() === 'SUPPLEMENT' ? 'Suprimento' : 'Sangria' }}</h3>
     <div class="form-fields">
       <input
         type="number"
@@ -146,14 +146,14 @@
           </thead>
           <tbody>
             @for (item of transactions(); track $index) {
-              <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLY' || item.type === 'OPENING'"
+              <tr [class.income]="item.type === 'SALE' || item.type === 'SUPPLEMENT' || item.type === 'OPENING'"
                   [class.expense]="item.type === 'SANGRIA' || item.type === 'CHANGE'">
                 <td>{{ item.timestamp | date: 'dd/MM/yyyy HH:mm' }}</td>
                 <td>
                   <span [class]="'type-badge ' + item.type.toLowerCase()">
                     <mat-icon>
                       {{ item.type === 'SALE'    ? 'shopping_cart'  :
-                         item.type === 'SUPPLY'  ? 'add_circle'     :
+                         item.type === 'SUPPLEMENT'  ? 'add_circle'     :
                          item.type === 'SANGRIA' ? 'remove_circle'  :
                          item.type === 'CHANGE'  ? 'sync_alt'       :
                          item.type === 'OPENING' ? 'vpn_key'        : 'payments' }}
@@ -182,60 +182,57 @@
     </div>
 
     <div class="tab-content summary-tab" *ngIf="activeTab() === 'summary'">
-      @if (isSummaryLoading()) {
-        <div class="summary-loading">
-          <mat-spinner diameter="36"></mat-spinner>
-        </div>
-      } @else if (sessionSummary(); as summary) {
-        <div class="summary-totals">
-          <div class="summary-card income">
-            <mat-icon>shopping_cart</mat-icon>
-            <div>
-              <span class="summary-label">Vendas</span>
-              <strong>{{ formatCurrency(summary.totalSales) }}</strong>
-            </div>
-          </div>
-          <div class="summary-card supply">
-            <mat-icon>add_circle</mat-icon>
-            <div>
-              <span class="summary-label">Suprimentos</span>
-              <strong>{{ formatCurrency(summary.totalSupply) }}</strong>
-            </div>
-          </div>
-          <div class="summary-card expense">
-            <mat-icon>remove_circle</mat-icon>
-            <div>
-              <span class="summary-label">Sangrias</span>
-              <strong>{{ formatCurrency(summary.totalSangria) }}</strong>
-            </div>
-          </div>
-          <div class="summary-card change">
-            <mat-icon>sync_alt</mat-icon>
-            <div>
-              <span class="summary-label">Troco</span>
-              <strong>{{ formatCurrency(summary.totalChange) }}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="payment-breakdown" *ngIf="summary.paymentMethods?.length">
-          <h4><mat-icon>credit_card</mat-icon> Vendas por Método de Pagamento</h4>
-          <div class="breakdown-list">
-            @for (method of summary.paymentMethods; track method.paymentMethodId) {
-              <div class="breakdown-item">
-                <span class="method-name">{{ method.methodName }}</span>
-                <span class="method-amount">{{ formatCurrency(method.expectedAmount) }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      } @else {
-        <div class="empty-state">
-          <mat-icon>info</mat-icon>
-          <span>Resumo indisponível.</span>
-        </div>
-      }
+  @if (isSummaryLoading()) {
+    <div class="summary-loading">
+      <mat-spinner diameter="36"></mat-spinner>
     </div>
+  } @else if (sessionSummary(); as summary) {
+    <div class="summary-totals">
+      <div class="summary-card income">
+        <mat-icon>shopping_cart</mat-icon>
+        <div>
+          <span class="summary-label">Vendas</span>
+          <strong>{{ formatCurrency(summary.totalSales) }}</strong>
+        </div>
+      </div>
+      <div class="summary-card supplement">
+        <mat-icon>add_circle</mat-icon>
+        <div>
+          <span class="summary-label">Suprimentos</span>
+          <strong>{{ formatCurrency(summary.totalSupplement) }}</strong>
+        </div>
+      </div>
+      <div class="summary-card expense">
+        <mat-icon>remove_circle</mat-icon>
+        <div>
+          <span class="summary-label">Sangrias</span>
+          <strong>{{ formatCurrency(summary.totalSangria) }}</strong>
+        </div>
+      </div>
+      <div class="summary-card change">
+        <mat-icon>sync_alt</mat-icon>
+        <div>
+          <span class="summary-label">Troco</span>
+          <strong>{{ formatCurrency(summary.totalChange) }}</strong>
+        </div>
+      </div>
+      <div class="summary-card balance">
+        <mat-icon>account_balance_wallet</mat-icon>
+        <div>
+          <span class="summary-label">Saldo atual</span>
+          <strong [style.color]="summary.currentBalance >= 0 ? '#15803d' : '#dc2626'">
+            {{ formatCurrency(summary.currentBalance) }}
+          </strong>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <mat-icon>info</mat-icon>
+      <span>Resumo indisponível.</span>
+    </div>
+  }
+</div>
 
     <div class="tab-content chart-tab" *ngIf="activeTab() === 'chart'">
       @if (!transactions().length) {

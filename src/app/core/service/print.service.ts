@@ -24,6 +24,7 @@ export interface CupomRequest {
     valor: number;
   }[];
   troco: number;
+  reimpressao?: boolean;
 }
 
 export interface FechamentoCaixaRequest {
@@ -48,6 +49,10 @@ export class PrintService {
 
   imprimir(cupom: CupomRequest): Observable<string> {
     return this.http.post(`${this.printAgentUrl}/imprimir`, cupom, { responseType: 'text' });
+  }
+
+  reimprimir(cupom: CupomRequest): Observable<string> {
+    return this.http.post(`${this.printAgentUrl}/reimprimir`, cupom, { responseType: 'text' });
   }
 
   imprimirFechamento(fechamento: FechamentoCaixaRequest): Observable<string> {

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environments';
 
-export type MovementType = 'OPENING' | 'SUPPLY' | 'SANGRIA' | 'SALE' | 'CHANGE';
+export type MovementType = 'OPENING' | 'SUPPLEMENT' | 'SANGRIA' | 'SALE' | 'CHANGE';
 
 export interface OpenSessionRequest {
   value: number;
@@ -16,7 +16,7 @@ export interface CashRegisterStatus {
 
 export interface CashTransactionRequestDTO {
   value: number;
-  type: 'SUPPLY' | 'SANGRIA';
+  type: 'SUPPLEMENT' | 'SANGRIA';
   description?: string;
 }
 
@@ -83,22 +83,15 @@ export interface CashSessionResponse {
   userName: string;
 }
 
-// ─── Novo: resposta do endpoint /summary ─────────────────────────────────────
-export interface PaymentMethodSummary {
-  paymentMethodId: number;
-  methodName: string;
-  expectedAmount: number;
-}
-
 export interface CashSummaryResponse {
-  sessionId: number;
   totalSales: number;
-  totalSupply: number;
+  totalSupplement: number;
   totalSangria: number;
   totalChange: number;
-  paymentMethods: PaymentMethodSummary[];
+  totalExchangeReturn: number;
+  currentBalance: number;
+  openingDate: string;
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Injectable({
   providedIn: 'root'
@@ -141,10 +134,6 @@ export class CashService {
   /** Retorna o resumo completo da sessão (breakdown por método de pagamento + totais) */
   getSessionSummary(sessionId: number): Observable<CashSummaryResponse> {
     return this.http.get<CashSummaryResponse>(`${this.apiUrl}/session/${sessionId}/summary`);
-  }
-
-  getExpectedTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
-    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/summary`);
   }
 
   getPaymentMethodTotals(sessionId: number): Observable<PaymentMethodTotal[]> {

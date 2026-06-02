@@ -39,7 +39,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   isClosingModalOpen = signal(false);
 
   transactions = signal<CashMovementResponse[]>([]);
-  movementType = signal<'SUPPLY' | 'SANGRIA'>('SUPPLY');
+  movementType = signal<'SUPPLEMENT' | 'SANGRIA'>('SUPPLEMENT');
   movementValue = signal<number>(0);
   movementObservation = signal<string>('');
   showMovementForm = signal(false);
@@ -217,7 +217,6 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
     this.showSuccess('✅ CSV exportado com sucesso!');
   }
 
-  // ─── Existentes ───────────────────────────────────────────────────────────
   onConfirmCashOpen(initialValue: number): void {
     if (initialValue < 0) {
       this.showError('O valor inicial não pode ser negativo');
@@ -264,6 +263,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
           this.resetMovementForm();
           this.loadTransactions();
           this.loadSummary();
+	  this.cashService.checkExistingSession();
         },
         error: (err) => this.showError(err.error?.message || 'Erro na transação')
       });
@@ -323,7 +323,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       'SALE': 'Venda',
-      'SUPPLY': 'Suprimento',
+      'SUPPLEMENT': 'Suprimento',
       'SANGRIA': 'Sangria',
       'CHANGE': 'Troco',
       'OPENING': 'Abertura'
