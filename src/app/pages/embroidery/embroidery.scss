@@ -565,3 +565,8 @@ table {
     background: #f0fdf4 !important;
   }
 }
+
+.kb-btn.revert {
+  color: #f59e0b;
+  &:hover { background: rgba(245, 158, 11, 0.1); }
+}

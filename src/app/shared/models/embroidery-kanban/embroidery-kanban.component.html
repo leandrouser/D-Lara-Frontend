@@ -32,6 +32,11 @@
                         matTooltip="Iniciar produção">
                   <mat-icon>manufacturing</mat-icon>
                 </button>
+                  <button class="kb-btn revert"
+                    (click)="revertStatus.emit({ item: e, status: getPreviousStatus(e.status)! })"
+                    matTooltip="{{ getPreviousLabel(e.status) }}">
+                    <mat-icon>undo</mat-icon>
+                  </button>
                 <button class="kb-btn" (click)="edit.emit(e)" matTooltip="Editar">
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -82,6 +87,11 @@
                         matTooltip="Marcar como pronto">
                   <mat-icon>done_all</mat-icon>
                 </button>
+                <button class="kb-btn revert"
+                      (click)="revertStatus.emit({ item: e, status: getPreviousStatus(e.status)! })"
+                      matTooltip="{{ getPreviousLabel(e.status) }}">
+                    <mat-icon>undo</mat-icon>
+                  </button>
                 <button class="kb-btn" (click)="edit.emit(e)" matTooltip="Editar">
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -127,6 +137,11 @@
                         matTooltip="Confirmar entrega">
                   <mat-icon>local_shipping</mat-icon>
                 </button>
+                <button class="kb-btn revert"
+                      (click)="revertStatus.emit({ item: e, status: getPreviousStatus(e.status)! })"
+                      matTooltip="{{ getPreviousLabel(e.status) }}">
+                    <mat-icon>undo</mat-icon>
+                  </button>
                 <button class="kb-btn" (click)="edit.emit(e)" matTooltip="Editar">
                   <mat-icon>edit</mat-icon>
                 </button>
@@ -169,6 +184,11 @@
               <div class="kb-actions">
                 <button class="kb-btn danger" (click)="remove.emit(e.id)" matTooltip="Excluir">
                   <mat-icon>delete</mat-icon>
+                </button>
+                <button class="kb-btn revert"
+                  (click)="revertStatus.emit({ item: e, status: getPreviousStatus(e.status)! })"
+                  matTooltip="{{ getPreviousLabel(e.status) }}">
+                  <mat-icon>undo</mat-icon>
                 </button>
               </div>
             </div>

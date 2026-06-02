@@ -31,8 +31,9 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            git config --global --add safe.directory /var/www/pdv
             cd /var/www/pdv
             git pull origin main
             npm install
             npx ng build --configuration=production
-            systemctl reload nginx
+            sudo systemctl reload nginx

@@ -21,6 +21,7 @@ export class EmbroideryKanbanComponent {
   @Output() markDelivered = new EventEmitter<EmbroideryResponse>();
   @Output() edit          = new EventEmitter<EmbroideryResponse>();
   @Output() remove        = new EventEmitter<number>();
+  @Output() revertStatus = new EventEmitter<{ item: EmbroideryResponse, status: string }>();
 
   get pending()    { return this.items.filter(e => e.status === 'PENDING');    }
   get inProduction() { return this.items.filter(e => e.status === 'IN_PRODUCTION'); }
@@ -33,5 +34,23 @@ export class EmbroideryKanbanComponent {
     const today    = new Date();
     today.setHours(0, 0, 0, 0);
     return delivery < today;
+  }
+
+  getPreviousStatus(status: string): string | null {
+    const map: Record<string, string> = {
+      'IN_PRODUCTION': 'PENDING',
+      'PROCESSING':    'IN_PRODUCTION',
+      'COMPLETED':     'PROCESSING'
+    };
+    return map[status] ?? null;
+  }
+
+  getPreviousLabel(status: string): string {
+    const map: Record<string, string> = {
+      'IN_PRODUCTION': 'Voltar para Pendente',
+      'PROCESSING':    'Voltar para Em Produção',
+      'COMPLETED':     'Voltar para Pronto'
+    };
+    return map[status] ?? '';
   }
 }

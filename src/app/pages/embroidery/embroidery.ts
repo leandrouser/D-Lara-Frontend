@@ -197,7 +197,11 @@ setViewMode(mode: 'table' | 'kanban') {
     this.embroideryService.updateStatus(embroidery.id, 'PROCESSING').subscribe({
       next: () => {
         this.showSuccess(`Bordado #${embroidery.id} marcado como Pronto!`);
-        this.loadData();
+        if (this.viewMode() === 'kanban') {
+          this.loadAllForKanban();
+        } else {
+          this.loadData();
+        }
         this.loadGlobalMetrics();
       },
       error: () => {
@@ -214,7 +218,11 @@ setViewMode(mode: 'table' | 'kanban') {
     this.embroideryService.updateStatus(embroidery.id, 'COMPLETED').subscribe({
       next: () => {
         this.showSuccess(`Bordado #${embroidery.id} entregue com sucesso!`);
-        this.loadData();
+        if (this.viewMode() === 'kanban') {
+          this.loadAllForKanban();
+        } else {
+          this.loadData();
+        }
         this.loadGlobalMetrics();
       },
       error: () => {
@@ -295,6 +303,23 @@ setViewMode(mode: 'table' | 'kanban') {
     this.snackBar.open(message, 'Fechar', {
       duration: 4000, panelClass: ['error-snackbar'],
       horizontalPosition: 'end', verticalPosition: 'top'
+    });
+  }
+
+  revertStatus(event: { item: EmbroideryResponse, status: string }) {
+    if (!confirm(`Voltar o bordado #${event.item.id} para o status anterior?`)) return;
+
+    this.loading.set(true);
+    this.embroideryService.updateStatus(event.item.id, event.status).subscribe({
+      next: () => {
+        this.showSuccess(`Status atualizado!`);
+        this.loadAllForKanban();
+        this.loadGlobalMetrics();
+      },
+      error: () => {
+        this.showError('Erro ao atualizar status.');
+        this.loading.set(false);
+      }
     });
   }
 }
