@@ -142,7 +142,7 @@ private apiUrl = `${environment.apiUrl}/sales`;
   }
 
   getTopSellingLast3Months(): Observable<TopSellingProductResponse[]> {
-    return this.http.get<TopSellingProductResponse[]>(`${this.apiUrl}/top-selling`);
+    return this.http.get<TopSellingProductResponse[]>(`${this.apiUrl}/stats/top-selling`);
   }
 
 }
