@@ -30,13 +30,8 @@ jobs:
             # 2. Puxa o código novo
             git pull origin main
 
-            # 3. Recria o environment de produção (não vai para o git por estar no .gitignore)
-            cat > src/environments/environment.prod.ts << 'EOF'
-            export const environment = {
-              production: true,
-              apiUrl: '/api'
-            };
-            EOF
+            # 3. Recria o environment de produção
+            printf 'export const environment = {\n  production: true,\n  apiUrl: "/api"\n};\n' > src/environments/environment.prod.ts
 
             # 4. Instala e builda
             npm install
