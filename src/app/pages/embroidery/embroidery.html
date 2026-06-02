@@ -14,7 +14,14 @@
       </div>
       <mat-icon class="icon">format_list_bulleted</mat-icon>
     </div>
-
+    <div class="card emerald">
+    <div class="info">
+      <span>Em Produção</span>
+      <strong>{{ inProductionCount() }}</strong>
+      <small>Sendo bordados</small>
+    </div>
+    <mat-icon class="icon">manufacturing</mat-icon>
+  </div>
     <div class="card orange">
       <div class="info">
         <span>Atrasados</span>
@@ -22,7 +29,6 @@
       </div>
       <mat-icon class="icon">priority_high</mat-icon>
     </div>
-
     <div class="card green">
       <div class="info">
         <span>Para Hoje</span>
@@ -30,7 +36,6 @@
       </div>
       <mat-icon class="icon">event_available</mat-icon>
     </div>
-
     <div class="card purple">
       <div class="info">
         <span>Pendentes</span>
@@ -39,7 +44,6 @@
       </div>
       <mat-icon class="icon">pending_actions</mat-icon>
     </div>
-
     <div class="card teal">
       <div class="info">
         <span>Valor a Receber</span>
@@ -61,7 +65,7 @@
       </div>
     </div>
 
-    <div class="filter-actions">
+    <div class="filter-actions" *ngIf="viewMode() === 'table'">
       <button class="btn-filter"
               [class.active]="activeFilter() === 'PENDING'"
               [class.filter-pending]="activeFilter() === 'PENDING'"
@@ -70,7 +74,6 @@
         Pendentes
         <span class="filter-count">{{ pendingCount() }}</span>
       </button>
-
       <button class="btn-filter"
               [class.active]="activeFilter() === 'PROCESSING'"
               [class.filter-processing]="activeFilter() === 'PROCESSING'"
@@ -79,7 +82,6 @@
         Prontos
         <span class="filter-count">{{ processingCount() }}</span>
       </button>
-
       <button class="btn-filter"
               [class.active]="activeFilter() === 'COMPLETED'"
               [class.filter-completed]="activeFilter() === 'COMPLETED'"
@@ -87,6 +89,22 @@
         <mat-icon>check_circle</mat-icon>
         Entregues
         <span class="filter-count">{{ completedCount() }}</span>
+      </button>
+    </div>
+
+    <!-- TOGGLE DE VISUALIZAÇÃO -->
+    <div class="view-toggle">
+      <button class="vt-btn"
+              [class.active]="viewMode() === 'table'"
+              (click)="setViewMode('table')"
+              matTooltip="Tabela">
+        <mat-icon>table_rows</mat-icon>
+      </button>
+      <button class="vt-btn"
+              [class.active]="viewMode() === 'kanban'"
+              (click)="setViewMode('kanban')"
+              matTooltip="Kanban">
+        <mat-icon>view_kanban</mat-icon>
       </button>
     </div>
 
@@ -98,139 +116,149 @@
     </div>
   </div>
 
-  <!-- LEGENDA DAS ETAPAS -->
-  <div class="steps-legend">
+  <!-- MODO TABELA -->
+  <ng-container *ngIf="viewMode() === 'table'">
+
+    <!-- LEGENDA DAS ETAPAS -->
+      <div class="steps-legend">
     <div class="step" [class.step-active]="activeFilter() === 'PENDING'">
       <span class="step-dot pending"></span>
       <span class="step-label">1. Pendente</span>
       <mat-icon class="step-arrow">arrow_forward</mat-icon>
     </div>
+    <div class="step" [class.step-active]="activeFilter() === 'IN_PRODUCTION'">
+      <span class="step-dot in-production"></span>
+      <span class="step-label">2. Em Produção</span>
+      <mat-icon class="step-arrow">arrow_forward</mat-icon>
+    </div>
     <div class="step" [class.step-active]="activeFilter() === 'PROCESSING'">
       <span class="step-dot processing"></span>
-      <span class="step-label">2. Pronto para entrega</span>
+      <span class="step-label">3. Pronto para entrega</span>
       <mat-icon class="step-arrow">arrow_forward</mat-icon>
     </div>
     <div class="step" [class.step-active]="activeFilter() === 'COMPLETED'">
       <span class="step-dot completed"></span>
-      <span class="step-label">3. Entregue</span>
+      <span class="step-label">4. Entregue</span>
     </div>
   </div>
 
-  <!-- LOADING -->
-  <div *ngIf="loading()" class="search-loading">
-    <mat-icon class="loading-spinner">refresh</mat-icon>
-    Buscando bordados...
-  </div>
-
-  <!-- TABELA -->
-  <div class="table-container">
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-id center">CÓDIGO</th>
-            <th class="col-name">👤 Cliente</th>
-            <th class="col-description">📝 Descrição</th>
-            <th class="col-price center">💰 Preço</th>
-            <th class="col-date center">📅 Entrega</th>
-            <th class="col-status center">📌 Status</th>
-            <th class="col-date center" *ngIf="activeFilter() === 'COMPLETED'">✅ Entregue em</th>
-            <th class="col-actions center">⚙️ Ações</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngIf="!loading() && dataSource().length === 0">
-            <td colspan="8" class="empty-state">
-              <mat-icon>search_off</mat-icon>
-              <p>Nenhum bordado encontrado</p>
-            </td>
-          </tr>
-
-          <tr *ngFor="let e of dataSource()"
-              [class.late-row]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
-
-            <td class="col-id center" data-label="Código">#{{ e.id }}</td>
-            <td class="col-name" data-label="Cliente"><strong>{{ e.customerName }}</strong></td>
-            <td class="col-description" data-label="Descrição">{{ e.description }}</td>
-            <td class="col-price center" data-label="Preço">{{ e.price | brlCurrency }}</td>
-
-            <td class="col-date center" data-label="Entrega">
-              <span class="delivery-badge"
-                    [class.late]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
-                {{ e.deliveryDate ? (e.deliveryDate | date:'dd/MM/yyyy') : '—' }}
-              </span>
-            </td>
-
-            <td class="col-status center" data-label="Status">
-              <span class="status-badge" [ngClass]="getStatusClass(e.status)">
-                <mat-icon>{{ getStatusIcon(e.status) }}</mat-icon>
-                {{ getStatusLabel(e.status) }}
-              </span>
-            </td>
-
-            <td class="col-date center" data-label="Entregue em"
-                *ngIf="activeFilter() === 'COMPLETED'">
-              <span class="delivery-badge delivered" *ngIf="e.deliveredAt; else semData">
-                {{ e.deliveredAt | date:'dd/MM/yyyy' }}
-              </span>
-              <ng-template #semData>—</ng-template>
-            </td>
-
-            <td class="col-actions center">
-              <div class="action-buttons">
-
-                <!-- ETAPA 1 → 2: Pendente → Pronto -->
-                <button mat-icon-button
-                        *ngIf="e.status === 'PENDING'"
-                        (click)="markAsReady(e)"
-                        matTooltip="Marcar como Pronto para entrega"
-                        class="btn-ready">
-                  <mat-icon>done_all</mat-icon>
-                </button>
-
-                <!-- ETAPA 2 → 3: Pronto → Entregue -->
-                <button mat-icon-button
-                        *ngIf="e.status === 'PROCESSING'"
-                        (click)="markAsDelivered(e)"
-                        matTooltip="Confirmar entrega ao cliente"
-                        class="btn-deliver">
-                  <mat-icon>local_shipping</mat-icon>
-                </button>
-
-                <button mat-icon-button (click)="openModal(e)" matTooltip="Editar">
-                  <mat-icon>edit</mat-icon>
-                </button>
-
-                <button mat-icon-button (click)="delete(e.id)" matTooltip="Excluir">
-                  <mat-icon color="warn">delete</mat-icon>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- LOADING -->
+    <div *ngIf="loading()" class="search-loading">
+      <mat-icon class="loading-spinner">refresh</mat-icon>
+      Buscando bordados...
     </div>
-  </div>
 
-  <!-- PAGINAÇÃO -->
-  <div class="pagination-container" *ngIf="totalElements() > 0">
-    <div class="pagination-info">
-      Mostrando {{ getStartIndex() }}–{{ getEndIndex() }} de {{ totalElements() }}
+    <!-- TABELA -->
+    <div class="table-container">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-id center">CÓDIGO</th>
+              <th class="col-name">👤 Cliente</th>
+              <th class="col-description">📝 Descrição</th>
+              <th class="col-price center">💰 Preço</th>
+              <th class="col-date center">📅 Entrega</th>
+              <th class="col-status center">📌 Status</th>
+              <th class="col-date center" *ngIf="activeFilter() === 'COMPLETED'">✅ Entregue em</th>
+              <th class="col-actions center">⚙️ Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!loading() && dataSource().length === 0">
+              <td colspan="8" class="empty-state">
+                <mat-icon>search_off</mat-icon>
+                <p>Nenhum bordado encontrado</p>
+              </td>
+            </tr>
+            <tr *ngFor="let e of dataSource()"
+                [class.late-row]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
+              <td class="col-id center" data-label="Código">#{{ e.id }}</td>
+              <td class="col-name" data-label="Cliente"><strong>{{ e.customerName }}</strong></td>
+              <td class="col-description" data-label="Descrição">{{ e.description }}</td>
+              <td class="col-price center" data-label="Preço">{{ e.price | brlCurrency }}</td>
+              <td class="col-date center" data-label="Entrega">
+                <span class="delivery-badge"
+                      [class.late]="isOverdue(e.deliveryDate) && e.status === 'PENDING'">
+                  {{ e.deliveryDate ? (e.deliveryDate | date:'dd/MM/yyyy') : '—' }}
+                </span>
+              </td>
+              <td class="col-status center" data-label="Status">
+                <span class="status-badge" [ngClass]="getStatusClass(e.status)">
+                  <mat-icon>{{ getStatusIcon(e.status) }}</mat-icon>
+                  {{ getStatusLabel(e.status) }}
+                </span>
+              </td>
+              <td class="col-date center" data-label="Entregue em"
+                  *ngIf="activeFilter() === 'COMPLETED'">
+                <span class="delivery-badge delivered" *ngIf="e.deliveredAt; else semData">
+                  {{ e.deliveredAt | date:'dd/MM/yyyy' }}
+                </span>
+                <ng-template #semData>—</ng-template>
+              </td>
+              <td class="col-actions center">
+                <div class="action-buttons">
+                  <button mat-icon-button
+                          *ngIf="e.status === 'PENDING'"
+                          (click)="markAsReady(e)"
+                          matTooltip="Marcar como Pronto para entrega"
+                          class="btn-ready">
+                    <mat-icon>done_all</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          *ngIf="e.status === 'PROCESSING'"
+                          (click)="markAsDelivered(e)"
+                          matTooltip="Confirmar entrega ao cliente"
+                          class="btn-deliver">
+                    <mat-icon>local_shipping</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="openModal(e)" matTooltip="Editar">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="delete(e.id)" matTooltip="Excluir">
+                    <mat-icon color="warn">delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="pagination-buttons">
-      <button class="pagination-btn" (click)="changePage(-1)" [disabled]="currentPage() === 0">
-        <mat-icon>chevron_left</mat-icon>
-      </button>
-      <button class="pagination-btn active">{{ currentPage() + 1 }}</button>
-      <button class="pagination-btn" (click)="changePage(1)"
-              [disabled]="(currentPage() + 1) * pageSize() >= totalElements()">
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
-  </div>
 
-  <div class="table-stats">
-    Total: <strong>{{ totalElements() }}</strong> bordados
-  </div>
+    <!-- PAGINAÇÃO -->
+    <div class="pagination-container" *ngIf="totalElements() > 0">
+      <div class="pagination-info">
+        Mostrando {{ getStartIndex() }}–{{ getEndIndex() }} de {{ totalElements() }}
+      </div>
+      <div class="pagination-buttons">
+        <button class="pagination-btn" (click)="changePage(-1)" [disabled]="currentPage() === 0">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <button class="pagination-btn active">{{ currentPage() + 1 }}</button>
+        <button class="pagination-btn" (click)="changePage(1)"
+                [disabled]="(currentPage() + 1) * pageSize() >= totalElements()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="table-stats">
+      Total: <strong>{{ totalElements() }}</strong> bordados
+    </div>
+
+  </ng-container>
+
+  <!-- MODO KANBAN -->
+  <app-embroidery-kanban
+    *ngIf="viewMode() === 'kanban'"
+    [items]="allItems()"
+    [loading]="loading()"
+    (markInProduction)="markAsInProduction($event)"
+    (markReady)="markAsReady($event)"
+    (markDelivered)="markAsDelivered($event)"
+    (edit)="openModal($event)"
+    (remove)="delete($event)">
+  </app-embroidery-kanban>
+
 </div>

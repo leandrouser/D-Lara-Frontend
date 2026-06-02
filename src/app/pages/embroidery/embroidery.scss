@@ -43,7 +43,7 @@ $bp-lg: 1024px;
 
 .cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
 
@@ -74,6 +74,7 @@ $bp-lg: 1024px;
     .icon { font-size: 2.2rem; width: 2.2rem; height: 2.2rem; opacity: 0.25; }
 
     &.blue   { background: linear-gradient(135deg, #e0f2fe, #bae6fd); color: #0369a1; }
+    &.emerald { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
     &.green  { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; }
     &.orange { background: linear-gradient(135deg, #ffcaca, #fa5252); color: #7f1d1d; }
     &.purple { background: linear-gradient(135deg, #f3e8ff, #dbbefa); color: #7e22ce; }

@@ -43,6 +43,7 @@ export interface SpringPage<T> {
 
 export interface EmbroideryMetrics {
   totalPending: number;
+  totalInProduction: number;
   totalCompleted: number;
   totalProcessing: number;
   totalCanceled: number;
@@ -53,7 +54,7 @@ export interface EmbroideryMetrics {
   lastUpdated: string;
 }
 
-export type EmbroideryStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELED';
+export type EmbroideryStatus = 'PENDING' | 'IN_PRODUCTION' | 'PROCESSING' | 'COMPLETED' | 'CANCELED';
 
 @Injectable({ providedIn: 'root' })
 export class EmbroideryService {

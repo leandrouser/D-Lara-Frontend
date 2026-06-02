@@ -1,7 +1,7 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, forkJoin } from 'rxjs';
 import { EmbroideryResponse, EmbroideryService } from '../../core/service/embroidery.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableModule } from '@angular/material/table';
@@ -13,8 +13,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { EmbroideryModal } from '../../shared/models/embroidery/embroidery-modal';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BrlCurrencyPipe } from '../../shared/pipes/brl-currency.pipe';
+import { EmbroideryKanbanComponent } from "../../shared/models/embroidery-kanban/embroidery-kanban.component";
 
-export type StatusFilter = 'PENDING' | 'PROCESSING' | 'COMPLETED';
+export type StatusFilter = 'PENDING' | 'IN_PRODUCTION' | 'PROCESSING' | 'COMPLETED';
 
 @Component({
   selector: 'app-embroidery',
@@ -22,8 +23,9 @@ export type StatusFilter = 'PENDING' | 'PROCESSING' | 'COMPLETED';
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatTableModule,
     MatPaginatorModule, MatInputModule, MatButtonModule, MatIconModule,
-    MatTooltipModule, BrlCurrencyPipe
-  ],
+    MatTooltipModule, BrlCurrencyPipe,
+    EmbroideryKanbanComponent
+],
   templateUrl: './embroidery.html',
   styleUrls: ['./embroidery.scss']
 })
@@ -46,6 +48,10 @@ export class Embroidery implements OnInit {
   todayCount      = signal(0);
   totalRevenue    = signal(0);
   pendingRevenue  = signal(0);
+  inProductionCount = signal(0);
+
+  viewMode = signal<'table' | 'kanban'>('table');
+  allItems  = signal<EmbroideryResponse[]>([]);
 
   constructor(
     private dialog: MatDialog,
@@ -62,9 +68,44 @@ export class Embroidery implements OnInit {
       distinctUntilChanged()
     ).subscribe(() => {
       this.currentPage.set(0);
-      this.loadData();
+      if (this.viewMode() === 'kanban') {
+        this.loadAllForKanban();
+      } else {
+        this.loadData();
+      }
     });
   }
+
+  loadAllForKanban() {
+    this.loading.set(true);
+    const term = (this.searchControl.value || '').trim();
+
+    forkJoin({
+      pending:      this.embroideryService.search(term, 'PENDING',       0, 200),
+      inProduction: this.embroideryService.search(term, 'IN_PRODUCTION', 0, 200),
+      processing:   this.embroideryService.search(term, 'PROCESSING',    0, 200),
+      completed:    this.embroideryService.search(term, 'COMPLETED',     0, 50),
+    }).subscribe({
+      next: ({ pending, inProduction, processing, completed }) => {
+        this.allItems.set([
+          ...pending.content,
+          ...inProduction.content,
+          ...processing.content,
+          ...completed.content,
+        ]);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.showError('Falha ao carregar o kanban.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+setViewMode(mode: 'table' | 'kanban') {
+  this.viewMode.set(mode);
+  if (mode === 'kanban') this.loadAllForKanban();
+}
 
   loadData() {
     this.loading.set(true);
@@ -89,14 +130,33 @@ export class Embroidery implements OnInit {
     this.embroideryService.getMetrics().subscribe({
       next: (metrics) => {
         this.pendingCount.set(metrics.totalPending);
+        this.inProductionCount.set(metrics.totalInProduction);
         this.processingCount.set(metrics.totalProcessing);
         this.completedCount.set(metrics.totalCompleted);
         this.overdueCount.set(metrics.overdueCount);
         this.todayCount.set(metrics.todayDeliveries);
         this.totalRevenue.set(metrics.totalRevenue);
         this.pendingRevenue.set(metrics.pendingRevenue);
+        this.inProductionCount.set(metrics.totalInProduction ?? 0);
       },
       error: (err) => console.error('Erro ao carregar métricas:', err)
+    });
+  }
+
+  markAsInProduction(embroidery: EmbroideryResponse) {
+    if (!confirm(`Confirmar início da produção do bordado #${embroidery.id}?`)) return;
+
+    this.loading.set(true);
+    this.embroideryService.updateStatus(embroidery.id, 'IN_PRODUCTION').subscribe({
+      next: () => {
+        this.showSuccess(`Bordado #${embroidery.id} em produção!`);
+        this.loadAllForKanban();
+        this.loadGlobalMetrics();
+      },
+      error: () => {
+        this.showError('Erro ao atualizar status.');
+        this.loading.set(false);
+      }
     });
   }
 
@@ -194,6 +254,7 @@ export class Embroidery implements OnInit {
   getStatusLabel(status: string): string {
     const map: Record<string, string> = {
       PENDING:    'Pendente',
+      IN_PRODUCTION: 'Em Produção',
       PROCESSING: 'Pronto',
       COMPLETED:  'Entregue',
       CANCELED:   'Cancelado'
@@ -204,6 +265,7 @@ export class Embroidery implements OnInit {
   getStatusClass(status: string): string {
     const map: Record<string, string> = {
       PENDING:    'status-pending',
+      IN_PRODUCTION: 'status-in-production',
       PROCESSING: 'status-processing',
       COMPLETED:  'status-completed',
       CANCELED:   'status-canceled'
@@ -214,6 +276,7 @@ export class Embroidery implements OnInit {
   getStatusIcon(status: string): string {
     const map: Record<string, string> = {
       PENDING:    'schedule',
+      IN_PRODUCTION: 'manufacturing',
       PROCESSING: 'done',
       COMPLETED:  'check_circle',
       CANCELED:   'cancel'

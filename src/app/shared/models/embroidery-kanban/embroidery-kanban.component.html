@@ -1,0 +1,187 @@
+<div class="kb-root">
+  <div class="kb-cols">
+
+    <!-- PENDENTE -->
+    <div class="kb-col">
+      <div class="kb-col-header pending">
+        <span class="kb-dot dot-pending"></span>
+        <span class="kb-col-label">1. Pendente</span>
+        <span class="kb-col-count">{{ pending.length }}</span>
+      </div>
+      <div class="kb-col-body">
+        <ng-container *ngIf="pending.length > 0; else emptyPending">
+          <div class="kb-card"
+               *ngFor="let e of pending"
+               [class.late]="isOverdue(e.deliveryDate)">
+            <div class="kb-card-top">
+              <div>
+                <div class="kb-card-id">#{{ e.id }}</div>
+                <div class="kb-card-name">{{ e.customerName }}</div>
+              </div>
+              <span class="kb-late-badge" *ngIf="isOverdue(e.deliveryDate)">Atrasado</span>
+            </div>
+            <div class="kb-card-desc">{{ e.description }}</div>
+            <div class="kb-card-footer">
+              <span class="kb-card-price">{{ e.price | brlCurrency }}</span>
+              <span class="kb-card-date" [class.late]="isOverdue(e.deliveryDate)">
+                {{ e.deliveryDate ? (e.deliveryDate | date:'dd/MM/yy') : '—' }}
+              </span>
+              <div class="kb-actions">
+                <button class="kb-btn in-production"
+                        (click)="markInProduction.emit(e)"
+                        matTooltip="Iniciar produção">
+                  <mat-icon>manufacturing</mat-icon>
+                </button>
+                <button class="kb-btn" (click)="edit.emit(e)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button class="kb-btn danger" (click)="remove.emit(e.id)" matTooltip="Excluir">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #emptyPending>
+          <div class="kb-empty">
+            <mat-icon>check_circle_outline</mat-icon>
+            <span>Nenhum bordado pendente</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- EM PRODUÇÃO -->
+    <div class="kb-col">
+      <div class="kb-col-header in-production">
+        <span class="kb-dot dot-in-production"></span>
+        <span class="kb-col-label">2. Em Produção</span>
+        <span class="kb-col-count">{{ inProduction.length }}</span>
+      </div>
+      <div class="kb-col-body">
+        <ng-container *ngIf="inProduction.length > 0; else emptyInProduction">
+          <div class="kb-card"
+               *ngFor="let e of inProduction"
+               [class.late]="isOverdue(e.deliveryDate)">
+            <div class="kb-card-top">
+              <div>
+                <div class="kb-card-id">#{{ e.id }}</div>
+                <div class="kb-card-name">{{ e.customerName }}</div>
+              </div>
+              <span class="kb-late-badge" *ngIf="isOverdue(e.deliveryDate)">Atrasado</span>
+            </div>
+            <div class="kb-card-desc">{{ e.description }}</div>
+            <div class="kb-card-footer">
+              <span class="kb-card-price">{{ e.price | brlCurrency }}</span>
+              <span class="kb-card-date" [class.late]="isOverdue(e.deliveryDate)">
+                {{ e.deliveryDate ? (e.deliveryDate | date:'dd/MM/yy') : '—' }}
+              </span>
+              <div class="kb-actions">
+                <button class="kb-btn ready"
+                        (click)="markReady.emit(e)"
+                        matTooltip="Marcar como pronto">
+                  <mat-icon>done_all</mat-icon>
+                </button>
+                <button class="kb-btn" (click)="edit.emit(e)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button class="kb-btn danger" (click)="remove.emit(e.id)" matTooltip="Excluir">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #emptyInProduction>
+          <div class="kb-empty">
+            <mat-icon>manufacturing</mat-icon>
+            <span>Nenhum em produção</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- PRONTO PARA ENTREGA -->
+    <div class="kb-col">
+      <div class="kb-col-header processing">
+        <span class="kb-dot dot-processing"></span>
+        <span class="kb-col-label">3. Pronto para entrega</span>
+        <span class="kb-col-count">{{ processing.length }}</span>
+      </div>
+      <div class="kb-col-body">
+        <ng-container *ngIf="processing.length > 0; else emptyProcessing">
+          <div class="kb-card" *ngFor="let e of processing">
+            <div class="kb-card-top">
+              <div>
+                <div class="kb-card-id">#{{ e.id }}</div>
+                <div class="kb-card-name">{{ e.customerName }}</div>
+              </div>
+            </div>
+            <div class="kb-card-desc">{{ e.description }}</div>
+            <div class="kb-card-footer">
+              <span class="kb-card-price">{{ e.price | brlCurrency }}</span>
+              <span class="kb-card-date">{{ e.deliveryDate | date:'dd/MM/yy' }}</span>
+              <div class="kb-actions">
+                <button class="kb-btn deliver"
+                        (click)="markDelivered.emit(e)"
+                        matTooltip="Confirmar entrega">
+                  <mat-icon>local_shipping</mat-icon>
+                </button>
+                <button class="kb-btn" (click)="edit.emit(e)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #emptyProcessing>
+          <div class="kb-empty">
+            <mat-icon>inventory_2</mat-icon>
+            <span>Nenhum bordado pronto</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- ENTREGUE -->
+    <div class="kb-col">
+      <div class="kb-col-header completed">
+        <span class="kb-dot dot-completed"></span>
+        <span class="kb-col-label">4. Entregue</span>
+        <span class="kb-col-count">{{ completed.length }}</span>
+      </div>
+      <div class="kb-col-body">
+        <ng-container *ngIf="completed.length > 0; else emptyCompleted">
+          <div class="kb-card completed-card" *ngFor="let e of completed">
+            <div class="kb-card-top">
+              <div>
+                <div class="kb-card-id">#{{ e.id }}</div>
+                <div class="kb-card-name">{{ e.customerName }}</div>
+              </div>
+              <span class="kb-delivered-badge">Entregue</span>
+            </div>
+            <div class="kb-card-desc">{{ e.description }}</div>
+            <div class="kb-card-footer">
+              <span class="kb-card-price">{{ e.price | brlCurrency }}</span>
+              <span class="kb-card-date delivered" *ngIf="e.deliveredAt">
+                {{ e.deliveredAt | date:'dd/MM/yy' }}
+              </span>
+              <div class="kb-actions">
+                <button class="kb-btn danger" (click)="remove.emit(e.id)" matTooltip="Excluir">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #emptyCompleted>
+          <div class="kb-empty">
+            <mat-icon>checklist</mat-icon>
+            <span>Nenhuma entrega ainda</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+  </div>
+</div>
