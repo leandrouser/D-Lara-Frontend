@@ -178,7 +178,7 @@
 
                   @if (p.description) {
                     <p class="p-description">
-                      {{ p.description | slice:0:50 }}{{ (p.description?.length ?? 0) > 50 ? '...' : '' }}
+                      {{ p.description | slice:0:50 }}{{ p.description.length > 50 ? '...' : '' }}
                     </p>
                   }
 
