@@ -13,9 +13,6 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      # Removemos o Node/Install/Build daqui pois você já faz isso direto na VPS.
-      # Isso vai deixar o seu deploy muito mais rápido!
-
       - name: Deploy no VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -26,16 +23,24 @@ jobs:
           script: |
             git config --global --add safe.directory /var/www/pdv
             cd /var/www/pdv
-            
+
             # 1. Força o servidor a esquecer qualquer alteração local que trave o pull
             git reset --hard HEAD
-            
+
             # 2. Puxa o código novo
             git pull origin main
-            
-            # 3. Instala e builda direto na máquina local
+
+            # 3. Recria o environment de produção (não vai para o git por estar no .gitignore)
+            cat > src/environments/environment.prod.ts << 'EOF'
+            export const environment = {
+              production: true,
+              apiUrl: '/api'
+            };
+            EOF
+
+            # 4. Instala e builda
             npm install
             npx ng build --configuration=production
-            
-            # 4. Atualiza o servidor web
+
+            # 5. Atualiza o servidor web
             sudo systemctl reload nginx
