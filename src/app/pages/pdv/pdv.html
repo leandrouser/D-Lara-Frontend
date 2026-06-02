@@ -5,11 +5,11 @@
       <p class="subtitle">{{ pageSubtitle() }}</p>
     </div>
     <div class="header-actions">
-  <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
-    <mat-icon>{{ isCashRegisterOpen() ? 'lock' : 'lock_open' }}</mat-icon>
-    <span>{{ isCashRegisterOpen() ? 'FECHAR CAIXA' : 'ABRIR CAIXA' }}</span>
-  </button>
-</div>
+      <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
+        <mat-icon>{{ isCashRegisterOpen() ? 'lock' : 'lock_open' }}</mat-icon>
+        <span>{{ isCashRegisterOpen() ? 'FECHAR CAIXA' : 'ABRIR CAIXA' }}</span>
+      </button>
+    </div>
   </div>
 
   <div class="main-layout">
@@ -102,68 +102,123 @@
         </div>
 
         <div class="products-grid-scroll">
-          @for (p of filteredProducts(); track p.id) {
-            <div class="product-card" [class.is-embroidery]="p.categoryEnum === CategoryEnum.BORDADO">
-              <div class="card-content">
-                <div class="card-header-top">
-                  <div class="header-left">
-                    <div class="p-category-row">
-                      <span class="p-id-badge">#{{ p.id }}</span>
-                      <span class="p-category">{{ p.categoryEnum }}</span>
+          @if (filteredProducts().length > 0) {
+            @for (p of filteredProducts(); track p.id) {
+              <div class="product-card" [class.is-embroidery]="p.categoryEnum === CategoryEnum.BORDADO">
+                <div class="card-content">
+                  <div class="card-header-top">
+                    <div class="header-left">
+                      <div class="p-category-row">
+                        <span class="p-id-badge">#{{ p.id }}</span>
+                        <span class="p-category">{{ p.categoryEnum }}</span>
+                      </div>
+                      @if (p.categoryEnum !== CategoryEnum.BORDADO) {
+                        <span class="p-stock" [class.danger]="p.stockQty <= 5">{{ p.stockQty }} em estoque</span>
+                      }
                     </div>
-                    @if (p.categoryEnum !== CategoryEnum.BORDADO) {
-                      <span class="p-stock" [class.danger]="p.stockQty <= 5">{{ p.stockQty }} em estoque</span>
-                    }
+                    <span class="p-price">{{ p.price | brlCurrency }}</span>
                   </div>
-                  <span class="p-price">{{ p.price | brlCurrency }}</span>
-                </div>
-                <h3 class="p-name">{{ p.name }}</h3>
+                  <h3 class="p-name">{{ p.name }}</h3>
 
                   @if (p.categoryEnum !== CategoryEnum.BORDADO && p.description) {
                     <p class="p-description">{{ p.description | slice:0:50 }}{{ p.description?.length > 50 ? '...' : '' }}</p>
                   }
-                @if (p.categoryEnum === CategoryEnum.BORDADO) {
-                  <p class="p-description-hint" style="font-size:11px;color:#666;margin-bottom:4px">
-                    {{ p.description | slice:0:35 }}{{ p.description?.length > 35 ? '...' : '' }}
-                  </p>
-                  @if (p.deliveryDate) {
-                    <div class="delivery-date-info"
-                         [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
-                         style="font-size:12px;font-weight:bold;display:flex;align-items:center;gap:4px">
-                      <mat-icon style="font-size:16px;width:16px;height:16px">event</mat-icon>
-                      <span>Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}</span>
-                    </div>
+                  @if (p.categoryEnum === CategoryEnum.BORDADO) {
+                    <p class="p-description-hint" style="font-size:11px;color:#666;margin-bottom:4px">
+                      {{ p.description | slice:0:35 }}{{ (p.description?.length ?? 0) > 35 ? '...' : '' }}
+                    </p>
+                    @if (p.deliveryDate) {
+                      <div class="delivery-date-info"
+                           [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
+                           style="font-size:12px;font-weight:bold;display:flex;align-items:center;gap:4px">
+                        <mat-icon style="font-size:16px;width:16px;height:16px">event</mat-icon>
+                        <span>Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}</span>
+                      </div>
+                    }
                   }
-                }
 
-                <div class="p-footer">
-                  @if (p.barcode) {
-                    <div class="p-barcode" title="Identificador">
-                      <mat-icon>view_week</mat-icon><span>{{ p.barcode }}</span>
-                    </div>
-                  } @else if (p.categoryEnum === CategoryEnum.BORDADO) {
-                    <div class="p-barcode">
-                      <mat-icon>architecture</mat-icon><span>OS #{{ p.id }}</span>
-                    </div>
-                  }
-                  <button class="btn-add-cart"
-                          [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
-                          (click)="addToCart(p)">
-                    <span>{{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}</span>
-                    <mat-icon>{{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}</mat-icon>
-                  </button>
+                  <div class="p-footer">
+                    @if (p.barcode) {
+                      <div class="p-barcode" title="Identificador">
+                        <mat-icon>view_week</mat-icon><span>{{ p.barcode }}</span>
+                      </div>
+                    } @else if (p.categoryEnum === CategoryEnum.BORDADO) {
+                      <div class="p-barcode">
+                        <mat-icon>architecture</mat-icon><span>OS #{{ p.id }}</span>
+                      </div>
+                    }
+                    <button class="btn-add-cart"
+                            [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
+                            (click)="addToCart(p)">
+                      <span>{{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}</span>
+                      <mat-icon>{{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}</mat-icon>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          } @empty {
-            <div class="empty-grid-state">
-              <mat-icon>inventory_2</mat-icon>
-              <p>Nenhum produto ou bordado encontrado.</p>
-            </div>
+            }
+          } @else {
+            @for (p of topSellingProducts(); track p.productId) {
+              <div class="product-card" [class.out-of-stock]="p.stockQty <= 0">
+                <div class="card-content">
+                  <div class="card-header-top">
+                    <div class="header-left">
+                      <div class="p-category-row">
+                        <span class="p-id-badge">#{{ p.productId }}</span>
+                        <span class="p-category">{{ p.categoryEnum }}</span>
+                      </div>
+                      <span class="p-stock" [class.danger]="p.stockQty <= 5">
+                        {{ p.stockQty }} em estoque
+                      </span>
+                    </div>
+                    <span class="p-price">{{ p.price | brlCurrency }}</span>
+                  </div>
+
+                  <h3 class="p-name">{{ p.name }}</h3>
+
+                  @if (p.description) {
+                    <p class="p-description">
+                      {{ p.description | slice:0:50 }}{{ (p.description?.length ?? 0) > 50 ? '...' : '' }}
+                    </p>
+                  }
+
+                  <div class="p-footer">
+                    @if (p.barcode) {
+                      <div class="p-barcode" title="Identificador">
+                        <mat-icon>view_week</mat-icon>
+                        <span>{{ p.barcode }}</span>
+                      </div>
+                    }
+                    <div class="ts-sold-badge">
+                      <mat-icon>bolt</mat-icon>
+                      <span>{{ p.totalSold }}x vendidos</span>
+                    </div>
+                    <button class="btn-add-cart"
+                            [disabled]="p.stockQty <= 0"
+                            (click)="addToCart({
+                              id: p.productId,
+                              name: p.name,
+                              price: p.price,
+                              barcode: p.barcode ?? '',
+                              stockQty: p.stockQty,
+                              categoryEnum: p.categoryEnum
+                            })">
+                      <span>{{ p.stockQty <= 0 ? 'SEM ESTOQUE' : 'ADICIONAR' }}</span>
+                      <mat-icon>add_shopping_cart</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-grid-state">
+                <mat-icon>inventory_2</mat-icon>
+                <p>Nenhum produto encontrado.</p>
+              </div>
+            }
           }
         </div>
 
-        @if (totalPages() > 1) {
+        @if (totalPages() > 1 && filteredProducts().length > 0) {
           <div class="pdv-pagination">
             <span class="page-counter">
               {{ currentPage() * pageSize() + 1 }}–{{ pageRangeEnd() }} de {{ totalElements() }}
@@ -322,43 +377,45 @@
                   </div>
                 }
               </div>
-          
 
-          <div class="divider-dashed">
-            <div class="total-line">
-              <div class="total-row">
-                <span>Total a Pagar:</span>
-                <strong>{{ totalWithDiscount() | brlCurrency }}</strong>
+              <div class="divider-dashed">
+                <div class="total-line">
+                  <div class="total-row">
+                    <span>Total a Pagar:</span>
+                    <strong>{{ totalWithDiscount() | brlCurrency }}</strong>
+                  </div>
+                </div>
+
+                <button class="btn-checkout"
+                        [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
+                        (click)="preparePayment()">
+                  <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
+                  <span>{{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}</span>
+                  @if (isLoading()) { <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner> }
+                </button>
+
+                @if (!isCashRegisterOpen() && cart().length > 0) {
+                  <p style="color:#ef4444;font-size:11px;text-align:center;margin-top:8px;font-weight:700;text-transform:uppercase">
+                    Abra o caixa para concluir a venda
+                  </p>
+                }
+
+                <app-cash-modal
+                  [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
+                  [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
+                  [session]="cashService.activeSession()"
+                  [paymentMethods]="paymentMethods()"
+                  (close)="onCashModalClose()"
+                  (confirm)="onCashModalConfirm($event)">
+                </app-cash-modal>
               </div>
             </div>
-
-            <button class="btn-checkout"
-                    [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
-                    (click)="preparePayment()">
-              <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
-              <span>{{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}</span>
-              @if (isLoading()) { <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner> }
-            </button>
-
-            @if (!isCashRegisterOpen() && cart().length > 0) {
-              <p style="color:#ef4444;font-size:11px;text-align:center;margin-top:8px;font-weight:700;text-transform:uppercase">
-                Abra o caixa para concluir a venda
-              </p>
-            }
-
-            <app-cash-modal
-              [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
-              [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
-              [session]="cashService.activeSession()"
-              [paymentMethods]="paymentMethods()"
-              (close)="onCashModalClose()"
-              (confirm)="onCashModalConfirm($event)">
-            </app-cash-modal>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
 @if (isBordadoModalOpen()) {
   <div class="modal-overlay" (click)="closeBordadoModal()">

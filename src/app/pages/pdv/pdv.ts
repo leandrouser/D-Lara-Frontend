@@ -7,7 +7,7 @@
   import { CartItem, PdvService } from '../../core/service/pdv.service';
   import { CustomerService, CustomerResponse, CustomerRequest } from '../../core/service/customer.service';
   import { ProductService, CategoryEnum } from '../../core/service/product.service';
-  import { SaleService, SaleResponse, SaleRequest, SaleStatus, DiscountType } from '../../core/service/sale.service';
+  import { SaleService, SaleResponse, SaleRequest, SaleStatus, DiscountType, TopSellingProductResponse } from '../../core/service/sale.service';
   import { CustomerModal } from "../../shared/models/customer/customer-modal";
   import { CashModalComponent } from "../../shared/models/cash/cash-modal.component";
   import { EmbroideryService } from '../../core/service/embroidery.service';
@@ -50,6 +50,8 @@
     private paymentService = inject(PaymentService);
     private destroy$ = new Subject<void>();
     private customerSearchSubject = new Subject<string>();
+    topSellingProducts = signal<TopSellingProductResponse[]>([]);
+    private topSellingLoaded = false;
 
     @ViewChild(CashModalComponent) cashModal!: CashModalComponent;
 
@@ -132,6 +134,7 @@
       this.setupProductSearch();
       this.loadPaymentMethods();
       this.productSearchSubject.next('');
+      this.loadTopSellingProducts();
 
       setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
     }
@@ -351,7 +354,7 @@
 
    onSearchSale(query: string) {
   const term = query.trim();
-  if (term.length < 1) { 
+  if (term.length < 2) { 
     this.saleSuggestions.set([]); 
     this.showSaleSuggestions.set(false); 
     return; 
@@ -559,90 +562,99 @@
     }
 
     private setupProductSearch() {
-    this.productSearchSubject.pipe(
-      switchMap(term => {
-        this.isLoading.set(true);
-
-        const qtyMatch = term.match(/^(\d+)[xX](.+)$/);
-        const searchTerm = qtyMatch ? qtyMatch[2].trim() : term;
-        const forcedQty  = qtyMatch ? parseInt(qtyMatch[1], 10) : null;
-
-        if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
-          return this.embroideryService.search(searchTerm, 'PENDING', this.currentPage(), this.pageSize(), 'FALTA_PAGAMENTO').pipe(
-            map(res => ({
-              content: res.content.map((emb: any) => ({
-                ...emb, name: emb.customerName, description: emb.description,
-                deliveryDate: emb.deliveryDate, categoryEnum: CategoryEnum.BORDADO,
-                price: emb.price, stockQty: 0
-              })),
-              totalElements: res.totalElements, totalPages: res.totalPages,
-              serverPaged: true, exactBarcode: false, exactProduct: null, forcedQty: null
-            }))
-          );
-        } else {
-          return this.productService.findAll().pipe(
-            map(products => {
-              const termLower = searchTerm.toLowerCase().trim();
-              let filtered = products.filter(p =>
-                p.name.toLowerCase().includes(termLower) ||
-                (p.barcode && p.barcode.includes(searchTerm)) ||
-                p.id?.toString().includes(searchTerm)
-              );
-              const catFilter = this.productCategoryFilter();
-              if (catFilter !== 'all') filtered = filtered.filter(p => p.categoryEnum === catFilter);
-
-              const exactMatch = searchTerm.trim().length > 0
-                ? products.find(p => p.barcode && p.barcode === searchTerm.trim())
-                : null;
-
-              return {
-                content: filtered,
-                totalElements: filtered.length,
-                totalPages: Math.max(1, Math.ceil(filtered.length / this.pageSize())),
-                serverPaged: false,
-                exactBarcode: !!exactMatch,
-                exactProduct: exactMatch || null,
-                forcedQty      // ← passa a quantidade forçada
-              };
-            })
-          );
-        }
-      }),
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (response: any) => {
-        if (response.serverPaged) {
-          this.filteredProducts.set(response.content);
-          this.allFilteredProducts.set(response.content);
-          this.totalElements.set(response.totalElements ?? response.content.length);
-          this.totalPages.set(response.totalPages ?? 1);
-        } else {
-          this.applyClientPagination(response.content);
-        }
-
-        if (response.exactBarcode && response.exactProduct) {
-          const p = response.exactProduct;
-          const qty = response.forcedQty ?? 1;
-
-          if (p.stockQty > 0) {
-            for (let i = 0; i < qty; i++) this.addToCart(p);
-
-            this.beepSuccess();
-
-            const input = this.searchInput()?.nativeElement;
-            if (input) { input.value = ''; input.dispatchEvent(new Event('input')); }
-            this.productSearchSubject.next('');
-
-            if (qty > 1) this.snackBar.open(`${qty}x ${p.name} adicionado(s)!`, '', { duration: 1200 });
-          } else {
-            this.showWarning(`Produto "${p.name}" sem estoque.`);
+      this.productSearchSubject.pipe(
+        switchMap(term => {
+          if (!term || term.trim().length === 0) {
+            this.isLoading.set(false);
+            this.filteredProducts.set([]);
+            this.allFilteredProducts.set([]);
+            this.totalElements.set(0);
+            this.totalPages.set(1);
+            this.currentPage.set(0);
+            return of(null);
           }
-        }
 
-        this.isLoading.set(false);
-      },
-      error: () => { this.isLoading.set(false); this.filteredProducts.set([]); }
-    });
+          this.isLoading.set(true);
+
+          const qtyMatch = term.match(/^(\d+)[xX](.+)$/);
+          const searchTerm = qtyMatch ? qtyMatch[2].trim() : term;
+          const forcedQty  = qtyMatch ? parseInt(qtyMatch[1], 10) : null;
+
+          if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
+            return this.embroideryService.search(searchTerm, 'PENDING', this.currentPage(), this.pageSize(), 'FALTA_PAGAMENTO').pipe(
+              map(res => ({
+                content: res.content.map((emb: any) => ({
+                  ...emb, name: emb.customerName, description: emb.description,
+                  deliveryDate: emb.deliveryDate, categoryEnum: CategoryEnum.BORDADO,
+                  price: emb.price, stockQty: 0
+                })),
+                totalElements: res.totalElements, totalPages: res.totalPages,
+                serverPaged: true, exactBarcode: false, exactProduct: null, forcedQty: null
+              }))
+            );
+          } else {
+            return this.productService.findAll().pipe(
+              map(products => {
+                const termLower = searchTerm.toLowerCase().trim();
+                let filtered = products.filter(p =>
+                  p.name.toLowerCase().includes(termLower) ||
+                  (p.barcode && p.barcode.includes(searchTerm)) ||
+                  p.id?.toString().includes(searchTerm)
+                );
+                const catFilter = this.productCategoryFilter();
+                if (catFilter !== 'all') filtered = filtered.filter(p => p.categoryEnum === catFilter);
+
+                const exactMatch = searchTerm.trim().length > 0
+                  ? products.find(p => p.barcode && p.barcode === searchTerm.trim())
+                  : null;
+
+                return {
+                  content: filtered,
+                  totalElements: filtered.length,
+                  totalPages: Math.max(1, Math.ceil(filtered.length / this.pageSize())),
+                  serverPaged: false,
+                  exactBarcode: !!exactMatch,
+                  exactProduct: exactMatch || null,
+                  forcedQty
+                };
+              })
+            );
+          }
+        }),
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (response: any) => {
+          if (!response) return; // ← termo vazio, ignora
+
+          if (response.serverPaged) {
+            this.filteredProducts.set(response.content);
+            this.allFilteredProducts.set(response.content);
+            this.totalElements.set(response.totalElements ?? response.content.length);
+            this.totalPages.set(response.totalPages ?? 1);
+          } else {
+            this.applyClientPagination(response.content);
+          }
+
+          if (response.exactBarcode && response.exactProduct) {
+            const p = response.exactProduct;
+            const qty = response.forcedQty ?? 1;
+
+            if (p.stockQty > 0) {
+              for (let i = 0; i < qty; i++) this.addToCart(p);
+              this.beepSuccess();
+              const input = this.searchInput()?.nativeElement;
+              if (input) { input.value = ''; input.dispatchEvent(new Event('input')); }
+              this.productSearchSubject.next('');
+              if (qty > 1) this.snackBar.open(`${qty}x ${p.name} adicionado(s)!`, '', { duration: 1200 });
+            } else {
+              this.showWarning(`Produto "${p.name}" sem estoque.`);
+            }
+          }
+
+          this.isLoading.set(false);
+        },
+        error: () => { this.isLoading.set(false); this.filteredProducts.set([]); }
+      });
     }
 
     showDetails(emb: any) { this.selectedEmbroideryDetail.set(emb); this.isDetailVisible.set(true); }
@@ -753,5 +765,19 @@
 
     pageRangeEnd(): number {
     return Math.min((this.currentPage() + 1) * this.pageSize(), this.totalElements());
+    }
+
+    private loadTopSellingProducts() {
+      if (this.topSellingLoaded) return;
+      this.saleService.getTopSellingLast3Months().pipe(
+        take(1),
+        takeUntil(this.destroy$)
+      ).subscribe({
+        next: (products) => {
+          this.topSellingProducts.set(products);
+          this.topSellingLoaded = true;
+        },
+        error: () => {}
+      });
     }
   }

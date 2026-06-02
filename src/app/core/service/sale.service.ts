@@ -9,6 +9,17 @@ export enum DiscountType {
   FIXED = 'FIXED'
 }
 
+export interface TopSellingProductResponse {
+  productId: number;
+  name: string;
+  description: string | null;
+  price: number;
+  stockQty: number;
+  barcode: string | null;
+  categoryEnum: CategoryEnum;
+  totalSold: number;
+}
+
 export enum SaleStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
@@ -120,11 +131,18 @@ private apiUrl = `${environment.apiUrl}/sales`;
   }
 
   getSales(page: number = 0, size: number = 10): Observable<Page<SaleResponse>> {
-  return this.searchSales('', page, size);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<Page<SaleResponse>>(this.apiUrl, { params });
   }
 
   cancelSale(saleId: number): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${saleId}/cancel`, {});
+  }
+
+  getTopSellingLast3Months(): Observable<TopSellingProductResponse[]> {
+    return this.http.get<TopSellingProductResponse[]>(`${this.apiUrl}/top-selling`);
   }
 
 }
