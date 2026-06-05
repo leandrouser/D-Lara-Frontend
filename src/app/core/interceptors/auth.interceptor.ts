@@ -9,7 +9,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   let authReq = req;
   if (token) {
-    console.log('🔑 Anexando Token na requisição:', req.url);
     authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
