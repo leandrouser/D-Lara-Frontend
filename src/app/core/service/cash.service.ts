@@ -4,6 +4,8 @@ import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environments';
 
 export type MovementType = 'OPENING' | 'SUPPLEMENT' | 'SANGRIA' | 'SALE' | 'CHANGE';
+export type CashSessionStatus = 'OPEN' | 'CLOSED' | 'REVIEWED';
+export type CashReviewStatus = 'PENDING_REVIEW' | 'UNDER_REVIEW' | 'APPROVED' | 'ADJUSTED';
 
 export interface OpenSessionRequest {
   value: number;
@@ -18,6 +20,13 @@ export interface CashTransactionRequestDTO {
   value: number;
   type: 'SUPPLEMENT' | 'SANGRIA';
   description?: string;
+}
+
+export interface CashMovementUpdateRequest {
+  value: number;
+  type: MovementType;
+  description?: string;
+  paymentMethodId?: number | null;
 }
 
 export interface CashMovementResponse {
@@ -68,6 +77,8 @@ export interface MethodComparisonDTO {
   difference: number;
   initialValue: number;
   salesOnly: number;
+  verifiedAmount: number | null;
+  verifiedDifference: number | null;
 }
 
 export interface CashSessionResponse {
@@ -78,7 +89,10 @@ export interface CashSessionResponse {
   totalIncomes: number;
   totalExpenses: number;
   finalBalance: number;
-  status: 'OPEN' | 'CLOSED';
+  status: CashSessionStatus;
+  reviewStatus?: CashReviewStatus;
+  reviewedAt?: string;
+  reviewedBy?: string;
   userId: number;
   userName: string;
 }
@@ -91,6 +105,37 @@ export interface CashSummaryResponse {
   totalExchangeReturn: number;
   currentBalance: number;
   openingDate: string;
+}
+
+export interface CashSessionReportFilter {
+  status?: CashSessionStatus | 'ALL';
+  reviewStatus?: CashReviewStatus | 'ALL';
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface CashMovementReportFilter {
+  sessionId?: number | null;
+  type?: MovementType | 'ALL';
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface CashReviewConfirmationRequest {
+  observation?: string;
+}
+
+export interface CashReviewResponse {
+  session: CashSessionResponse;
+  summary: CashSummaryResponse;
+  movements: CashMovementResponse[];
+  details: MethodComparisonDTO[];
+}
+
+export interface PaymentMethodTotalsResponse {
+  paymentMethodId: number;
+  methodName: string;
+  expectedAmount: number;
 }
 
 @Injectable({
@@ -107,6 +152,8 @@ export class CashService {
   public isInitializing = this._isInitializing.asReadonly();
 
   public activeSessionId = computed(() => this._activeSession()?.id || null);
+
+  // FIX: usa status da sessão para determinar se está aberto, não apenas se existe
   public isCashOpen = computed(() => this._activeSession()?.status === 'OPEN');
 
   constructor() {
@@ -131,19 +178,13 @@ export class CashService {
     });
   }
 
-  /** Retorna o resumo completo da sessão (breakdown por método de pagamento + totais) */
   getSessionSummary(sessionId: number): Observable<CashSummaryResponse> {
     return this.http.get<CashSummaryResponse>(`${this.apiUrl}/session/${sessionId}/summary`);
   }
 
+  // FIX: endpoint correto para totais por método — usado no modal de fechamento
   getPaymentMethodTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
-    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/summary`).pipe(
-      map(totals => totals.map(t => ({
-        paymentMethodId: t.paymentMethodId,
-        methodName: t.methodName,
-        expectedAmount: t.expectedAmount
-      })))
-    );
+    return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/payment-totals`);
   }
 
   closeSession(sessionId: number, request: CloseSessionRequest): Observable<CloseSessionResponse> {
@@ -181,7 +222,7 @@ export class CashService {
   getOpenCashRegisterStatus(): Observable<CashRegisterStatus> {
     return this.http.get<CashSessionResponse>(`${this.apiUrl}/active`).pipe(
       map(session => ({
-        isOpen: !!session,
+        isOpen: !!session && session.status === 'OPEN',
         cashMovementId: session?.id || null
       })),
       catchError(() => of({ isOpen: false, cashMovementId: null }))
@@ -190,5 +231,69 @@ export class CashService {
 
   getMovementsBySession(sessionId: number): Observable<CashMovementResponse[]> {
     return this.http.get<CashMovementResponse[]>(`${this.apiUrl}/session/${sessionId}/movements`);
+  }
+
+  getSessionsForReview(filter: CashSessionReportFilter = {}): Observable<CashSessionResponse[]> {
+    return this.http.get<CashSessionResponse[]>(`${this.apiUrl}/sessions`, {
+      params: this.cleanParams({
+        status: filter.status ?? 'CLOSED',
+        reviewStatus: filter.reviewStatus ?? 'PENDING_REVIEW',
+        dateFrom: filter.dateFrom,
+        dateTo: filter.dateTo
+      })
+    });
+  }
+
+  getSessionReview(sessionId: number): Observable<CashReviewResponse> {
+    return this.http.get<CashReviewResponse>(`${this.apiUrl}/session/${sessionId}/review`);
+  }
+
+  updateMovement(
+    sessionId: number,
+    movementId: number,
+    request: CashMovementUpdateRequest
+  ): Observable<CashMovementResponse> {
+    return this.http.put<CashMovementResponse>(
+      `${this.apiUrl}/session/${sessionId}/movements/${movementId}`,
+      request
+    );
+  }
+
+  confirmSessionReview(
+    sessionId: number,
+    request: CashReviewConfirmationRequest
+  ): Observable<CashSessionResponse> {
+    return this.http.post<CashSessionResponse>(
+      `${this.apiUrl}/session/${sessionId}/review/confirm`,
+      request
+    );
+  }
+
+  getSessionReport(filter: CashSessionReportFilter = {}): Observable<CashSessionResponse[]> {
+    return this.http.get<CashSessionResponse[]>(`${this.apiUrl}/reports/sessions`, {
+      params: this.cleanParams(filter)
+    });
+  }
+
+  getMovementReport(filter: CashMovementReportFilter = {}): Observable<CashMovementResponse[]> {
+    return this.http.get<CashMovementResponse[]>(`${this.apiUrl}/reports/movements`, {
+      params: this.cleanParams(filter)
+    });
+  }
+
+  private cleanParams(params: object): Record<string, string> {
+    return Object.entries(params as Record<string, unknown>).reduce<Record<string, string>>((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '' && value !== 'ALL') {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {});
+  }
+
+  verifyMethod(sessionId: number, paymentMethodId: number, verifiedAmount: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/session/${sessionId}/verify-method`, {
+      paymentMethodId,
+      verifiedAmount
+    });
   }
 }

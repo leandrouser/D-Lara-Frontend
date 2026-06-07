@@ -10,7 +10,6 @@
       <h1><mat-icon>account_balance_wallet</mat-icon> Gerenciamento de Caixa</h1>
       <p class="subtitle">Controle de aberturas, fechamentos e movimentações financeiras</p>
     </div>
-
     <button class="cash-status-btn" [class.open]="isCashOpen()"
       (click)="!isCashOpen() ? isOpeningModalOpen.set(true) : null">
       <mat-icon>{{ isCashOpen() ? 'lock_open' : 'lock' }}</mat-icon>
@@ -27,7 +26,6 @@
       </div>
       <mat-icon class="card-icon">trending_up</mat-icon>
     </div>
-
     <div class="card red">
       <div class="card-info">
         <span class="card-label">Total Saídas</span>
@@ -36,7 +34,6 @@
       </div>
       <mat-icon class="card-icon">trending_down</mat-icon>
     </div>
-
     <div class="card blue">
       <div class="card-info">
         <span class="card-label">Saldo em Caixa</span>
@@ -47,7 +44,6 @@
       </div>
       <mat-icon class="card-icon">payments</mat-icon>
     </div>
-
     <div class="card purple">
       <div class="card-info">
         <span class="card-label">Abertura</span>
@@ -66,20 +62,17 @@
         <mat-icon>add_circle_outline</mat-icon>
         <span>Suprimento</span>
       </button>
-
       <button class="btn-action withdrawal"
         (click)="movementType.set('SANGRIA'); showMovementForm.set(true)"
         [disabled]="isLoading()">
         <mat-icon>remove_circle_outline</mat-icon>
         <span>Sangria</span>
       </button>
-
       <button class="btn-action export" (click)="exportCsv()" [disabled]="isLoading() || !transactions().length">
         <mat-icon>download</mat-icon>
         <span>Exportar CSV</span>
       </button>
     </div>
-
     <button class="btn-danger" (click)="isClosingModalOpen.set(true)" [disabled]="isLoading()">
       <mat-icon>lock</mat-icon>
       <span>Fechar Caixa</span>
@@ -89,23 +82,15 @@
   <div class="movement-form" *ngIf="showMovementForm()">
     <h3>Nova Movimentação: {{ movementType() === 'SUPPLEMENT' ? 'Suprimento' : 'Sangria' }}</h3>
     <div class="form-fields">
-      <input
-        type="number"
+      <input type="number"
         [ngModel]="movementValue()"
         (ngModelChange)="movementValue.set($event)"
-        placeholder="Valor (R$)"
-        min="0"
-        step="0.01"
-        [disabled]="isLoading()">
-
-      <input
-        type="text"
+        placeholder="Valor (R$)" min="0" step="0.01" [disabled]="isLoading()">
+      <input type="text"
         [ngModel]="movementObservation()"
         (ngModelChange)="movementObservation.set($event)"
-        placeholder="Observação (opcional)"
-        [disabled]="isLoading()">
+        placeholder="Observação (opcional)" [disabled]="isLoading()">
     </div>
-
     <div class="form-actions">
       <button (click)="showMovementForm.set(false)">Cancelar</button>
       <button class="btn-confirm" (click)="addMovement()" [disabled]="movementValue() <= 0 || isLoading()">
@@ -116,20 +101,32 @@
     </div>
   </div>
 
-  <div class="table-section" *ngIf="isCashOpen()">
+  <div class="table-section" *ngIf="isCashOpen() || isAdmin()">
     <div class="section-header">
       <div class="tabs">
-        <button class="tab-btn" [class.active]="activeTab() === 'movements'" (click)="activeTab.set('movements')">
+        <button class="tab-btn" *ngIf="isCashOpen() || isAdmin()"
+          [class.active]="activeTab() === 'movements'" (click)="activeTab.set('movements')">
           <mat-icon>list_alt</mat-icon> Movimentações
         </button>
-        <button class="tab-btn" [class.active]="activeTab() === 'summary'" (click)="activeTab.set('summary')">
+        <button class="tab-btn" *ngIf="isCashOpen() || isAdmin()"
+          [class.active]="activeTab() === 'summary'" (click)="activeTab.set('summary')">
           <mat-icon>summarize</mat-icon> Resumo
         </button>
-        <button class="tab-btn" [class.active]="activeTab() === 'chart'" (click)="activeTab.set('chart')">
+        <button class="tab-btn" *ngIf="isCashOpen() || isAdmin()"
+          [class.active]="activeTab() === 'chart'" (click)="activeTab.set('chart')">
           <mat-icon>pie_chart</mat-icon> Gráfico
         </button>
+        <button class="tab-btn" *ngIf="isAdmin()"
+          [class.active]="activeTab() === 'review'" (click)="activeTab.set('review')">
+          <mat-icon>fact_check</mat-icon> Conferencia
+        </button>
+        <button class="tab-btn" *ngIf="isAdmin()"
+          [class.active]="activeTab() === 'reports'" (click)="activeTab.set('reports')">
+          <mat-icon>assessment</mat-icon> Relatorios
+        </button>
       </div>
-      <span class="session-badge">Sessão #{{ cashService.activeSessionId() }}</span>
+      <span class="session-badge" *ngIf="isCashOpen()">Sessão #{{ cashService.activeSessionId() }}</span>
+      <span class="session-badge" *ngIf="!isCashOpen() && isAdmin()">Admin</span>
     </div>
 
     <div class="tab-content" *ngIf="activeTab() === 'movements'">
@@ -152,11 +149,11 @@
                 <td>
                   <span [class]="'type-badge ' + item.type.toLowerCase()">
                     <mat-icon>
-                      {{ item.type === 'SALE'    ? 'shopping_cart'  :
-                         item.type === 'SUPPLEMENT'  ? 'add_circle'     :
-                         item.type === 'SANGRIA' ? 'remove_circle'  :
-                         item.type === 'CHANGE'  ? 'sync_alt'       :
-                         item.type === 'OPENING' ? 'vpn_key'        : 'payments' }}
+                      {{ item.type === 'SALE'       ? 'shopping_cart' :
+                         item.type === 'SUPPLEMENT' ? 'add_circle'    :
+                         item.type === 'SANGRIA'    ? 'remove_circle' :
+                         item.type === 'CHANGE'     ? 'sync_alt'      :
+                         item.type === 'OPENING'    ? 'vpn_key'       : 'payments' }}
                     </mat-icon>
                     {{ getTypeLabel(item.type) }}
                   </span>
@@ -181,59 +178,59 @@
       </div>
     </div>
 
+    <!-- ═══════════════════ ABA: RESUMO ═══════════════════ -->
     <div class="tab-content summary-tab" *ngIf="activeTab() === 'summary'">
-  @if (isSummaryLoading()) {
-    <div class="summary-loading">
-      <mat-spinner diameter="36"></mat-spinner>
+      @if (isSummaryLoading()) {
+        <div class="summary-loading"><mat-spinner diameter="36"></mat-spinner></div>
+      } @else if (sessionSummary(); as summary) {
+        <div class="summary-totals">
+          <div class="summary-card income">
+            <mat-icon>shopping_cart</mat-icon>
+            <div>
+              <span class="summary-label">Vendas</span>
+              <strong>{{ formatCurrency(summary.totalSales) }}</strong>
+            </div>
+          </div>
+          <div class="summary-card supplement">
+            <mat-icon>add_circle</mat-icon>
+            <div>
+              <span class="summary-label">Suprimentos</span>
+              <strong>{{ formatCurrency(summary.totalSupplement) }}</strong>
+            </div>
+          </div>
+          <div class="summary-card expense">
+            <mat-icon>remove_circle</mat-icon>
+            <div>
+              <span class="summary-label">Sangrias</span>
+              <strong>{{ formatCurrency(summary.totalSangria) }}</strong>
+            </div>
+          </div>
+          <div class="summary-card change">
+            <mat-icon>sync_alt</mat-icon>
+            <div>
+              <span class="summary-label">Troco</span>
+              <strong>{{ formatCurrency(summary.totalChange) }}</strong>
+            </div>
+          </div>
+          <div class="summary-card balance">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <div>
+              <span class="summary-label">Saldo atual</span>
+              <strong [style.color]="summary.currentBalance >= 0 ? '#15803d' : '#dc2626'">
+                {{ formatCurrency(summary.currentBalance) }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <mat-icon>info</mat-icon>
+          <span>Resumo indisponível.</span>
+        </div>
+      }
     </div>
-  } @else if (sessionSummary(); as summary) {
-    <div class="summary-totals">
-      <div class="summary-card income">
-        <mat-icon>shopping_cart</mat-icon>
-        <div>
-          <span class="summary-label">Vendas</span>
-          <strong>{{ formatCurrency(summary.totalSales) }}</strong>
-        </div>
-      </div>
-      <div class="summary-card supplement">
-        <mat-icon>add_circle</mat-icon>
-        <div>
-          <span class="summary-label">Suprimentos</span>
-          <strong>{{ formatCurrency(summary.totalSupplement) }}</strong>
-        </div>
-      </div>
-      <div class="summary-card expense">
-        <mat-icon>remove_circle</mat-icon>
-        <div>
-          <span class="summary-label">Sangrias</span>
-          <strong>{{ formatCurrency(summary.totalSangria) }}</strong>
-        </div>
-      </div>
-      <div class="summary-card change">
-        <mat-icon>sync_alt</mat-icon>
-        <div>
-          <span class="summary-label">Troco</span>
-          <strong>{{ formatCurrency(summary.totalChange) }}</strong>
-        </div>
-      </div>
-      <div class="summary-card balance">
-        <mat-icon>account_balance_wallet</mat-icon>
-        <div>
-          <span class="summary-label">Saldo atual</span>
-          <strong [style.color]="summary.currentBalance >= 0 ? '#15803d' : '#dc2626'">
-            {{ formatCurrency(summary.currentBalance) }}
-          </strong>
-        </div>
-      </div>
-    </div>
-  } @else {
-    <div class="empty-state">
-      <mat-icon>info</mat-icon>
-      <span>Resumo indisponível.</span>
-    </div>
-  }
-</div>
 
+    <!-- ═══════════════════ ABA: GRÁFICO ═══════════════════ -->
     <div class="tab-content chart-tab" *ngIf="activeTab() === 'chart'">
       @if (!transactions().length) {
         <div class="empty-state">
@@ -246,6 +243,430 @@
         </div>
       }
     </div>
+
+    <!-- ═══════════════════ ABA: CONFERÊNCIA ═══════════════════ -->
+    <div class="tab-content review-tab" *ngIf="activeTab() === 'review' && isAdmin()">
+
+      <!-- PENDENTES DE CONFERÊNCIA -->
+      <div class="review-layout">
+        <aside class="review-sessions">
+          <div class="panel-header">
+            <h3>Caixas pendentes</h3>
+            <button class="icon-btn" (click)="loadReviewSessions()" [disabled]="isReviewLoading()">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+          @for (session of reviewSessions(); track session.id) {
+            <button class="session-row"
+              [class.active]="selectedReviewSession()?.id === session.id"
+              (click)="selectReviewSession(session)">
+              <span>Sessão #{{ session.id }}</span>
+              <strong>{{ session.finalBalance | currency:'BRL' }}</strong>
+              <small>{{ formatDateTime(session.closedAt) || formatDateTime(session.openedAt) }}</small>
+              <em>{{ getReviewStatusLabel(session) }}</em>
+            </button>
+          } @empty {
+            <div class="empty-list">
+              <mat-icon>task_alt</mat-icon>
+              <span>Nenhum caixa pendente.</span>
+            </div>
+          }
+        </aside>
+
+        <section class="review-detail">
+          @if (selectedReviewSession(); as selected) {
+            <div class="review-heading">
+              <div>
+                <h3>Conferência da sessão #{{ selected.id }}</h3>
+                <p>{{ selected.userName }} - {{ formatDateTime(selected.openedAt) }} / {{ formatDateTime(selected.closedAt) }}</p>
+              </div>
+              <button class="btn-confirm-review" (click)="confirmReview()" [disabled]="isReviewLoading()">
+                <mat-icon>verified</mat-icon>
+                Fechamento definitivo
+              </button>
+            </div>
+
+            @if (reviewSummary(); as summary) {
+              <div class="review-summary">
+                <div><span>Vendas</span><strong>{{ summary.totalSales | currency:'BRL' }}</strong></div>
+                <div><span>Suprimentos</span><strong>{{ summary.totalSupplement | currency:'BRL' }}</strong></div>
+                <div><span>Sangrias</span><strong>{{ summary.totalSangria | currency:'BRL' }}</strong></div>
+                <div><span>Saldo</span><strong>{{ summary.currentBalance | currency:'BRL' }}</strong></div>
+              </div>
+            }
+
+            <div class="method-review-section">
+              <h4><mat-icon>compare_arrows</mat-icon> Conferência por Método de Pagamento</h4>
+              <div class="table-container">
+                <table class="cash-table">
+                  <thead>
+                    <tr>
+                      <th>Método</th>
+                      <th style="text-align:right">Sistema</th>
+                      <th style="text-align:right">Informado (fechamento)</th>
+                      <th style="text-align:right">Dif. Fechamento</th>
+                      <th style="text-align:right">Conferido</th>
+                      <th style="text-align:right">Dif. Conferência</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (detail of reviewDetails(); track detail.paymentMethodId) {
+                      <tr>
+                        <td>{{ detail.methodName }}</td>
+                        <td style="text-align:right">{{ detail.expectedAmount | currency:'BRL' }}</td>
+                        <td style="text-align:right">{{ detail.reportedAmount | currency:'BRL' }}</td>
+                        <td style="text-align:right"
+                            [class.positive]="detail.difference > 0"
+                            [class.negative]="detail.difference < 0">
+                          {{ detail.difference | currency:'BRL' }}
+                        </td>
+                        <td style="text-align:right">
+                          <div class="input-wrapper compact">
+                            <span class="currency">R$</span>
+                            <input type="number" min="0" step="0.01"
+                              [value]="verifiedAmounts()[detail.paymentMethodId] ?? ''"
+                              (input)="updateVerifiedAmount(detail.paymentMethodId, +$any($event.target).value)"
+                              placeholder="0,00">
+                          </div>
+                        </td>
+                        <td style="text-align:right">
+                          @if (verifiedAmounts()[detail.paymentMethodId] != null) {
+                            <span
+                              [class.positive]="(verifiedAmounts()[detail.paymentMethodId] - detail.expectedAmount) > 0"
+                              [class.negative]="(verifiedAmounts()[detail.paymentMethodId] - detail.expectedAmount) < 0">
+                              {{ (verifiedAmounts()[detail.paymentMethodId] - detail.expectedAmount) | currency:'BRL' }}
+                            </span>
+                          } @else if (detail.verifiedDifference != null) {
+                            <span [class.positive]="detail.verifiedDifference > 0"
+                                  [class.negative]="detail.verifiedDifference < 0">
+                              {{ detail.verifiedDifference | currency:'BRL' }}
+                            </span>
+                          } @else {
+                            <span style="color:#64748b">—</span>
+                          }
+                        </td>
+                        <td>
+                          <button class="icon-btn success"
+                            (click)="saveVerification(detail.paymentMethodId)"
+                            [disabled]="verifiedAmounts()[detail.paymentMethodId] == null">
+                            <mat-icon>save</mat-icon>
+                          </button>
+                        </td>
+                      </tr>
+                    } @empty {
+                      <tr><td colspan="7" class="empty-state">Nenhum método encontrado.</td></tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="table-container" style="margin-top:1.5rem">
+              <h4><mat-icon>list_alt</mat-icon> Lançamentos da sessão</h4>
+              <table class="cash-table editable-table">
+                <thead>
+                  <tr>
+                    <th>Data/Hora</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Método</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of reviewMovements(); track item.id) {
+                    <tr>
+                      <td>{{ item.timestamp | date: 'dd/MM/yyyy HH:mm' }}</td>
+                      <td>
+                        @if (editingMovementId() === item.id) {
+                          <select [ngModel]="movementDraft().type" (ngModelChange)="updateMovementDraft('type', $event)">
+                            <option value="OPENING">Abertura</option>
+                            <option value="SALE">Venda</option>
+                            <option value="SUPPLEMENT">Suprimento</option>
+                            <option value="SANGRIA">Sangria</option>
+                            <option value="CHANGE">Troco</option>
+                          </select>
+                        } @else {
+                          {{ getTypeLabel(item.type) }}
+                        }
+                      </td>
+                      <td>
+                        @if (editingMovementId() === item.id) {
+                          <input type="text" [ngModel]="movementDraft().description" (ngModelChange)="updateMovementDraft('description', $event)">
+                        } @else {
+                          {{ item.description || '---' }}
+                        }
+                      </td>
+                      <td>{{ item.methodName || '---' }}</td>
+                      <td>
+                        @if (editingMovementId() === item.id) {
+                          <input type="number" min="0" step="0.01" [ngModel]="movementDraft().value" (ngModelChange)="updateMovementDraft('value', +$event)">
+                        } @else {
+                          {{ item.value | currency:'BRL' }}
+                        }
+                      </td>
+                      <td class="row-actions">
+                        @if (editingMovementId() === item.id) {
+                          <button class="icon-btn success" (click)="saveMovementEdit(item)"><mat-icon>check</mat-icon></button>
+                          <button class="icon-btn" (click)="cancelEditMovement()"><mat-icon>close</mat-icon></button>
+                        } @else {
+                          <button class="icon-btn" (click)="startEditMovement(item)"><mat-icon>edit</mat-icon></button>
+                        }
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="6" class="empty-state">Nenhum lançamento encontrado.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <textarea class="review-note"
+              [ngModel]="reviewObservation()"
+              (ngModelChange)="reviewObservation.set($event)"
+              placeholder="Observação da conferência"></textarea>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>fact_check</mat-icon>
+              <span>Selecione uma sessão para conferir.</span>
+            </div>
+          }
+        </section>
+      </div>
+
+      <!-- CAIXAS JÁ CONFERIDOS -->
+      <div class="reviewed-section" style="margin-top:2rem">
+        <div class="panel-header" (click)="showReviewed.set(!showReviewed())" style="cursor:pointer">
+          <h3><mat-icon>inventory</mat-icon> Caixas já conferidos</h3>
+          <mat-icon>{{ showReviewed() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </div>
+
+        @if (showReviewed()) {
+          <div class="review-layout" style="margin-top:1rem">
+            <aside class="review-sessions">
+              @if (isReviewedLoading()) {
+                <div class="empty-list"><mat-spinner diameter="28"></mat-spinner></div>
+              }
+              @for (session of reviewedSessions(); track session.id) {
+                <button class="session-row"
+                  [class.active]="selectedReviewedSession()?.id === session.id"
+                  (click)="selectReviewedSession(session)">
+                  <span>Sessão #{{ session.id }}</span>
+                  <strong>{{ session.finalBalance | currency:'BRL' }}</strong>
+                  <small>{{ formatDateTime(session.closedAt) }}</small>
+                  <em>{{ session.reviewedBy || 'Conferido' }}</em>
+                </button>
+              } @empty {
+                <div class="empty-list">
+                  <mat-icon>task_alt</mat-icon>
+                  <span>Nenhum caixa conferido.</span>
+                </div>
+              }
+            </aside>
+
+            <section class="review-detail">
+              @if (selectedReviewedSession(); as selected) {
+                <div class="review-heading">
+                  <div>
+                    <h3>Sessão #{{ selected.id }}</h3>
+                    <p>{{ selected.userName }} — {{ formatDateTime(selected.openedAt) }} / {{ formatDateTime(selected.closedAt) }}</p>
+                    <p><small>Conferido por: {{ selected.reviewedBy }} em {{ formatDateTime(selected.reviewedAt) }}</small></p>
+                  </div>
+                </div>
+
+                @if (reviewedSummary(); as summary) {
+                  <div class="review-summary">
+                    <div><span>Vendas</span><strong>{{ summary.totalSales | currency:'BRL' }}</strong></div>
+                    <div><span>Suprimentos</span><strong>{{ summary.totalSupplement | currency:'BRL' }}</strong></div>
+                    <div><span>Sangrias</span><strong>{{ summary.totalSangria | currency:'BRL' }}</strong></div>
+                    <div><span>Saldo</span><strong>{{ summary.currentBalance | currency:'BRL' }}</strong></div>
+                  </div>
+                }
+
+                <div class="method-review-section">
+                  <h4><mat-icon>compare_arrows</mat-icon> Valores por método</h4>
+                  <div class="table-container">
+                    <table class="cash-table">
+                      <thead>
+                        <tr>
+                          <th>Método</th>
+                          <th style="text-align:right">Sistema</th>
+                          <th style="text-align:right">Informado</th>
+                          <th style="text-align:right">Dif. Fechamento</th>
+                          <th style="text-align:right">Conferido</th>
+                          <th style="text-align:right">Dif. Conferência</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (detail of reviewedDetails(); track detail.paymentMethodId) {
+                          <tr>
+                            <td>{{ detail.methodName }}</td>
+                            <td style="text-align:right">{{ detail.expectedAmount | currency:'BRL' }}</td>
+                            <td style="text-align:right">{{ detail.reportedAmount | currency:'BRL' }}</td>
+                            <td style="text-align:right"
+                                [class.positive]="detail.difference > 0"
+                                [class.negative]="detail.difference < 0">
+                              {{ detail.difference | currency:'BRL' }}
+                            </td>
+                            <td style="text-align:right">
+                              {{ detail.verifiedAmount != null ? (detail.verifiedAmount | currency:'BRL') : '—' }}
+                            </td>
+                            <td style="text-align:right"
+                                [class.positive]="(detail.verifiedDifference ?? 0) > 0"
+                                [class.negative]="(detail.verifiedDifference ?? 0) < 0">
+                              {{ detail.verifiedDifference != null ? (detail.verifiedDifference | currency:'BRL') : '—' }}
+                            </td>
+                          </tr>
+                        } @empty {
+                          <tr><td colspan="6" class="empty-state">Sem detalhes.</td></tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="table-container" style="margin-top:1rem">
+                  <h4><mat-icon>list_alt</mat-icon> Lançamentos</h4>
+                  <table class="cash-table">
+                    <thead>
+                      <tr>
+                        <th>Data/Hora</th>
+                        <th>Tipo</th>
+                        <th>Descrição</th>
+                        <th>Método</th>
+                        <th>Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of reviewedMovements(); track item.id) {
+                        <tr>
+                          <td>{{ item.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
+                          <td>{{ getTypeLabel(item.type) }}</td>
+                          <td>{{ item.description || '---' }}</td>
+                          <td>{{ item.methodName || '---' }}</td>
+                          <td [class.positive]="item.value > 0" [class.negative]="item.value < 0">
+                            {{ item.value | currency:'BRL' }}
+                          </td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="empty-state">Nenhum lançamento.</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              } @else {
+                <div class="empty-state">
+                  <mat-icon>fact_check</mat-icon>
+                  <span>Selecione uma sessão para ver os detalhes.</span>
+                </div>
+              }
+            </section>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════════════════ ABA: RELATÓRIOS ═══════════════════ -->
+    <div class="tab-content reports-tab" *ngIf="activeTab() === 'reports' && isAdmin()">
+      <div class="report-toolbar">
+        <input type="date" [ngModel]="reportDateFrom()" (ngModelChange)="reportDateFrom.set($event)">
+        <input type="date" [ngModel]="reportDateTo()" (ngModelChange)="reportDateTo.set($event)">
+        <button class="btn-action export" (click)="loadReports()" [disabled]="isReportLoading()">
+          <mat-icon>search</mat-icon> Filtrar
+        </button>
+        <button class="btn-action export" (click)="exportSessionsReportCsv()" [disabled]="!reportSessions().length">
+          <mat-icon>download</mat-icon> Sessões
+        </button>
+        <button class="btn-action export" (click)="exportMovementsReportCsv()" [disabled]="!reportMovements().length">
+          <mat-icon>download</mat-icon> Lançamentos
+        </button>
+      </div>
+
+      <div class="report-grid">
+        <section>
+          <h3>Sessões</h3>
+          <div class="table-container">
+            <table class="cash-table">
+              <thead>
+                <tr>
+                  <th>Sessão</th>
+                  <th>Operador</th>
+                  <th>Fechamento</th>
+                  <th>Status</th>
+                  <th>Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (session of reportSessions(); track session.id) {
+                  <tr style="cursor:pointer"
+                    [class.active]="selectedReportSession()?.id === session.id"
+                    (click)="selectReportSession(session)">
+                    <td>#{{ session.id }}</td>
+                    <td>{{ session.userName }}</td>
+                    <td>{{ formatDateTime(session.closedAt) || 'Aberta' }}</td>
+                    <td>{{ getReviewStatusLabel(session) }}</td>
+                    <td>{{ session.finalBalance | currency:'BRL' }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="5" class="empty-state">Nenhuma sessão encontrada.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <h3>
+            Lançamentos
+            @if (selectedReportSession(); as s) {
+              <small style="font-weight:normal;color:#64748b"> — Sessão #{{ s.id }} ({{ s.userName }})</small>
+            }
+          </h3>
+          <div class="table-container">
+            <table class="cash-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Método</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (isReportLoading() && selectedReportSession()) {
+                  <tr><td colspan="5" class="empty-state"><mat-spinner diameter="24"></mat-spinner></td></tr>
+                }
+                @for (movement of reportMovements(); track movement.id) {
+                  <tr>
+                    <td>{{ formatDateTime(movement.timestamp) }}</td>
+                    <td>{{ getTypeLabel(movement.type) }}</td>
+                    <td>{{ movement.description || '---' }}</td>
+                    <td>{{ movement.methodName || '---' }}</td>
+                    <td [class.positive]="movement.value > 0" [class.negative]="movement.value < 0">
+                      {{ movement.value | currency:'BRL' }}
+                    </td>
+                  </tr>
+                } @empty {
+                  @if (!isReportLoading()) {
+                    <tr>
+                      <td colspan="5" class="empty-state">
+                        {{ selectedReportSession() ? 'Nenhum lançamento.' : 'Selecione uma sessão para ver os lançamentos.' }}
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+
   </div>
 
   <app-cash-modal
