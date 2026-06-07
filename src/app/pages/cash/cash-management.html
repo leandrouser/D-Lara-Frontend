@@ -325,7 +325,7 @@
                           <div class="input-wrapper compact">
                             <span class="currency">R$</span>
                             <input type="number" min="0" step="0.01"
-                              [value]="verifiedAmounts()[detail.paymentMethodId] ?? ''"
+                              [value]="verifiedAmounts()[detail.paymentMethodId]"
                               (input)="updateVerifiedAmount(detail.paymentMethodId, +$any($event.target).value)"
                               placeholder="0,00">
                           </div>
