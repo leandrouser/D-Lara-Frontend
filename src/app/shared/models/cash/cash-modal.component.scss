@@ -38,7 +38,6 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-// ── HEADER ──────────────────────────────────────────────────
 .modal-header {
   padding: 22px 24px 18px;
   display: flex;
@@ -133,7 +132,6 @@
   opacity: 0.75;
 }
 
-// ── BODY ────────────────────────────────────────────────────
 .modal-body { padding: 20px 24px; }
 
 .info-message,
@@ -161,7 +159,6 @@
   p { color: #334155; }
 }
 
-// ── FORM ────────────────────────────────────────────────────
 .form-group {
   display: flex;
   flex-direction: column;
@@ -222,7 +219,6 @@
   margin-top: 2px;
 }
 
-// ── SESSION INFO ─────────────────────────────────────────────
 .session-info {
   background: #f9fafb;
   border-radius: 10px;
@@ -244,7 +240,6 @@
   }
 }
 
-// ── PAYMENT INPUTS ───────────────────────────────────────────
 .payment-inputs {
   display: grid;
   gap: 12px;
@@ -312,7 +307,6 @@
   p { margin: 0; font-size: 0.875rem; }
 }
 
-// ── RELATÓRIO ────────────────────────────────────────────────
 .result-header {
   display: flex;
   justify-content: space-between;
@@ -504,7 +498,6 @@
   p { margin: 0; font-size: 0.85rem; color: #78350f; line-height: 1.5; }
 }
 
-// ── FOOTER ───────────────────────────────────────────────────
 .modal-footer {
   padding: 16px 24px;
   background: #f9fafb;

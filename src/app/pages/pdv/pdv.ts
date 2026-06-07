@@ -624,7 +624,7 @@
         takeUntil(this.destroy$)
       ).subscribe({
         next: (response: any) => {
-          if (!response) return; // ← termo vazio, ignora
+          if (!response) return;
 
           if (response.serverPaged) {
             this.filteredProducts.set(response.content);

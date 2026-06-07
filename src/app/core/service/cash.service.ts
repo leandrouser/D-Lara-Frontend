@@ -153,7 +153,6 @@ export class CashService {
 
   public activeSessionId = computed(() => this._activeSession()?.id || null);
 
-  // FIX: usa status da sessão para determinar se está aberto, não apenas se existe
   public isCashOpen = computed(() => this._activeSession()?.status === 'OPEN');
 
   constructor() {
@@ -182,7 +181,6 @@ export class CashService {
     return this.http.get<CashSummaryResponse>(`${this.apiUrl}/session/${sessionId}/summary`);
   }
 
-  // FIX: endpoint correto para totais por método — usado no modal de fechamento
   getPaymentMethodTotals(sessionId: number): Observable<PaymentMethodTotal[]> {
     return this.http.get<PaymentMethodTotal[]>(`${this.apiUrl}/session/${sessionId}/payment-totals`);
   }

@@ -92,7 +92,6 @@
   }
 }
 
-// ─── Nav ───────────────────────────────────────────────────
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;
@@ -150,7 +149,6 @@
   font-weight: 500;
 }
 
-// ─── Área do usuário ───────────────────────────────────────
 .user-area {
   margin-top: 1px solid #eee;
   display: flex;
@@ -230,7 +228,6 @@
   }
 }
 
-// ─── Scrollbar ─────────────────────────────────────────────
 .sidebar-nav::-webkit-scrollbar {
   width: 4px;
 }
@@ -244,7 +241,6 @@
   border-radius: 4px;
 }
 
-// ─── Collapsed — desktop ───────────────────────────────────
 :host.collapsed {
   .menu-text {
     opacity: 0;
@@ -290,7 +286,6 @@
   }
 }
 
-// ─── Mobile ────────────────────────────────────────────────
 @media (max-width: 768px) {
   .toggle-btn {
     display: none;
@@ -358,7 +353,6 @@
   }
 }
 
-// ─── Menu item (mat-icon) ──────────────────────────────────
 .menu-item {
   display: flex;
   align-items: center;

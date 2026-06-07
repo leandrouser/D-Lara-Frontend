@@ -23,7 +23,6 @@
           [disabled]="isLoading()">
       </div>
 
-      <!-- ── Telefone com validação ── -->
       <div class="form-group">
         <label for="phone">Telefone *</label>
         <div class="phone-input-wrapper">
@@ -44,7 +43,6 @@
           <mat-icon class="phone-icon success"  *ngIf="!checkingPhone() && phoneChecked() && !phoneExists() && formData().phone">check_circle</mat-icon>
         </div>
 
-        <!-- feedback -->
         <div class="phone-feedback">
           <span class="checking" *ngIf="checkingPhone()">
             <mat-icon>autorenew</mat-icon> Verificando telefone...

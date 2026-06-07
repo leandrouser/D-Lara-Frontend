@@ -109,14 +109,13 @@ export class ExchangeComponent implements OnInit {
         if (s.saleStatus !== 'PAID') {
           this.saleError.set('Apenas vendas com status PAGO podem ser trocadas.');
           this.loadingSale.set(false);
-          return; // Importante para não continuar o processamento
+          return;
         }
 
-        // Sucesso: popula os sinais
         this.sale.set(s);
         this.returnItems.set(
           (s.items ?? []).map((item) => ({
-            saleItem: item, // Aqui o 'id' real do banco será preservado
+            saleItem: item,
             selected: false,
             quantityToReturn: item.quantity,
           }))

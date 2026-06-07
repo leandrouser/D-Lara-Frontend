@@ -1,271 +1,254 @@
-<div class="layout">
-  <div class="content content-adjustable">
-    <div class="content">
+<div class="db-wrap">
 
-      <div class="header">
-        <div>
-          <h1>
-            <mat-icon>dashboard</mat-icon>
-            Dashboard
-          </h1>
-          <p class="subtitle">Visão geral do seu negócio</p>
-        </div>
-      </div>
-
-      <!-- CARDS -->
-      <div class="cards">
-        <div class="card green">
-          <div class="info">
-            <span>Vendas Hoje</span>
-            <strong>{{ todaySalesTotal() | currency:'BRL' }}</strong>
-            <small>Pagamentos hoje</small>
-          </div>
-          <mat-icon class="icon">today</mat-icon>
-        </div>
-
-        <div class="card blue">
-            <div class="info">
-              <span>Vendas do Mês</span>
-              <strong>{{ monthSalesTotal() | currency:'BRL' }}</strong>
-              <small>{{ monthSalesCount() }} vendas · Ticket médio {{ ticketMedio() | currency:'BRL' }}</small>
-            </div>
-            <mat-icon class="icon">calendar_month</mat-icon>
-          </div>
-
-          <div class="card purple" (click)="refreshProductsStats()" style="cursor: pointer;">
-            <div class="info">
-              <span>Produtos Cadastrados</span>
-              @if (loadingProducts()) {
-                <strong><mat-icon class="loading-spinner-mini">refresh</mat-icon></strong>
-                <small>Atualizando...</small>
-              } @else {
-                <strong>{{ totalProducts() }}</strong>
-                <small>Valor: {{ totalProductsValue() | currency:'BRL' }}</small>
-              }
-            </div>
-          <mat-icon class="icon">inventory_2</mat-icon>
-        </div>
-
-        <div class="card orange">
-          <div class="info">
-            <span>Baixo Estoque</span>
-            <strong>{{ lowStockCount() }}</strong>
-            <small>Produtos</small>
-          </div>
-          <mat-icon class="icon">warning</mat-icon>
-        </div>
-      </div>
-
-      <div class="dashboard-sections">
-
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <mat-icon>receipt_long</mat-icon>
-              Últimas Vendas do Dia
-            </h3>
-            <button class="refresh-btn" (click)="refreshTodaySales()" matTooltip="Atualizar lista">
-              <mat-icon>refresh</mat-icon>
-            </button>
-          </div>
-
-          @if (salesByHour().length > 0) {
-            <div class="hourly-chart-card">
-              <div class="chart-header">
-                <mat-icon>bar_chart</mat-icon>
-                <span>Vendas por Hora — Hoje</span>
-              </div>
-
-              <div class="chart-bars">
-                @for (slot of salesByHour(); track slot.hour) {
-                  <div class="bar-slot" [title]="slot.hour + ': ' + (slot.total | currency:'BRL')">
-                    <div class="bar-fill"
-                        [style.height.%]="maxSalesValue() > 0 ? (slot.total / maxSalesValue()) * 100 : 0"
-                        [class.has-value]="slot.total > 0">
-                    </div>
-                    <span class="bar-label">{{ slot.hour }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <div class="section-content">
-            @if (loadingToday()) {
-              <div class="loading-state">
-                <mat-icon class="loading-spinner">refresh</mat-icon>
-                Carregando vendas...
-              </div>
-            } @else if (todaySales().length === 0) {
-              <div class="empty-state">
-                <mat-icon>history_toggle_off</mat-icon>
-                <p>Nenhuma venda realizada hoje</p>
-                <small>As vendas aparecerão aqui assim que forem feitas</small>
-              </div>
-            } @else {
-              <div class="table-container">
-                <div class="table-wrapper">
-                  <table class="sales-table">
-                    <thead>
-                      <tr>
-                        <th class="col-id"><mat-icon>tag</mat-icon> ID</th>
-                        <th class="col-date"><mat-icon>schedule</mat-icon> Horário</th>
-                        <th class="col-customer"><mat-icon>person</mat-icon> Cliente</th>
-                        <th class="col-total"><mat-icon>payments</mat-icon> Total</th>
-                        <th class="col-status"><mat-icon>circle</mat-icon> Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (sale of salesPaged(); track sale.id) {
-                        <tr
-                          [class.paid]="getNormalizedStatus(sale.saleStatus) === 'paid'"
-                          [class.pending]="getNormalizedStatus(sale.saleStatus) === 'pending'"
-                          [class.cancelled]="getNormalizedStatus(sale.saleStatus) === 'cancelled'">
-                          <td class="sale-id"><strong>#{{ sale.id }}</strong></td>
-                          <td class="sale-date">{{ sale.dateSale | date:'HH:mm' }}</td>
-                          <td class="sale-customer">
-                            <div class="customer-info">
-                              <strong>{{ sale.customerName }}</strong>
-                              <small class="phone">{{ sale.customerPhone }}</small>
-                            </div>
-                          </td>
-                          <td class="sale-total"><strong>{{ sale.total | currency:'BRL' }}</strong></td>
-                          <td class="sale-status">
-                            <span [class]="'status-tag ' + getNormalizedStatus(sale.saleStatus)">
-                              <mat-icon class="status-icon">{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
-                              {{ getStatusText(sale.saleStatus) }}
-                            </span>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-
-                @if (salesTotalPages() > 1) {
-                  <div class="pagination">
-                    <button class="page-btn nav" (click)="salesPrevPage()" [disabled]="salesPage() === 0">
-                      <mat-icon>chevron_left</mat-icon>
-                    </button>
-                    @for (page of salesPageNumbers(); track $index) {
-                      @if (page === null) {
-                        <span class="page-ellipsis">…</span>
-                      } @else {
-                        <button
-                          class="page-btn"
-                          [class.active]="salesPage() === page"
-                          (click)="salesGoToPage(page)">
-                          {{ page + 1 }}
-                        </button>
-                      }
-                    }
-                    <button class="page-btn nav" (click)="salesNextPage()" [disabled]="salesPage() === salesTotalPages() - 1">
-                      <mat-icon>chevron_right</mat-icon>
-                    </button>
-                    <span class="page-info">
-                      {{ salesPage() + 1 }} / {{ salesTotalPages() }}
-                      &nbsp;·&nbsp;
-                      {{ todaySales().length }} registros
-                    </span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-header">
-            <h3>
-              <mat-icon>inventory</mat-icon>
-              Estoque Baixo
-            </h3>
-            <button
-              class="refresh-btn"
-              (click)="refreshLowStock()"
-              matTooltip="Atualizar estoque"
-              [disabled]="loadingLowStock()">
-              <mat-icon>refresh</mat-icon>
-            </button>
-          </div>
-
-          <div class="section-content">
-            @if (loadingLowStock()) {
-              <div class="loading-state">
-                <mat-icon class="loading-spinner">refresh</mat-icon>
-                Carregando estoque...
-              </div>
-            } @else if (lowStockProducts().length === 0) {
-              <div class="empty-state">
-                <mat-icon>check_circle</mat-icon>
-                <p>Todos os produtos com estoque adequado</p>
-                <small>Nenhum produto abaixo do estoque mínimo</small>
-              </div>
-            } @else {
-              <div class="table-container">
-                <div class="table-wrapper">
-                  <table class="sales-table">
-                    <thead>
-                      <tr>
-                        <th class="col-id"><mat-icon>tag</mat-icon> ID</th>
-                        <th class="col-product"><mat-icon>inventory_2</mat-icon> Produto</th>
-                        <th class="col-stock"><mat-icon>warehouse</mat-icon> Estoque</th>
-                        <th class="col-price"><mat-icon>attach_money</mat-icon> Preço</th>
-                        <th class="col-status"><mat-icon>circle</mat-icon> Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (p of lowStockPaged(); track p.id) {
-                        <tr class="low-stock">
-                          <td class="product-id"><strong>#{{ p.id }}</strong></td>
-                          <td class="product-name"><strong>{{ p.name }}</strong></td>
-                          <td class="product-stock"><span class="stock-badge">{{ p.stockQty }}</span></td>
-                          <td class="product-price"><strong>{{ p.price | currency:'BRL' }}</strong></td>
-                          <td class="product-status">
-                            <span class="status-tag low">
-                              <mat-icon class="status-icon">warning</mat-icon>
-                              Baixo Estoque
-                            </span>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-
-                @if (lowStockTotalPages() > 1) {
-                  <div class="pagination">
-                    <button class="page-btn nav" (click)="lowStockPrevPage()" [disabled]="lowStockPage() === 0">
-                      <mat-icon>chevron_left</mat-icon>
-                    </button>
-                    @for (page of lowStockPageNumbers(); track $index) {
-                      @if (page === null) {
-                        <span class="page-ellipsis">…</span>
-                      } @else {
-                        <button
-                          class="page-btn"
-                          [class.active]="lowStockPage() === page"
-                          (click)="lowStockGoToPage(page)">
-                          {{ page + 1 }}
-                        </button>
-                      }
-                    }
-                    <button class="page-btn nav" (click)="lowStockNextPage()" [disabled]="lowStockPage() === lowStockTotalPages() - 1">
-                      <mat-icon>chevron_right</mat-icon>
-                    </button>
-                    <span class="page-info">
-                      {{ lowStockPage() + 1 }} / {{ lowStockTotalPages() }}
-                      &nbsp;·&nbsp;
-                      {{ lowStockProducts().length }} registros
-                    </span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-      </div>
+  <!-- ── Header ── -->
+  <div class="db-header">
+    <div>
+      <h1 class="db-title">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard
+      </h1>
+      <p class="db-subtitle">Visão geral do seu negócio</p>
     </div>
+    <span class="db-live-badge">Ao vivo</span>
+  </div>
+
+  <!-- ── KPI Cards ── -->
+  <div class="db-kpi-row">
+
+    <div class="db-kpi db-kpi--green">
+      <div class="db-kpi__top">
+        <span class="db-kpi__label">Vendas hoje</span>
+        <span class="db-kpi__icon"><mat-icon>today</mat-icon></span>
+      </div>
+      <strong class="db-kpi__value">{{ todaySalesTotal() | currency:'BRL' }}</strong>
+      <span class="db-kpi__sub">Pagamentos realizados hoje</span>
+    </div>
+
+    <div class="db-kpi db-kpi--blue">
+      <div class="db-kpi__top">
+        <span class="db-kpi__label">Vendas do mês</span>
+        <span class="db-kpi__icon"><mat-icon>calendar_month</mat-icon></span>
+      </div>
+      <strong class="db-kpi__value">{{ monthSalesTotal() | currency:'BRL' }}</strong>
+      <span class="db-kpi__sub">{{ monthSalesCount() }} vendas · ticket {{ ticketMedio() | currency:'BRL' }}</span>
+    </div>
+
+    <div class="db-kpi db-kpi--purple" (click)="refreshProductsStats()" style="cursor:pointer">
+      <div class="db-kpi__top">
+        <span class="db-kpi__label">Produtos cadastrados</span>
+        <span class="db-kpi__icon"><mat-icon>inventory_2</mat-icon></span>
+      </div>
+      @if (loadingProducts()) {
+        <strong class="db-kpi__value"><mat-icon class="db-spin">refresh</mat-icon></strong>
+        <span class="db-kpi__sub">Atualizando...</span>
+      } @else {
+        <strong class="db-kpi__value">{{ totalProducts() }}</strong>
+        <span class="db-kpi__sub">Valor: {{ totalProductsValue() | currency:'BRL' }}</span>
+      }
+    </div>
+
+    <div class="db-kpi db-kpi--orange">
+      <div class="db-kpi__top">
+        <span class="db-kpi__label">Baixo estoque</span>
+        <span class="db-kpi__icon"><mat-icon>warning</mat-icon></span>
+      </div>
+      <strong class="db-kpi__value">{{ lowStockCount() }}</strong>
+      <span class="db-kpi__sub db-kpi__sub--warn">
+        <mat-icon>error_outline</mat-icon>
+        produtos precisam de reposição
+      </span>
+    </div>
+
+  </div>
+
+  <!-- ── Two columns ── -->
+  <div class="db-sections">
+
+    <!-- Vendas do dia -->
+    <div class="db-card">
+      <div class="db-card__head">
+        <h3 class="db-card__title">
+          <mat-icon>receipt_long</mat-icon>
+          Últimas vendas do dia
+        </h3>
+        <div class="db-card__actions">
+          @if (todaySales().length > 0) {
+            <span class="db-badge">{{ todaySales().length }} vendas</span>
+          }
+          <button class="db-icon-btn" (click)="refreshTodaySales()" matTooltip="Atualizar">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      @if (salesByHour().length > 0) {
+        <div class="db-chart">
+          <span class="db-chart__label">Vendas por hora — hoje</span>
+          <div class="db-chart__bars">
+            @for (slot of salesByHour(); track slot.hour) {
+              <div class="db-bar" [title]="slot.hour + ': ' + (slot.total | currency:'BRL')">
+                <div class="db-bar__fill"
+                     [style.height.%]="maxSalesValue() > 0 ? (slot.total / maxSalesValue()) * 100 : 0"
+                     [class.db-bar__fill--active]="slot.total > 0">
+                </div>
+                <span class="db-bar__lbl">{{ slot.hour }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (loadingToday()) {
+        <div class="db-state db-state--loading">
+          <mat-icon class="db-spin">refresh</mat-icon>
+          Carregando vendas...
+        </div>
+      } @else if (todaySales().length === 0) {
+        <div class="db-state">
+          <mat-icon>history_toggle_off</mat-icon>
+          <p>Nenhuma venda realizada hoje</p>
+          <small>As vendas aparecerão aqui assim que forem realizadas</small>
+        </div>
+      } @else {
+        <div class="db-table-scroll">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Hora</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sale of salesPaged(); track sale.id) {
+                <tr [class]="'db-tr db-tr--' + getNormalizedStatus(sale.saleStatus)">
+                  <td><span class="db-id">#{{ sale.id }}</span></td>
+                  <td class="db-time">{{ sale.dateSale | date:'HH:mm' }}</td>
+                  <td>
+                    <span class="db-customer">
+                      <strong>{{ sale.customerName }}</strong>
+                      <small>{{ sale.customerPhone }}</small>
+                    </span>
+                  </td>
+                  <td class="db-amount">{{ sale.total | currency:'BRL' }}</td>
+                  <td>
+                    <span [class]="'db-pill db-pill--' + getNormalizedStatus(sale.saleStatus)">
+                      <mat-icon>{{ getStatusIcon(sale.saleStatus) }}</mat-icon>
+                      {{ getStatusText(sale.saleStatus) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (salesTotalPages() > 1) {
+          <div class="db-pager">
+            <button class="db-pg" (click)="salesPrevPage()" [disabled]="salesPage() === 0">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            @for (page of salesPageNumbers(); track $index) {
+              @if (page === null) {
+                <span class="db-pg-dots">…</span>
+              } @else {
+                <button class="db-pg" [class.db-pg--active]="salesPage() === page" (click)="salesGoToPage(page)">
+                  {{ page + 1 }}
+                </button>
+              }
+            }
+            <button class="db-pg" (click)="salesNextPage()" [disabled]="salesPage() === salesTotalPages() - 1">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <span class="db-pager__info">{{ salesPage() + 1 }}/{{ salesTotalPages() }} · {{ todaySales().length }} registros</span>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Estoque baixo -->
+    <div class="db-card">
+      <div class="db-card__head">
+        <h3 class="db-card__title">
+          <mat-icon>inventory</mat-icon>
+          Estoque baixo
+        </h3>
+        <div class="db-card__actions">
+          @if (lowStockProducts().length > 0) {
+            <span class="db-badge db-badge--warn">{{ lowStockProducts().length }} produtos</span>
+          }
+          <button class="db-icon-btn" (click)="refreshLowStock()" matTooltip="Atualizar" [disabled]="loadingLowStock()">
+            <mat-icon>refresh</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      @if (loadingLowStock()) {
+        <div class="db-state db-state--loading">
+          <mat-icon class="db-spin">refresh</mat-icon>
+          Carregando estoque...
+        </div>
+      } @else if (lowStockProducts().length === 0) {
+        <div class="db-state db-state--ok">
+          <mat-icon>check_circle</mat-icon>
+          <p>Todos os produtos com estoque adequado</p>
+          <small>Nenhum produto abaixo do mínimo</small>
+        </div>
+      } @else {
+        <div class="db-table-scroll">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Preço</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of lowStockPaged(); track p.id) {
+                <tr class="db-tr db-tr--warn">
+                  <td><span class="db-id">#{{ p.id }}</span></td>
+                  <td><strong>{{ p.name }}</strong></td>
+                  <td><span class="db-stock-pill">{{ p.stockQty }}</span></td>
+                  <td class="db-amount">{{ p.price | currency:'BRL' }}</td>
+                  <td>
+                    <span class="db-pill db-pill--pending">
+                      <mat-icon>warning</mat-icon>
+                      Baixo estoque
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (lowStockTotalPages() > 1) {
+          <div class="db-pager">
+            <button class="db-pg" (click)="lowStockPrevPage()" [disabled]="lowStockPage() === 0">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            @for (page of lowStockPageNumbers(); track $index) {
+              @if (page === null) {
+                <span class="db-pg-dots">…</span>
+              } @else {
+                <button class="db-pg" [class.db-pg--active]="lowStockPage() === page" (click)="lowStockGoToPage(page)">
+                  {{ page + 1 }}
+                </button>
+              }
+            }
+            <button class="db-pg" (click)="lowStockNextPage()" [disabled]="lowStockPage() === lowStockTotalPages() - 1">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <span class="db-pager__info">{{ lowStockPage() + 1 }}/{{ lowStockTotalPages() }} · {{ lowStockProducts().length }} registros</span>
+          </div>
+        }
+      }
+    </div>
+
   </div>
 </div>

@@ -1,216 +1,204 @@
-<div class="pdv-container">
-  <div class="page-header">
-    <div class="header-info">
-      <h1><mat-icon>shopping_cart_checkout</mat-icon> {{ pageTitle() }}</h1>
-      <p class="subtitle">{{ pageSubtitle() }}</p>
+<div class="pdv-wrap">
+
+  <!-- ── Header ── -->
+  <div class="pdv-header">
+    <div class="pdv-header__info">
+      <h1 class="pdv-header__title">
+        <mat-icon>shopping_cart_checkout</mat-icon>
+        {{ pageTitle() }}
+      </h1>
+      <p class="pdv-header__sub">{{ pageSubtitle() }}</p>
     </div>
-    <div class="header-actions">
-      <button class="cash-status-btn" [class.is-open]="isCashRegisterOpen()" (click)="handleButtonClick()">
-        <mat-icon>{{ isCashRegisterOpen() ? 'lock' : 'lock_open' }}</mat-icon>
-        <span>{{ isCashRegisterOpen() ? 'FECHAR CAIXA' : 'ABRIR CAIXA' }}</span>
-      </button>
-    </div>
+    <button class="pdv-cash-btn" [class.pdv-cash-btn--open]="isCashRegisterOpen()" (click)="handleButtonClick()">
+      <mat-icon>{{ isCashRegisterOpen() ? 'lock' : 'lock_open' }}</mat-icon>
+      <span>{{ isCashRegisterOpen() ? 'Fechar Caixa' : 'Abrir Caixa' }}</span>
+    </button>
   </div>
 
-  <div class="main-layout">
-    <div class="left-side">
-      <div class="top-controls">
-        <div class="customer-selection-row">
+  <!-- ── Main layout ── -->
+  <div class="pdv-layout">
 
-          <div class="customer-selection-area">
-            <div class="search-filters compact">
-              <div class="search-box">
-                <div class="input-box">
-                  <mat-icon>person_search</mat-icon>
-                  <input type="text" placeholder="ID, Nome ou Telefone..."
-                    [value]="customerSearchValue()"
-                    (input)="onCustomerSearchInput($event)">
-                </div>
-              </div>
-              <div class="new-customer-btn">
-                <button (click)="openCustomerModal()"><mat-icon>person_add</mat-icon></button>
-              </div>
-            </div>
+    <!-- ════ LEFT SIDE ════ -->
+    <div class="pdv-left">
 
-            @if (showCustomerDropdown()) {
-              <div class="customer-dropdown">
-                @for (c of suggestedCustomers(); track c.id) {
-                  <div class="dropdown-item" (click)="selectCustomer(c)">
-                    <span class="c-id">#{{c.id}}</span>
-                    <div class="c-info">
-                      <span class="c-name">{{c.name}}</span>
-                      <span class="c-phone">
-                        <mat-icon style="font-size:14px;width:14px;height:14px;margin-right:4px">phone</mat-icon>
-                        {{c.phone}}
-                      </span>
-                    </div>
-                  </div>
-                } @empty {
-                  <div class="dropdown-empty">
-                    <mat-icon>search_off</mat-icon>
-                    <span>Nenhum cliente encontrado</span>
-                  </div>
-                }
-              </div>
-            }
+      <!-- Customer + filters row -->
+      <div class="pdv-customer-row">
 
-            <div class="quick-actions-row">
-              <button [class.active]="productCategoryFilter() === 'all'" (click)="setProductFilter('all')">Produtos</button>
-              <button [class.active]="productCategoryFilter() === CategoryEnum.BORDADO" (click)="setProductFilter(CategoryEnum.BORDADO)">Bordados</button>
-            </div>
+        <!-- Search + dropdown -->
+        <div class="pdv-customer-search">
+          <div class="pdv-search-bar" [class.pdv-search-bar--focus]="showCustomerDropdown()">
+            <mat-icon>person_search</mat-icon>
+            <input
+              type="text"
+              placeholder="ID, Nome ou Telefone..."
+              [value]="customerSearchValue()"
+              (input)="onCustomerSearchInput($event)" />
+            <button class="pdv-search-bar__add" (click)="openCustomerModal()" title="Novo cliente">
+              <mat-icon>person_add</mat-icon>
+            </button>
           </div>
 
-          @if (selectedCustomer(); as customer) {
-            <div class="card selected-item-card purple" (click)="clearCustomer()" title="Clique para remover">
-              <div class="info">
-                <span class="c-id">ID: #{{ customer.id }}</span>
-                <strong class="c-name">{{ customer.name }}</strong>
-                <small class="c-phone"><mat-icon>phone</mat-icon> {{ customer.phone }}</small>
-              </div>
-              <mat-icon class="icon">person</mat-icon>
-              <div class="remove-badge"><mat-icon>close</mat-icon></div>
+          @if (showCustomerDropdown()) {
+            <div class="pdv-customer-drop">
+              @for (c of suggestedCustomers(); track c.id) {
+                <div class="pdv-customer-drop__item" (click)="selectCustomer(c)">
+                  <span class="pdv-drop-id">#{{ c.id }}</span>
+                  <div class="pdv-drop-info">
+                    <span class="pdv-drop-name">{{ c.name }}</span>
+                    <span class="pdv-drop-phone">
+                      <mat-icon>phone</mat-icon>{{ c.phone }}
+                    </span>
+                  </div>
+                </div>
+              } @empty {
+                <div class="pdv-customer-drop__empty">
+                  <mat-icon>search_off</mat-icon>
+                  <span>Nenhum cliente encontrado</span>
+                </div>
+              }
             </div>
           }
 
-          <div class="card bordado-quick-card" (click)="openBordadoModal()" title="Adicionar bordado com valor livre">
-            <div class="info">
-              <span class="bq-label">Bordado</span>
-              <strong class="bq-name">VALOR LIVRE</strong>
-              <small class="bq-hint">Clique para definir o preço</small>
-            </div>
-            <mat-icon class="icon">brush</mat-icon>
-            <div class="add-badge"><mat-icon>add</mat-icon></div>
+          <div class="pdv-cat-tabs">
+            <button [class.pdv-cat-tabs__btn--active]="productCategoryFilter() === 'all'" (click)="setProductFilter('all')">
+              Todos os produtos
+            </button>
+            <button [class.pdv-cat-tabs__btn--active]="productCategoryFilter() === CategoryEnum.BORDADO" (click)="setProductFilter(CategoryEnum.BORDADO)">
+              Bordados
+            </button>
           </div>
-
         </div>
+
+        <!-- Selected customer chip -->
+        @if (selectedCustomer(); as customer) {
+          <div class="pdv-customer-chip" (click)="clearCustomer()" title="Clique para remover">
+            <div class="pdv-customer-chip__info">
+              <span class="pdv-customer-chip__id">ID #{{ customer.id }}</span>
+              <strong class="pdv-customer-chip__name">{{ customer.name }}</strong>
+              <span class="pdv-customer-chip__phone">
+                <mat-icon>phone</mat-icon>{{ customer.phone }}
+              </span>
+            </div>
+            <mat-icon class="pdv-customer-chip__icon">person</mat-icon>
+            <span class="pdv-customer-chip__remove"><mat-icon>close</mat-icon></span>
+          </div>
+        }
+
+        <!-- Bordado livre -->
+        <div class="pdv-bordado-chip" (click)="openBordadoModal()" title="Adicionar bordado com valor livre">
+          <div class="pdv-bordado-chip__info">
+            <span class="pdv-bordado-chip__label">Bordado</span>
+            <strong class="pdv-bordado-chip__name">Valor Livre</strong>
+            <span class="pdv-bordado-chip__hint">Clique para definir o preço</span>
+          </div>
+          <mat-icon class="pdv-bordado-chip__icon">brush</mat-icon>
+          <span class="pdv-bordado-chip__add"><mat-icon>add</mat-icon></span>
+        </div>
+
       </div>
 
-      <div class="items-display-area">
-        <div class="product-search-bar">
-          <div class="search-input-wrapper">
-            <mat-icon>search</mat-icon>
-            <input #searchInput type="text"
-                   placeholder="Pesquisar produto ou bordado (F2)..."
-                   (input)="onProductSearchInput($event)" />
-            @if (isLoading()) {
-              <mat-icon class="spinner-loading">refresh</mat-icon>
-            }
-          </div>
-          <div class="results-info">
-            {{ totalElements() }} produto{{ totalElements() !== 1 ? 's' : '' }} encontrado{{ totalElements() !== 1 ? 's' : '' }}
-          </div>
+      <!-- Product search bar -->
+      <div class="pdv-prod-search">
+        <div class="pdv-prod-search__input">
+          <mat-icon>search</mat-icon>
+          <input #searchInput type="text"
+                 placeholder="Pesquisar produto ou bordado (F2)..."
+                 (input)="onProductSearchInput($event)" />
+          @if (isLoading()) {
+            <mat-icon class="pdv-spin">refresh</mat-icon>
+          }
         </div>
+        <span class="pdv-prod-search__count">
+          {{ totalElements() }} produto{{ totalElements() !== 1 ? 's' : '' }}
+        </span>
+      </div>
 
-        <div class="products-grid-scroll">
+      <!-- Products grid -->
+      <div class="pdv-grid-area">
+        <div class="pdv-grid">
           @if (filteredProducts().length > 0) {
             @for (p of filteredProducts(); track p.id) {
-              <div class="product-card" [class.is-embroidery]="p.categoryEnum === CategoryEnum.BORDADO">
-                <div class="card-content">
-                  <div class="card-header-top">
-                    <div class="header-left">
-                      <div class="p-category-row">
-                        <span class="p-id-badge">#{{ p.id }}</span>
-                        <span class="p-category">{{ p.categoryEnum }}</span>
-                      </div>
-                      @if (p.categoryEnum !== CategoryEnum.BORDADO) {
-                        <span class="p-stock" [class.danger]="p.stockQty <= 5">{{ p.stockQty }} em estoque</span>
-                      }
+              <div class="pdv-prod-card" [class.pdv-prod-card--embroidery]="p.categoryEnum === CategoryEnum.BORDADO">
+                <div class="pdv-prod-card__top">
+                  <div class="pdv-prod-card__meta">
+                    <span class="pdv-prod-id">#{{ p.id }}</span>
+                    <span class="pdv-prod-cat">{{ p.categoryEnum }}</span>
+                  </div>
+                  <span class="pdv-prod-price">{{ p.price | brlCurrency }}</span>
+                </div>
+
+                @if (p.categoryEnum !== CategoryEnum.BORDADO) {
+                  <span class="pdv-prod-stock" [class.pdv-prod-stock--low]="p.stockQty <= 5">
+                    {{ p.stockQty }} em estoque
+                  </span>
+                }
+
+                <h3 class="pdv-prod-name">{{ p.name }}</h3>
+
+                @if (p.categoryEnum !== CategoryEnum.BORDADO && p.description) {
+                  <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ p.description?.length > 50 ? '…' : '' }}</p>
+                }
+                @if (p.categoryEnum === CategoryEnum.BORDADO) {
+                  <p class="pdv-prod-desc">{{ p.description | slice:0:35 }}{{ (p.description?.length ?? 0) > 35 ? '…' : '' }}</p>
+                  @if (p.deliveryDate) {
+                    <div class="pdv-delivery" [class.pdv-delivery--overdue]="isOverdue(p.deliveryDate)">
+                      <mat-icon>event</mat-icon>
+                      Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}
                     </div>
-                    <span class="p-price">{{ p.price | brlCurrency }}</span>
-                  </div>
-                  <h3 class="p-name">{{ p.name }}</h3>
-
-                  @if (p.categoryEnum !== CategoryEnum.BORDADO && p.description) {
-                    <p class="p-description">{{ p.description | slice:0:50 }}{{ p.description?.length > 50 ? '...' : '' }}</p>
                   }
-                  @if (p.categoryEnum === CategoryEnum.BORDADO) {
-                    <p class="p-description-hint" style="font-size:11px;color:#666;margin-bottom:4px">
-                      {{ p.description | slice:0:35 }}{{ (p.description?.length ?? 0) > 35 ? '...' : '' }}
-                    </p>
-                    @if (p.deliveryDate) {
-                      <div class="delivery-date-info"
-                           [style.color]="isOverdue(p.deliveryDate) ? '#ef4444' : '#6366f1'"
-                           style="font-size:12px;font-weight:bold;display:flex;align-items:center;gap:4px">
-                        <mat-icon style="font-size:16px;width:16px;height:16px">event</mat-icon>
-                        <span>Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}</span>
-                      </div>
-                    }
-                  }
+                }
 
-                  <div class="p-footer">
-                    @if (p.barcode) {
-                      <div class="p-barcode" title="Identificador">
-                        <mat-icon>view_week</mat-icon><span>{{ p.barcode }}</span>
-                      </div>
-                    } @else if (p.categoryEnum === CategoryEnum.BORDADO) {
-                      <div class="p-barcode">
-                        <mat-icon>architecture</mat-icon><span>OS #{{ p.id }}</span>
-                      </div>
-                    }
-                    <button class="btn-add-cart"
-                            [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
-                            (click)="addToCart(p)">
-                      <span>{{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'SEM ESTOQUE' : 'ADICIONAR' }}</span>
-                      <mat-icon>{{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}</mat-icon>
-                    </button>
-                  </div>
+                <div class="pdv-prod-card__footer">
+                  @if (p.barcode) {
+                    <span class="pdv-barcode"><mat-icon>view_week</mat-icon>{{ p.barcode }}</span>
+                  } @else if (p.categoryEnum === CategoryEnum.BORDADO) {
+                    <span class="pdv-barcode"><mat-icon>architecture</mat-icon>OS #{{ p.id }}</span>
+                  }
+                  <button class="pdv-btn-add"
+                          [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
+                          (click)="addToCart(p)">
+                    <span>{{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'Sem estoque' : 'Adicionar' }}</span>
+                    <mat-icon>{{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}</mat-icon>
+                  </button>
                 </div>
               </div>
             }
           } @else {
             @for (p of topSellingProducts(); track p.productId) {
-              <div class="product-card" [class.out-of-stock]="p.stockQty <= 0">
-                <div class="card-content">
-                  <div class="card-header-top">
-                    <div class="header-left">
-                      <div class="p-category-row">
-                        <span class="p-id-badge">#{{ p.productId }}</span>
-                        <span class="p-category">{{ p.categoryEnum }}</span>
-                      </div>
-                      <span class="p-stock" [class.danger]="p.stockQty <= 5">
-                        {{ p.stockQty }} em estoque
-                      </span>
-                    </div>
-                    <span class="p-price">{{ p.price | brlCurrency }}</span>
+              <div class="pdv-prod-card" [class.pdv-prod-card--out]="p.stockQty <= 0">
+                <div class="pdv-prod-card__top">
+                  <div class="pdv-prod-card__meta">
+                    <span class="pdv-prod-id">#{{ p.productId }}</span>
+                    <span class="pdv-prod-cat">{{ p.categoryEnum }}</span>
                   </div>
+                  <span class="pdv-prod-price">{{ p.price | brlCurrency }}</span>
+                </div>
 
-                  <h3 class="p-name">{{ p.name }}</h3>
+                <span class="pdv-prod-stock" [class.pdv-prod-stock--low]="p.stockQty <= 5">
+                  {{ p.stockQty }} em estoque
+                </span>
 
-                  @if (p.description) {
-                    <p class="p-description">
-                      {{ p.description | slice:0:50 }}{{ p.description.length > 50 ? '...' : '' }}
-                    </p>
+                <h3 class="pdv-prod-name">{{ p.name }}</h3>
+
+                @if (p.description) {
+                  <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ p.description.length > 50 ? '…' : '' }}</p>
+                }
+
+                <div class="pdv-prod-card__footer">
+                  @if (p.barcode) {
+                    <span class="pdv-barcode"><mat-icon>view_week</mat-icon>{{ p.barcode }}</span>
                   }
-
-                  <div class="p-footer">
-                    @if (p.barcode) {
-                      <div class="p-barcode" title="Identificador">
-                        <mat-icon>view_week</mat-icon>
-                        <span>{{ p.barcode }}</span>
-                      </div>
-                    }
-                    <div class="ts-sold-badge">
-                      <mat-icon>bolt</mat-icon>
-                      <span>{{ p.totalSold }}x vendidos</span>
-                    </div>
-                    <button class="btn-add-cart"
-                            [disabled]="p.stockQty <= 0"
-                            (click)="addToCart({
-                              id: p.productId,
-                              name: p.name,
-                              price: p.price,
-                              barcode: p.barcode ?? '',
-                              stockQty: p.stockQty,
-                              categoryEnum: p.categoryEnum
-                            })">
-                      <span>{{ p.stockQty <= 0 ? 'SEM ESTOQUE' : 'ADICIONAR' }}</span>
-                      <mat-icon>add_shopping_cart</mat-icon>
-                    </button>
-                  </div>
+                  <span class="pdv-top-badge"><mat-icon>bolt</mat-icon>{{ p.totalSold }}x vendidos</span>
+                  <button class="pdv-btn-add"
+                          [disabled]="p.stockQty <= 0"
+                          (click)="addToCart({ id: p.productId, name: p.name, price: p.price, barcode: p.barcode ?? '', stockQty: p.stockQty, categoryEnum: p.categoryEnum })">
+                    <span>{{ p.stockQty <= 0 ? 'Sem estoque' : 'Adicionar' }}</span>
+                    <mat-icon>add_shopping_cart</mat-icon>
+                  </button>
                 </div>
               </div>
             } @empty {
-              <div class="empty-grid-state">
+              <div class="pdv-grid-empty">
                 <mat-icon>inventory_2</mat-icon>
                 <p>Nenhum produto encontrado.</p>
               </div>
@@ -219,24 +207,26 @@
         </div>
 
         @if (totalPages() > 1 && filteredProducts().length > 0) {
-          <div class="pdv-pagination">
-            <span class="page-counter">
+          <div class="pdv-pager">
+            <span class="pdv-pager__info">
               {{ currentPage() * pageSize() + 1 }}–{{ pageRangeEnd() }} de {{ totalElements() }}
             </span>
-            <div class="pagination-actions">
-              <button class="page-btn nav" [disabled]="currentPage() === 0" (click)="goToPage(0)" title="Primeira página">
+            <div class="pdv-pager__btns">
+              <button class="pdv-pg" [disabled]="currentPage() === 0" (click)="goToPage(0)" title="Primeira">
                 <mat-icon>first_page</mat-icon>
               </button>
-              <button class="page-btn nav" [disabled]="currentPage() === 0" (click)="changePage(-1)" title="Anterior">
+              <button class="pdv-pg" [disabled]="currentPage() === 0" (click)="changePage(-1)" title="Anterior">
                 <mat-icon>chevron_left</mat-icon>
               </button>
               @for (page of pageNumbers; track page) {
-                <button class="page-btn" [class.active]="currentPage() === page" (click)="goToPage(page)">{{ page + 1 }}</button>
+                <button class="pdv-pg" [class.pdv-pg--active]="currentPage() === page" (click)="goToPage(page)">
+                  {{ page + 1 }}
+                </button>
               }
-              <button class="page-btn nav" [disabled]="currentPage() >= totalPages() - 1" (click)="changePage(1)" title="Próxima">
+              <button class="pdv-pg" [disabled]="currentPage() >= totalPages() - 1" (click)="changePage(1)" title="Próxima">
                 <mat-icon>chevron_right</mat-icon>
               </button>
-              <button class="page-btn nav" [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(totalPages() - 1)" title="Última">
+              <button class="pdv-pg" [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(totalPages() - 1)" title="Última">
                 <mat-icon>last_page</mat-icon>
               </button>
             </div>
@@ -245,215 +235,215 @@
       </div>
     </div>
 
-    <div class="right-side">
-      <div class="sale-recovery-area">
-        <div class="recovery-input-container">
+    <!-- ════ RIGHT SIDE — CART ════ -->
+    <div class="pdv-right">
 
-          <div class="recovery-row">
-            <div class="recovery-input">
-              <mat-icon>search</mat-icon>
-              <input type="text" placeholder="Buscar venda..."
-                    (input)="onSearchSale($any($event.target).value)">
-            </div>
-            <button class="btn-clear-cart" (click)="resetPDV()" title="Limpar venda">
-              <mat-icon>delete_sweep</mat-icon>
-              <span>LIMPAR</span>
-            </button>
+      <!-- Sale recovery -->
+      <div class="pdv-recovery">
+        <div class="pdv-recovery__row">
+          <div class="pdv-recovery__input">
+            <mat-icon>search</mat-icon>
+            <input type="text" placeholder="Buscar venda para editar..."
+                   (input)="onSearchSale($any($event.target).value)" />
           </div>
+          <button class="pdv-btn-clear" (click)="resetPDV()" title="Limpar venda">
+            <mat-icon>delete_sweep</mat-icon>
+            Limpar
+          </button>
+        </div>
 
-          @if (showSaleSuggestions() && saleSuggestions().length > 0) {
-            <div class="suggestions-dropdown">
-              @for (sale of saleSuggestions(); track sale.id) {
-                <div class="suggestion-item" (click)="selectSaleToEdit(sale)">
-                  <div class="sug-info">
-                    <span class="sug-id">Venda #{{ sale.id }}</span>
-                    <span class="sug-name">{{ sale.customerName }}</span>
-                  </div>
-                  <div class="sug-details">
-                    <span class="sug-total">{{ sale.total | brlCurrency }}</span>
-                    <span class="status-badge">{{ sale.saleStatus }}</span>
-                  </div>
+        @if (showSaleSuggestions() && saleSuggestions().length > 0) {
+          <div class="pdv-sale-drop">
+            @for (sale of saleSuggestions(); track sale.id) {
+              <div class="pdv-sale-drop__item" (click)="selectSaleToEdit(sale)">
+                <div class="pdv-sale-drop__info">
+                  <span class="pdv-sale-drop__id">Venda #{{ sale.id }}</span>
+                  <span class="pdv-sale-drop__name">{{ sale.customerName }}</span>
                 </div>
+                <div class="pdv-sale-drop__right">
+                  <span class="pdv-sale-drop__total">{{ sale.total | brlCurrency }}</span>
+                  <span class="pdv-sale-drop__status">{{ sale.saleStatus }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Cart header -->
+      <div class="pdv-cart-head">
+        <div class="pdv-cart-head__title">
+          <mat-icon>shopping_basket</mat-icon>
+          <h2>Resumo da Venda</h2>
+        </div>
+        @if (activeSaleId()) {
+          <span class="pdv-edit-badge pdv-edit-badge--edit">
+            <mat-icon>edit</mat-icon> Editando #{{ activeSaleId() }}
+          </span>
+        } @else if (isCopiedSale() && cart().length > 0) {
+          <span class="pdv-edit-badge pdv-edit-badge--copy">
+            <mat-icon>content_copy</mat-icon> Nova a partir de venda paga
+          </span>
+        }
+      </div>
+
+      <!-- Cart items -->
+      <div class="pdv-cart-body">
+        @for (item of cart(); track $index) {
+          <div class="pdv-cart-item">
+            <div class="pdv-cart-item__id">
+              <span class="pdv-cart-pid">#{{ item.product.id }}</span>
+              <span class="pdv-cart-ref">
+                <mat-icon>view_week</mat-icon>{{ item.product.barcode || 'S/ REF' }}
+              </span>
+            </div>
+            <div class="pdv-cart-item__info">
+              <span class="pdv-cart-name">{{ item.product.name }}</span>
+              @if (item.isEmbroidery) {
+                <span class="pdv-cart-tag">Serviço bordado</span>
               }
             </div>
-          }
-
-        </div>
+            <div class="pdv-cart-item__qty">
+              <div class="pdv-stepper">
+                <button (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1">
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span>{{ item.quantity }}</span>
+                <button (click)="updateQuantity(item, 1)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            </div>
+            <div class="pdv-cart-item__prices">
+              <div class="pdv-price-unit">
+                <small>Unit.</small>
+                <span>{{ item.product.price | brlCurrency }}</span>
+              </div>
+              <div class="pdv-price-sep"></div>
+              <div class="pdv-price-total">
+                <small>Total</small>
+                <span>{{ item.total | brlCurrency }}</span>
+              </div>
+              <button class="pdv-btn-remove" (click)="removeFromCart($index)">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <div class="pdv-cart-empty">
+            <mat-icon>add_shopping_cart</mat-icon>
+            <p>Carrinho vazio</p>
+          </div>
+        }
       </div>
 
-      <div class="cart-wrapper">
-        <div class="cart-header">
-          <div class="header-main-info">
-            <mat-icon>shopping_basket</mat-icon>
-            <h2>Resumo da Venda</h2>
+      <!-- Cart footer -->
+      <div class="pdv-cart-foot">
+
+        <!-- Discount -->
+        <div class="pdv-discount">
+          <div class="pdv-discount__label">
+            <mat-icon>local_offer</mat-icon>
+            <span>Desconto</span>
           </div>
-
-          @if (activeSaleId()) {
-            <span class="edit-badge pending">
-              <mat-icon>edit</mat-icon>
-              EDITANDO #{{ activeSaleId() }}
-            </span>
-          } @else if (isCopiedSale() && cart().length > 0) {
-            <span class="edit-badge copied">
-              <mat-icon>content_copy</mat-icon>
-              NOVA A PARTIR DE VENDA PAGA
-            </span>
-          }
-        </div>
-
-        <div class="cart-content">
-          @for (item of cart(); track $index) {
-            <div class="cart-item">
-              <div class="col-id">
-                <span class="p-id">#{{ item.product.id }}</span>
-                <span class="p-barcode">
-                  <mat-icon>view_week</mat-icon>
-                  {{ item.product.barcode || 'S/ REF' }}
-                </span>
-              </div>
-              <div class="col-info">
-                <span class="item-name">{{ item.product.name }}</span>
-                @if (item.isEmbroidery) { <span class="item-tag">SERVIÇO BORDADO</span> }
-              </div>
-              <div class="col-qty">
-                <div class="qty-stepper">
-                  <button (click)="updateQuantity(item, -1)" [disabled]="item.quantity <= 1"><mat-icon>remove</mat-icon></button>
-                  <span class="qty-val">{{ item.quantity }}</span>
-                  <button (click)="updateQuantity(item, 1)"><mat-icon>add</mat-icon></button>
-                </div>
-              </div>
-              <div class="col-price-row">
-                <div class="price-box unit">
-                  <small>Unit.</small>
-                  <span>{{ item.product.price | brlCurrency }}</span>
-                </div>
-                <div class="price-divider"></div>
-                <div class="price-box line-total">
-                  <small>Total Item</small>
-                  <span class="total-value">{{ item.total | brlCurrency }}</span>
-                </div>
-                <button class="btn-remove" (click)="removeFromCart($index)">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
-              </div>
+          <div class="pdv-discount__controls">
+            <div class="pdv-discount__type">
+              <button [class.pdv-discount__type-btn--active]="discountType() === 'value'" (click)="changeDiscountType('value')">R$</button>
+              <button [class.pdv-discount__type-btn--active]="discountType() === 'percent'" (click)="changeDiscountType('percent')">%</button>
             </div>
-          } @empty {
-            <div class="cart-empty">
-              <mat-icon>add_shopping_cart</mat-icon>
-              <p>Carrinho vazio</p>
+            <div class="pdv-discount__input">
+              @if (discountType() === 'value') { <span class="pdv-discount__pfx">R$</span> }
+              <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0" />
+              @if (discountType() === 'percent') { <span class="pdv-discount__sfx">%</span> }
             </div>
-          }
-        </div>
-
-        <div class="cart-footer">
-          <div class="discount-container">
-            <div class="input-group">
-              <div class="label-with-icon">
-                <mat-icon>local_offer</mat-icon>
-                <span>Desconto</span>
-              </div>
-
-              <div class="discount-controls">
-                <div class="type-selector">
-                  <button [class.active]="discountType() === 'value'" (click)="changeDiscountType('value')">R$</button>
-                  <button [class.active]="discountType() === 'percent'" (click)="changeDiscountType('percent')">%</button>
-                </div>
-
-                <div class="input-wrapper">
-                  @if (discountType() === 'value') { <span class="prefix">R$</span> }
-                  <input type="number" [value]="discountInput()" (input)="updateDiscountValue($event)" placeholder="0">
-                  @if (discountType() === 'percent') { <span class="suffix">%</span> }
-                </div>
-
-                <div class="summary-item bruto-value">
-                  <span>Bruto</span>
-                  <span>{{ (totalWithDiscount() + calculatedDiscount()) | brlCurrency }}</span>
-                </div>
-
-                @if (calculatedDiscount() > 0) {
-                  <div class="summary-item discount-applied">
-                    <span>- @if (discountType() === 'percent') { {{ discountInput() }}% }</span>
-                    <span>{{ calculatedDiscount() | brlCurrency }}</span>
-                  </div>
-                }
-              </div>
-
-              <div class="divider-dashed">
-                <div class="total-line">
-                  <div class="total-row">
-                    <span>Total a Pagar:</span>
-                    <strong>{{ totalWithDiscount() | brlCurrency }}</strong>
-                  </div>
-                </div>
-
-                <button class="btn-checkout"
-                        [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
-                        (click)="preparePayment()">
-                  <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
-                  <span>{{ isCashRegisterOpen() ? 'FINALIZAR VENDA (F10)' : 'CAIXA FECHADO' }}</span>
-                  @if (isLoading()) { <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner> }
-                </button>
-
-                @if (!isCashRegisterOpen() && cart().length > 0) {
-                  <p style="color:#ef4444;font-size:11px;text-align:center;margin-top:8px;font-weight:700;text-transform:uppercase">
-                    Abra o caixa para concluir a venda
-                  </p>
-                }
-
-                <app-cash-modal
-                  [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
-                  [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
-                  [session]="cashService.activeSession()"
-                  [paymentMethods]="paymentMethods()"
-                  (close)="onCashModalClose()"
-                  (confirm)="onCashModalConfirm($event)">
-                </app-cash-modal>
-              </div>
+            <div class="pdv-discount__gross">
+              <span>Bruto</span>
+              <span>{{ (totalWithDiscount() + calculatedDiscount()) | brlCurrency }}</span>
             </div>
+            @if (calculatedDiscount() > 0) {
+              <div class="pdv-discount__applied">
+                <span>− @if (discountType() === 'percent') { {{ discountInput() }}% }</span>
+                <span>{{ calculatedDiscount() | brlCurrency }}</span>
+              </div>
+            }
           </div>
         </div>
+
+        <!-- Total -->
+        <div class="pdv-total-bar">
+          <span>Total a pagar</span>
+          <strong>{{ totalWithDiscount() | brlCurrency }}</strong>
+        </div>
+
+        <!-- Checkout -->
+        <button class="pdv-btn-checkout"
+                [disabled]="(!isCashRegisterOpen() || cart().length === 0) || isLoading()"
+                (click)="preparePayment()">
+          <mat-icon>{{ isCashRegisterOpen() ? 'check_circle' : 'lock' }}</mat-icon>
+          <span>{{ isCashRegisterOpen() ? 'Finalizar Venda (F10)' : 'Caixa Fechado' }}</span>
+          @if (isLoading()) {
+            <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+          }
+        </button>
+
+        @if (!isCashRegisterOpen() && cart().length > 0) {
+          <p class="pdv-cash-warning">Abra o caixa para concluir a venda</p>
+        }
+
+        <app-cash-modal
+          [isOpen]="isOpeningModalOpen() || isClosingModalOpen()"
+          [modalType]="isOpeningModalOpen() ? 'OPENING' : 'CLOSING'"
+          [session]="cashService.activeSession()"
+          [paymentMethods]="paymentMethods()"
+          (close)="onCashModalClose()"
+          (confirm)="onCashModalConfirm($event)">
+        </app-cash-modal>
       </div>
     </div>
+
   </div>
 </div>
 
+<!-- ── Modal: Bordado livre ── -->
 @if (isBordadoModalOpen()) {
-  <div class="modal-overlay" (click)="closeBordadoModal()">
-    <div class="bordado-modal" (click)="$event.stopPropagation()">
-      <div class="bordado-modal-header">
+  <div class="pdv-overlay" (click)="closeBordadoModal()">
+    <div class="pdv-modal" (click)="$event.stopPropagation()">
+      <div class="pdv-modal__head pdv-modal__head--purple">
         <mat-icon>brush</mat-icon>
         <h3>Adicionar Bordado</h3>
-        <button class="close-btn" (click)="closeBordadoModal()"><mat-icon>close</mat-icon></button>
+        <button class="pdv-modal__close" (click)="closeBordadoModal()"><mat-icon>close</mat-icon></button>
       </div>
-      <div class="bordado-modal-body">
-        <div class="bm-field">
+      <div class="pdv-modal__body">
+        <div class="pdv-modal__field">
           <label>Descrição <small>(opcional)</small></label>
           <input type="text"
                  [(ngModel)]="bordadoDescription"
                  [ngModel]="bordadoDescription()"
                  (ngModelChange)="bordadoDescription.set($event)"
                  placeholder="Ex: Bordado floral manga direita"
-                 maxlength="80">
+                 maxlength="80" />
         </div>
-        <div class="bm-field">
-          <label>Valor do Bordado <span class="required">*</span></label>
-          <div class="bm-price-input">
-            <span class="bm-prefix">R$</span>
+        <div class="pdv-modal__field">
+          <label>Valor do Bordado <span class="pdv-required">*</span></label>
+          <div class="pdv-modal__price-wrap">
+            <span class="pdv-modal__price-pfx">R$</span>
             <input type="number"
                    [ngModel]="bordadoPrice()"
                    (ngModelChange)="bordadoPrice.set($event)"
                    placeholder="0,00"
                    min="0.01"
                    step="0.01"
-                   autofocus>
+                   autofocus />
           </div>
         </div>
       </div>
-      <div class="bordado-modal-footer">
-        <button class="bm-btn-cancel" (click)="closeBordadoModal()">
+      <div class="pdv-modal__foot">
+        <button class="pdv-modal__btn pdv-modal__btn--cancel" (click)="closeBordadoModal()">
           <mat-icon>close</mat-icon> Cancelar
         </button>
-        <button class="bm-btn-confirm" (click)="confirmAddBordado()" [disabled]="!bordadoPrice() || bordadoPrice()! <= 0">
+        <button class="pdv-modal__btn pdv-modal__btn--confirm-purple"
+                (click)="confirmAddBordado()"
+                [disabled]="!bordadoPrice() || bordadoPrice()! <= 0">
           <mat-icon>add_shopping_cart</mat-icon> Adicionar ao Carrinho
         </button>
       </div>
@@ -461,31 +451,32 @@
   </div>
 }
 
+<!-- ── Modal: Detalhes OS ── -->
 @if (isDetailVisible() && selectedEmbroideryDetail(); as emb) {
-  <div class="modal-overlay" (click)="closeDetails()">
-    <div class="detail-modal" (click)="$event.stopPropagation()">
-      <div class="detail-header">
+  <div class="pdv-overlay" (click)="closeDetails()">
+    <div class="pdv-modal" (click)="$event.stopPropagation()">
+      <div class="pdv-modal__head pdv-modal__head--purple">
         <mat-icon>architecture</mat-icon>
         <h3>Detalhes da OS #{{ emb.id }}</h3>
-        <button class="close-btn" (click)="closeDetails()"><mat-icon>close</mat-icon></button>
+        <button class="pdv-modal__close" (click)="closeDetails()"><mat-icon>close</mat-icon></button>
       </div>
-      <div class="detail-body">
-        <div class="detail-section">
+      <div class="pdv-modal__body">
+        <div class="pdv-modal__detail-row">
           <label>Cliente do Serviço</label>
           <p>{{ emb.name }}</p>
         </div>
-        <div class="detail-section">
-          <label>Descrição Completa do Bordado</label>
-          <div class="description-box">{{ emb.description }}</div>
+        <div class="pdv-modal__detail-row">
+          <label>Descrição Completa</label>
+          <div class="pdv-modal__desc-box">{{ emb.description }}</div>
         </div>
-        <div class="detail-footer-info">
-          <span>Valor do Serviço: <strong>{{ emb.price | brlCurrency }}</strong></span>
-        </div>
+        <p class="pdv-modal__detail-price">
+          Valor do Serviço: <strong>{{ emb.price | brlCurrency }}</strong>
+        </p>
       </div>
-      <div class="detail-actions">
-        <button class="btn-secondary" (click)="closeDetails()">VOLTAR</button>
-        <button class="btn-primary" (click)="addToCart(emb); closeDetails()">
-          <mat-icon>add_shopping_cart</mat-icon> ADICIONAR AO CARRINHO
+      <div class="pdv-modal__foot">
+        <button class="pdv-modal__btn pdv-modal__btn--cancel" (click)="closeDetails()">Voltar</button>
+        <button class="pdv-modal__btn pdv-modal__btn--confirm-purple" (click)="addToCart(emb); closeDetails()">
+          <mat-icon>add_shopping_cart</mat-icon> Adicionar ao Carrinho
         </button>
       </div>
     </div>

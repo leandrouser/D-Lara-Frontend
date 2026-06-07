@@ -1,10 +1,8 @@
-// ─── Breakpoints ───────────────────────────────────────────
 $bp-sm: 480px;
 $bp-md: 768px;
 $bp-lg: 1024px;
 $bp-xl: 1280px;
 
-// ─── Tokens ────────────────────────────────────────────────
 $blue:        #2563eb;
 $blue-dark:   #1d4ed8;
 $blue-light:  #eff6ff;
@@ -29,7 +27,6 @@ $slate-700:   #334155;
 $slate-900:   #0f172a;
 $white:       #ffffff;
 
-// ─── Container ─────────────────────────────────────────────
 .products-container {
   padding: 24px;
   background: $slate-50;
@@ -40,7 +37,6 @@ $white:       #ffffff;
   @media (max-width: $bp-sm) { padding: 12px; }
 }
 
-// ─── Page Header ───────────────────────────────────────────
 .page-header {
   margin-bottom: 24px;
 
@@ -62,7 +58,6 @@ $white:       #ffffff;
   .subtitle { color: $slate-500; font-size: 14px; margin: 0; }
 }
 
-// ─── Summary Cards ─────────────────────────────────────────
 .cards {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -106,7 +101,6 @@ $white:       #ffffff;
   }
 }
 
-// ─── Search + Filters ──────────────────────────────────────
 .search-filters {
   background: $white;
   padding: 16px;
@@ -206,7 +200,6 @@ $white:       #ffffff;
   }
 }
 
-// ─── Search loading / info ──────────────────────────────────
 .search-loading,
 .search-info {
   display: flex;
@@ -224,7 +217,6 @@ $white:       #ffffff;
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 
-// ─── Table Container ───────────────────────────────────────
 .table-container {
   background: $white;
   border-radius: 14px;
@@ -232,20 +224,17 @@ $white:       #ffffff;
   overflow: hidden;
 }
 
-// ─── Table Wrapper — scroll horizontal no desktop ──────────
 .table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-// ─── Table base ────────────────────────────────────────────
 table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;  // garante alinhamento perfeito entre header e cells
-  min-width: 760px;     // força scroll antes de quebrar
+  table-layout: fixed;
+  min-width: 760px;
 
-  // ── Larguras das colunas ─────────────────────────────────
   .col-id          { width: 58px;  }
   .col-barcode     { width: 110px; }
   .col-name        { width: 180px; }
@@ -295,7 +284,6 @@ table {
   }
 }
 
-// ─── Loading / Empty states ────────────────────────────────
 td.loading,
 td.empty {
   text-align: center;
@@ -312,7 +300,6 @@ td.empty {
   }
 }
 
-// ─── Cell-specific styles ──────────────────────────────────
 .product-id {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 12px;
@@ -348,7 +335,6 @@ td.empty {
   white-space: nowrap;
 }
 
-// ─── Edit input wrappers ───────────────────────────────────
 .edit-input {
   display: flex;
   align-items: center;
@@ -363,7 +349,6 @@ td.empty {
   }
 }
 
-// ─── Inputs dentro da tabela ───────────────────────────────
 .table-input {
   width: 100%;
   padding: 6px 8px;
@@ -398,7 +383,6 @@ select.table-input {
   text-align: right;
 }
 
-// ─── Category tag ──────────────────────────────────────────
 .category-tag {
   display: inline-flex;
   align-items: center;
@@ -414,7 +398,6 @@ select.table-input {
   mat-icon { font-size: 13px; width: 13px; height: 13px; }
 }
 
-// ─── Stock tag ─────────────────────────────────────────────
 .tag {
   display: inline-flex;
   align-items: center;
@@ -433,7 +416,6 @@ select.table-input {
   mat-icon { font-size: 13px; width: 13px; height: 13px; }
 }
 
-// ─── Action buttons ────────────────────────────────────────
 .actions-col {
   text-align: center;
 }
@@ -468,19 +450,13 @@ select.table-input {
   &.cancel  { background: $slate-100;  color: $slate-600; &:hover { background: $slate-200; } }
 }
 
-// ─── Pagination ────────────────────────────────────────────
 .pagination-container {
   padding: 12px 16px;
   border-top: 1px solid $slate-100;
 }
 
-// ═══════════════════════════════════════════════════════════
-// RESPONSIVIDADE — Mobile card mode (≤ 768px)
-// Apenas quando NÃO está em edição em massa
-// ═══════════════════════════════════════════════════════════
 @media (max-width: $bp-md) {
 
-  // ── Quando está em edição em massa: mantém tabela com scroll
   .table-container.is-bulk-editing {
     .table-wrapper {
       overflow-x: auto;
@@ -496,7 +472,6 @@ select.table-input {
     thead, tbody, tr, th, td { display: revert; }
   }
 
-  // ── Modo normal (sem edição em massa): converte para cards
   .table-container:not(.is-bulk-editing) {
 
     .table-wrapper {
@@ -509,7 +484,6 @@ select.table-input {
       display: block;
     }
 
-    // Esconde cabeçalho
     thead {
       display: none;
     }
@@ -521,7 +495,6 @@ select.table-input {
       padding: 12px;
     }
 
-    // Cada linha vira um card
     tr {
       display: block;
       background: $white;
@@ -540,7 +513,6 @@ select.table-input {
         border-color: #bae6fd;
       }
 
-      // Linha de loading/empty: mantém como bloco simples
       &:has(td[colspan]) {
         box-shadow: none;
         border: none;
@@ -549,7 +521,6 @@ select.table-input {
       }
     }
 
-    // Células como linhas label + valor
     td {
       display: flex;
       justify-content: space-between;
@@ -563,7 +534,6 @@ select.table-input {
 
       &:last-child { border-bottom: none; }
 
-      // Label gerado pelo data-label
       &::before {
         content: attr(data-label);
         font-size: 11px;
@@ -576,37 +546,30 @@ select.table-input {
         min-width: 80px;
       }
 
-      // Esconde ID e Ações no modo card (pouco útil visualmente)
       &.product-id { display: none; }
 
-      // Coluna de ações centraliza o botão
       &.actions-col {
         justify-content: flex-end;
         padding-top: 10px;
         &::before { display: none; }
       }
 
-      // Loading/empty: ocupa largura toda
       &[colspan] {
         display: block;
         text-align: center;
         &::before { display: none; }
       }
 
-      // Inputs no modo edição individual: largura máxima
       .table-input { max-width: 160px; }
 
-      // Stock tag pode quebrar linha
       .stock-display { text-align: right; }
 
-      // Nome em destaque
       .name-text {
         font-weight: 700;
         font-size: 14px;
       }
     }
 
-    // Linha de nome: destaque como cabeçalho do card
     tr td.product-name {
       border-bottom: 1px solid $slate-200;
       padding-bottom: 10px;
@@ -618,14 +581,10 @@ select.table-input {
         font-size: 15px;
         color: $slate-900;
       }
-
-      // Exibe o barcode abaixo do nome como subtítulo
-      // (técnica: mostra o id via pseudo, mas o barcode está em outra td)
     }
   }
 }
 
-// ─── Extra small (< 480px) ─────────────────────────────────
 @media (max-width: $bp-sm) {
   .table-container:not(.is-bulk-editing) {
     tbody { padding: 8px; gap: 8px; }
@@ -636,7 +595,6 @@ select.table-input {
   }
 }
 
-// ─── Animations ────────────────────────────────────────────
 @keyframes fadein {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -648,7 +606,6 @@ select.table-input {
 
 .loading-spinner { animation: spin 1s linear infinite; }
 
-// ─── Pagination Controls ───────────────────────────────────
 .pagination-container {
   display: flex;
   align-items: center;

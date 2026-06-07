@@ -1,4 +1,3 @@
-// pdv.service.ts
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal, computed, effect } from '@angular/core';
 import { environment } from '../../../environments/environments';

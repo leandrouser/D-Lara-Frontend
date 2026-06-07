@@ -1,473 +1,471 @@
-<div class="layout">
-  <div class="content content-adjustable">
-    <div class="content">
+<div class="tr-wrap">
 
-      <!-- ── Header ── -->
-      <div class="header">
-        <div>
-          <h1><mat-icon>swap_horiz</mat-icon> Trocas e Devoluções</h1>
-          <p class="subtitle">Processe trocas de produtos e devoluções com controle de estoque e caixa</p>
-        </div>
-      </div>
-
-      <!-- ── Cards de resumo da sessão ── -->
-      <div class="cards-container">
-        <div class="cards-grid">
-          <div class="card blue">
-            <div class="info">
-              <span>Trocas na sessão</span>
-              <strong>{{ stats().total }}</strong>
-              <small>Operações realizadas</small>
-            </div>
-            <mat-icon class="icon">swap_horiz</mat-icon>
-          </div>
-          <div class="card green">
-            <div class="info">
-              <span>Total devolvido</span>
-              <strong>{{ stats().totalReturned | currency:'BRL' }}</strong>
-              <small>Valor estornado ao estoque</small>
-            </div>
-            <mat-icon class="icon">keyboard_return</mat-icon>
-          </div>
-          <div class="card purple">
-            <div class="info">
-              <span>Novos itens</span>
-              <strong>{{ stats().totalNewItems | currency:'BRL' }}</strong>
-              <small>Valor dos itens saídos</small>
-            </div>
-            <mat-icon class="icon">shopping_bag</mat-icon>
-          </div>
-          <div class="card orange">
-            <div class="info">
-              <span>Saldo no caixa</span>
-              <strong>{{ stats().totalDiff | currency:'BRL' }}</strong>
-              <small>{{ stats().totalDiff >= 0 ? 'Entrada líquida' : 'Saída líquida' }}</small>
-            </div>
-            <mat-icon class="icon">account_balance_wallet</mat-icon>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── Wizard ── -->
-      <div class="wizard-container">
-
-        <!-- Indicador de passos -->
-        <div class="steps-indicator">
-          <div class="step-item" [class.active]="step() >= 1" [class.done]="step() > 1">
-            <div class="step-circle">
-              @if (step() > 1) { <mat-icon>check</mat-icon> } @else { <span>1</span> }
-            </div>
-            <span class="step-label">Buscar venda</span>
-          </div>
-          <div class="step-line" [class.active]="step() > 1"></div>
-          <div class="step-item" [class.active]="step() >= 2" [class.done]="step() > 2">
-            <div class="step-circle">
-              @if (step() > 2) { <mat-icon>check</mat-icon> } @else { <span>2</span> }
-            </div>
-            <span class="step-label">Itens novos</span>
-          </div>
-          <div class="step-line" [class.active]="step() > 2"></div>
-          <div class="step-item" [class.active]="step() >= 3">
-            <div class="step-circle"><span>3</span></div>
-            <span class="step-label">Confirmar</span>
-          </div>
-        </div>
-
-        <!-- ══ PASSO 1: Buscar venda e selecionar itens ══ -->
-        @if (step() === 1) {
-          <div class="wizard-panel">
-            <div class="panel-header">
-              <mat-icon>search</mat-icon>
-              <h2>Buscar venda e selecionar itens a devolver</h2>
-            </div>
-
-            <!-- Busca -->
-            <div class="search-row">
-              <div class="input-box">
-                <mat-icon class="search-icon">tag</mat-icon>
-                <input type="number"
-                       placeholder="Número da venda (ex: 42)"
-                       [value]="saleIdInput()"
-                       (input)="saleIdInput.set($any($event.target).value)"
-                       (keyup)="onSaleInputKeyup($event)" />
-              </div>
-              <button class="btn-primary" (click)="searchSale()" [disabled]="loadingSale()">
-                @if (loadingSale()) {
-                  <mat-icon class="spin">refresh</mat-icon> Buscando...
-                } @else {
-                  <mat-icon>search</mat-icon> Buscar
-                }
-              </button>
-            </div>
-
-            <div *ngIf="saleError()" class="alert alert-warning">
-                <mat-icon>warning</mat-icon>
-                <span>{{ saleError() }}</span>
-            </div>
-
-            <!-- Dados da venda encontrada -->
-            @if (sale()) {
-              <div class="sale-info-bar">
-                <div class="sale-info-item">
-                  <span class="info-label">Venda</span>
-                  <strong>#{{ sale()!.id }}</strong>
-                </div>
-                <div class="sale-info-item">
-                  <span class="info-label">Cliente</span>
-                  <strong>{{ sale()!.customerName || 'Consumidor Final' }}</strong>
-                </div>
-                <div class="sale-info-item">
-                  <span class="info-label">Total da venda</span>
-                  <strong>{{ sale()!.total | currency:'BRL' }}</strong>
-                </div>
-                <div class="sale-info-item">
-                  <span class="info-label">Data</span>
-                  <strong>{{ formatDate(sale()!.dateSale) }}</strong>
-                </div>
-                <span class="status-tag paid">
-                  <mat-icon class="status-icon">check_circle</mat-icon> Paga
-                </span>
-              </div>
-
-              <!-- Ações de seleção rápida -->
-              <div class="selection-toolbar">
-                <span class="selection-count">
-                  {{ selectedCount() }} de {{ returnItems().length }} iten(s) selecionado(s)
-                </span>
-                <div class="selection-actions">
-                  <button class="btn-link" (click)="selectAll()">Selecionar todos</button>
-                  <button class="btn-link" (click)="clearSelection()">Limpar seleção</button>
-                </div>
-              </div>
-
-              <!-- Tabela de itens -->
-              <div class="table-container">
-                <div class="table-wrapper">
-                  <table class="sales-table">
-                    <thead>
-                      <tr>
-                        <th class="col-check"></th>
-                        <th>Produto</th>
-                        <th class="center">Qtd vendida</th>
-                        <th class="center">Qtd a devolver</th>
-                        <th class="right">Valor unit.</th>
-                        <th class="right">Subtotal devolução</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (row of returnItems(); track row.saleItem.id; let i = $index) {
-                        <tr [class.row-selected]="row.selected">
-                          <td class="col-check">
-                            <label class="checkbox-wrap">
-                              <input type="checkbox"
-                                     [checked]="row.selected"
-                                     (change)="toggleItem(i)" />
-                              <span class="checkmark"></span>
-                            </label>
-                          </td>
-                          <td>
-                            <div class="product-cell">
-                              <strong>{{ row.saleItem.productName || row.saleItem.description || '(item manual)' }}</strong>
-                              @if (row.saleItem.productBarcode) {
-                                <span class="barcode-badge">{{ row.saleItem.productBarcode }}</span>
-                              }
-                            </div>
-                          </td>
-                          <td class="center">
-                            <span class="quantity-badge">{{ row.saleItem.quantity }}</span>
-                          </td>
-                          <td class="center">
-                            <input type="number" class="qty-input"
-                                   [disabled]="!row.selected"
-                                   [value]="row.quantityToReturn"
-                                   min="1"
-                                   [max]="row.saleItem.quantity"
-                                   (change)="updateReturnQty(i, $any($event.target).value)" />
-                          </td>
-                          <td class="right">{{ row.saleItem.productPrice | currency:'BRL' }}</td>
-                          <td class="right">
-                            <strong>
-                              {{ row.saleItem.productPrice * row.quantityToReturn | currency:'BRL' }}
-                            </strong>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- Total devolvido -->
-              <div class="total-bar">
-                <span>Total a estornar:</span>
-                <strong class="total-value">{{ totalReturned() | currency:'BRL' }}</strong>
-              </div>
-
-              <div class="panel-footer">
-                <button class="btn-secondary" (click)="reset()">
-                  <mat-icon>close</mat-icon> Cancelar
-                </button>
-                <button class="btn-primary" [disabled]="!canGoStep2()" (click)="goToStep(2)">
-                  Próximo <mat-icon>chevron_right</mat-icon>
-                </button>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- ══ PASSO 2: Adicionar novos itens ══ -->
-        @if (step() === 2) {
-          <div class="wizard-panel">
-            <div class="panel-header">
-              <mat-icon>add_shopping_cart</mat-icon>
-              <h2>Adicionar novos itens (opcional)</h2>
-            </div>
-
-            <p class="panel-hint">
-              Busque os produtos que o cliente vai levar em troca. Deixe em branco para devolução pura.
-            </p>
-
-            <!-- Busca de produto -->
-            <div class="search-row">
-              <div class="input-box">
-                <mat-icon class="search-icon">search</mat-icon>
-                <input type="text"
-                       placeholder="Nome ou código do produto..."
-                       [value]="productSearchTerm()"
-                       (input)="productSearchTerm.set($any($event.target).value)"
-                       (keyup)="onProductSearchKeyup($event)" />
-              </div>
-              <button class="btn-secondary" (click)="searchProducts()" [disabled]="searchingProducts()">
-                @if (searchingProducts()) {
-                  <mat-icon class="spin">refresh</mat-icon>
-                } @else {
-                  <mat-icon>search</mat-icon>
-                }
-                Buscar produto
-              </button>
-            </div>
-
-            <!-- Resultados da busca -->
-            @if (productResults().length > 0) {
-              <div class="product-results">
-                @for (p of productResults(); track p.productId) {
-                  <div class="product-result-item" (click)="addNewItem(p)">
-                    <div class="product-result-info">
-                      <strong>{{ p.productName }}</strong>
-                      <span class="stock-badge">
-                        <mat-icon>inventory_2</mat-icon> {{ p.stockQty }} em estoque
-                      </span>
-                    </div>
-                    <div class="product-result-right">
-                      <span class="product-price">{{ p.price | currency:'BRL' }}</span>
-                      <button class="btn-add"><mat-icon>add</mat-icon></button>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-
-            <!-- Itens novos adicionados -->
-            @if (newItems().length > 0) {
-              <div class="table-container" style="margin-top: 16px">
-                <div class="table-wrapper">
-                  <table class="sales-table">
-                    <thead>
-                      <tr>
-                        <th>Produto</th>
-                        <th class="center">Estoque</th>
-                        <th class="center">Quantidade</th>
-                        <th class="right">Preço unit.</th>
-                        <th class="right">Subtotal</th>
-                        <th class="center">Remover</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (item of newItems(); track item.productId; let i = $index) {
-                        <tr>
-                          <td><strong>{{ item.productName }}</strong></td>
-                          <td class="center">
-                            <span class="quantity-badge">{{ item.stockQty }}</span>
-                          </td>
-                          <td class="center">
-                            <input type="number" class="qty-input"
-                                   [value]="item.quantity"
-                                   min="1"
-                                   [max]="item.stockQty"
-                                   (change)="updateNewQty(i, $any($event.target).value)" />
-                          </td>
-                          <td class="right">{{ item.price | currency:'BRL' }}</td>
-                          <td class="right">
-                            <strong>{{ item.price * item.quantity | currency:'BRL' }}</strong>
-                          </td>
-                          <td class="center">
-                            <button class="btn-icon-danger" (click)="removeNewItem(i)">
-                              <mat-icon>delete</mat-icon>
-                            </button>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="total-bar">
-                <span>Total novos itens:</span>
-                <strong class="total-value">{{ totalNewItems() | currency:'BRL' }}</strong>
-              </div>
-            }
-
-            <div class="panel-footer">
-              <button class="btn-secondary" (click)="goToStep(1)">
-                <mat-icon>chevron_left</mat-icon> Voltar
-              </button>
-              <button class="btn-primary" (click)="goToStep(3)">
-                Próximo <mat-icon>chevron_right</mat-icon>
-              </button>
-            </div>
-          </div>
-        }
-
-        <!-- ══ PASSO 3: Confirmar ══ -->
-        @if (step() === 3) {
-          <div class="wizard-panel">
-            <div class="panel-header">
-              <mat-icon>fact_check</mat-icon>
-              <h2>Confirmar troca</h2>
-            </div>
-
-            <!-- Resumo dos itens devolvidos -->
-            <div class="summary-section">
-              <h3 class="summary-title">
-                <mat-icon>keyboard_return</mat-icon> Itens devolvidos
-              </h3>
-              <div class="summary-list">
-                @for (r of returnItems(); track r.saleItem.id) {
-                  @if (r.selected) {
-                    <div class="summary-row">
-                      <span>{{ r.quantityToReturn }}x {{ r.saleItem.productName || '(manual)' }}</span>
-                      <span>{{ r.saleItem.productPrice * r.quantityToReturn | currency:'BRL' }}</span>
-                    </div>
-                  }
-                }
-              </div>
-            </div>
-
-            <!-- Resumo dos novos itens -->
-            @if (newItems().length > 0) {
-              <div class="summary-section">
-                <h3 class="summary-title">
-                  <mat-icon>shopping_bag</mat-icon> Novos itens
-                </h3>
-                <div class="summary-list">
-                  @for (n of newItems(); track n.productId) {
-                    <div class="summary-row">
-                      <span>{{ n.quantity }}x {{ n.productName }}</span>
-                      <span>{{ n.price * n.quantity | currency:'BRL' }}</span>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <!-- Diferença -->
-            <div class="diff-box" [ngClass]="diffClass()">
-              <div class="diff-row">
-                <span>Valor devolvido:</span>
-                <span>{{ totalReturned() | currency:'BRL' }}</span>
-              </div>
-              <div class="diff-row">
-                <span>Novos itens:</span>
-                <span>{{ totalNewItems() | currency:'BRL' }}</span>
-              </div>
-              <div class="diff-divider"></div>
-              <div class="diff-row diff-total">
-                <strong>{{ diffLabel() }}:</strong>
-                <strong>{{ difference() | currency:'BRL' }}</strong>
-              </div>
-            </div>
-
-            <!-- Motivo e método -->
-            <div class="form-row">
-              <div class="form-group">
-                <label>Motivo da troca <span class="required">*</span></label>
-                <input type="text"
-                       class="form-input"
-                       placeholder="Ex: produto com defeito, tamanho errado..."
-                       [value]="reason()"
-                       (input)="reason.set($any($event.target).value)" />
-              </div>
-              <div class="form-group">
-                <label>Método de pagamento do acerto</label>
-                <select class="form-select"
-                        [value]="paymentMethodCode()"
-                        (change)="paymentMethodCode.set($any($event.target).value)">
-                  <option value="DINHEIRO">Dinheiro</option>
-                  <option value="PIX">Pix</option>
-                  <option value="CARTAO">Cartão</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="panel-footer">
-              <button class="btn-secondary" (click)="goToStep(2)">
-                <mat-icon>chevron_left</mat-icon> Voltar
-              </button>
-              <button class="btn-confirm"
-                      [disabled]="!canSubmit() || submitting()"
-                      (click)="confirm()">
-                @if (submitting()) {
-                  <mat-icon class="spin">refresh</mat-icon> Processando...
-                } @else {
-                  <mat-icon>check_circle</mat-icon> Confirmar troca
-                }
-              </button>
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- ── Histórico da sessão ── -->
-      @if (history().length > 0) {
-        <div class="table-container" style="margin-top: 32px">
-          <div class="history-header">
-            <mat-icon>history</mat-icon>
-            <h2>Histórico da sessão</h2>
-          </div>
-          <div class="table-wrapper">
-            <table class="sales-table">
-              <thead>
-                <tr>
-                  <th>Venda origem</th>
-                  <th class="right">Devolvido</th>
-                  <th class="right">Novos itens</th>
-                  <th class="right">Diferença</th>
-                  <th>Resultado</th>
-                  <th>Horário</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (rec of history(); track rec.id) {
-                  <tr>
-                    <td><strong>#{{ rec.saleId }}</strong></td>
-                    <td class="right">{{ rec.totalReturned | currency:'BRL' }}</td>
-                    <td class="right">{{ rec.totalNewItems | currency:'BRL' }}</td>
-                    <td class="right">
-                      <span [class]="'diff-pill ' + historyDiffClass(rec.difference)">
-                        {{ rec.difference | currency:'BRL' }}
-                      </span>
-                    </td>
-                    <td>{{ rec.message }}</td>
-                    <td>{{ formatDate(rec.doneAt) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-      }
-
+  <!-- ── Header ── -->
+  <div class="tr-header">
+    <div>
+      <h1 class="tr-title">
+        <mat-icon>swap_horiz</mat-icon>
+        Trocas e Devoluções
+      </h1>
+      <p class="tr-subtitle">Processe trocas de produtos e devoluções com controle de estoque e caixa</p>
     </div>
   </div>
+
+  <!-- ── KPI Cards ── -->
+  <div class="tr-kpi-row">
+
+    <div class="tr-kpi tr-kpi--blue">
+      <div class="tr-kpi__top">
+        <span class="tr-kpi__label">Trocas na sessão</span>
+        <span class="tr-kpi__icon"><mat-icon>swap_horiz</mat-icon></span>
+      </div>
+      <strong class="tr-kpi__value">{{ stats().total }}</strong>
+      <span class="tr-kpi__sub">Operações realizadas</span>
+    </div>
+
+    <div class="tr-kpi tr-kpi--green">
+      <div class="tr-kpi__top">
+        <span class="tr-kpi__label">Total devolvido</span>
+        <span class="tr-kpi__icon"><mat-icon>keyboard_return</mat-icon></span>
+      </div>
+      <strong class="tr-kpi__value">{{ stats().totalReturned | currency:'BRL' }}</strong>
+      <span class="tr-kpi__sub">Valor estornado ao estoque</span>
+    </div>
+
+    <div class="tr-kpi tr-kpi--purple">
+      <div class="tr-kpi__top">
+        <span class="tr-kpi__label">Novos itens</span>
+        <span class="tr-kpi__icon"><mat-icon>shopping_bag</mat-icon></span>
+      </div>
+      <strong class="tr-kpi__value">{{ stats().totalNewItems | currency:'BRL' }}</strong>
+      <span class="tr-kpi__sub">Valor dos itens saídos</span>
+    </div>
+
+    <div class="tr-kpi tr-kpi--orange">
+      <div class="tr-kpi__top">
+        <span class="tr-kpi__label">Saldo no caixa</span>
+        <span class="tr-kpi__icon"><mat-icon>account_balance_wallet</mat-icon></span>
+      </div>
+      <strong class="tr-kpi__value">{{ stats().totalDiff | currency:'BRL' }}</strong>
+      <span class="tr-kpi__sub">{{ stats().totalDiff >= 0 ? 'Entrada líquida' : 'Saída líquida' }}</span>
+    </div>
+
+  </div>
+
+  <!-- ── Wizard ── -->
+  <div class="tr-wizard">
+
+    <!-- Steps -->
+    <div class="tr-steps">
+      <div class="tr-step" [class.tr-step--active]="step() >= 1" [class.tr-step--done]="step() > 1">
+        <div class="tr-step__circle">
+          @if (step() > 1) { <mat-icon>check</mat-icon> } @else { <span>1</span> }
+        </div>
+        <span class="tr-step__label">Buscar venda</span>
+      </div>
+      <div class="tr-step__line" [class.tr-step__line--active]="step() > 1"></div>
+      <div class="tr-step" [class.tr-step--active]="step() >= 2" [class.tr-step--done]="step() > 2">
+        <div class="tr-step__circle">
+          @if (step() > 2) { <mat-icon>check</mat-icon> } @else { <span>2</span> }
+        </div>
+        <span class="tr-step__label">Itens novos</span>
+      </div>
+      <div class="tr-step__line" [class.tr-step__line--active]="step() > 2"></div>
+      <div class="tr-step" [class.tr-step--active]="step() >= 3">
+        <div class="tr-step__circle"><span>3</span></div>
+        <span class="tr-step__label">Confirmar</span>
+      </div>
+    </div>
+
+    <!-- ── Step 1 ── -->
+    @if (step() === 1) {
+      <div class="tr-panel">
+        <div class="tr-panel__head">
+          <mat-icon>search</mat-icon>
+          <h2>Buscar venda e selecionar itens a devolver</h2>
+        </div>
+
+        <div class="tr-search-row">
+          <div class="tr-input-wrap">
+            <mat-icon class="tr-input-wrap__icon">tag</mat-icon>
+            <input
+              type="number"
+              class="tr-input"
+              placeholder="Número da venda (ex: 42)"
+              [value]="saleIdInput()"
+              (input)="saleIdInput.set($any($event.target).value)"
+              (keyup)="onSaleInputKeyup($event)" />
+          </div>
+          <button class="tr-btn tr-btn--primary" (click)="searchSale()" [disabled]="loadingSale()">
+            @if (loadingSale()) {
+              <mat-icon class="tr-spin">refresh</mat-icon> Buscando...
+            } @else {
+              <mat-icon>search</mat-icon> Buscar
+            }
+          </button>
+        </div>
+
+        <div *ngIf="saleError()" class="tr-alert tr-alert--warn">
+          <mat-icon>warning</mat-icon>
+          <span>{{ saleError() }}</span>
+        </div>
+
+        @if (sale()) {
+          <!-- Info bar da venda -->
+          <div class="tr-sale-bar">
+            <div class="tr-sale-bar__item">
+              <span class="tr-sale-bar__label">Venda</span>
+              <strong>#{{ sale()!.id }}</strong>
+            </div>
+            <div class="tr-sale-bar__item">
+              <span class="tr-sale-bar__label">Cliente</span>
+              <strong>{{ sale()!.customerName || 'Consumidor Final' }}</strong>
+            </div>
+            <div class="tr-sale-bar__item">
+              <span class="tr-sale-bar__label">Total da venda</span>
+              <strong>{{ sale()!.total | currency:'BRL' }}</strong>
+            </div>
+            <div class="tr-sale-bar__item">
+              <span class="tr-sale-bar__label">Data</span>
+              <strong>{{ formatDate(sale()!.dateSale) }}</strong>
+            </div>
+            <span class="tr-pill tr-pill--paid">
+              <mat-icon>check_circle</mat-icon> Paga
+            </span>
+          </div>
+
+          <!-- Toolbar de seleção -->
+          <div class="tr-toolbar">
+            <span class="tr-toolbar__count">
+              {{ selectedCount() }} de {{ returnItems().length }} item(s) selecionado(s)
+            </span>
+            <div class="tr-toolbar__actions">
+              <button class="tr-btn-link" (click)="selectAll()">Selecionar todos</button>
+              <button class="tr-btn-link" (click)="clearSelection()">Limpar seleção</button>
+            </div>
+          </div>
+
+          <!-- Tabela de itens -->
+          <div class="tr-table-card">
+            <div class="tr-table-scroll">
+              <table class="tr-table">
+                <thead>
+                  <tr>
+                    <th class="tr-th--check"></th>
+                    <th>Produto</th>
+                    <th class="tr-th--center">Qtd vendida</th>
+                    <th class="tr-th--center">Qtd a devolver</th>
+                    <th class="tr-th--right">Valor unit.</th>
+                    <th class="tr-th--right">Subtotal devolução</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of returnItems(); track row.saleItem.id; let i = $index) {
+                    <tr [class.tr-tr--selected]="row.selected">
+                      <td class="tr-th--check">
+                        <label class="tr-checkbox">
+                          <input type="checkbox" [checked]="row.selected" (change)="toggleItem(i)" />
+                          <span class="tr-checkbox__mark"></span>
+                        </label>
+                      </td>
+                      <td>
+                        <div class="tr-product-cell">
+                          <strong>{{ row.saleItem.productName || row.saleItem.description || '(item manual)' }}</strong>
+                          @if (row.saleItem.productBarcode) {
+                            <span class="tr-barcode">{{ row.saleItem.productBarcode }}</span>
+                          }
+                        </div>
+                      </td>
+                      <td class="tr-td--center">
+                        <span class="tr-qty-badge">{{ row.saleItem.quantity }}</span>
+                      </td>
+                      <td class="tr-td--center">
+                        <input type="number" class="tr-qty-input"
+                               [disabled]="!row.selected"
+                               [value]="row.quantityToReturn"
+                               min="1"
+                               [max]="row.saleItem.quantity"
+                               (change)="updateReturnQty(i, $any($event.target).value)" />
+                      </td>
+                      <td class="tr-td--right">{{ row.saleItem.productPrice | currency:'BRL' }}</td>
+                      <td class="tr-td--right">
+                        <strong>{{ row.saleItem.productPrice * row.quantityToReturn | currency:'BRL' }}</strong>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="tr-total-bar">
+              <span>Total a estornar:</span>
+              <strong class="tr-total-bar__value">{{ totalReturned() | currency:'BRL' }}</strong>
+            </div>
+          </div>
+
+          <div class="tr-panel__footer">
+            <button class="tr-btn tr-btn--secondary" (click)="reset()">
+              <mat-icon>close</mat-icon> Cancelar
+            </button>
+            <button class="tr-btn tr-btn--primary" [disabled]="!canGoStep2()" (click)="goToStep(2)">
+              Próximo <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Step 2 ── -->
+    @if (step() === 2) {
+      <div class="tr-panel">
+        <div class="tr-panel__head">
+          <mat-icon>add_shopping_cart</mat-icon>
+          <h2>Adicionar novos itens (opcional)</h2>
+        </div>
+
+        <div class="tr-hint">
+          Busque os produtos que o cliente vai levar em troca. Deixe em branco para devolução pura.
+        </div>
+
+        <div class="tr-search-row">
+          <div class="tr-input-wrap">
+            <mat-icon class="tr-input-wrap__icon">search</mat-icon>
+            <input
+              type="text"
+              class="tr-input"
+              placeholder="Nome ou código do produto..."
+              [value]="productSearchTerm()"
+              (input)="productSearchTerm.set($any($event.target).value)"
+              (keyup)="onProductSearchKeyup($event)" />
+          </div>
+          <button class="tr-btn tr-btn--secondary" (click)="searchProducts()" [disabled]="searchingProducts()">
+            @if (searchingProducts()) {
+              <mat-icon class="tr-spin">refresh</mat-icon>
+            } @else {
+              <mat-icon>search</mat-icon>
+            }
+            Buscar produto
+          </button>
+        </div>
+
+        @if (productResults().length > 0) {
+          <div class="tr-results">
+            @for (p of productResults(); track p.productId) {
+              <div class="tr-result-item" (click)="addNewItem(p)">
+                <div class="tr-result-item__info">
+                  <strong>{{ p.productName }}</strong>
+                  <span class="tr-stock-badge">
+                    <mat-icon>inventory_2</mat-icon> {{ p.stockQty }} em estoque
+                  </span>
+                </div>
+                <div class="tr-result-item__right">
+                  <span class="tr-result-item__price">{{ p.price | currency:'BRL' }}</span>
+                  <button class="tr-btn-add"><mat-icon>add</mat-icon></button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (newItems().length > 0) {
+          <div class="tr-table-card" style="margin-top: 16px">
+            <div class="tr-table-scroll">
+              <table class="tr-table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th class="tr-th--center">Estoque</th>
+                    <th class="tr-th--center">Quantidade</th>
+                    <th class="tr-th--right">Preço unit.</th>
+                    <th class="tr-th--right">Subtotal</th>
+                    <th class="tr-th--center">Remover</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of newItems(); track item.productId; let i = $index) {
+                    <tr>
+                      <td><strong>{{ item.productName }}</strong></td>
+                      <td class="tr-td--center">
+                        <span class="tr-qty-badge">{{ item.stockQty }}</span>
+                      </td>
+                      <td class="tr-td--center">
+                        <input type="number" class="tr-qty-input"
+                               [value]="item.quantity"
+                               min="1"
+                               [max]="item.stockQty"
+                               (change)="updateNewQty(i, $any($event.target).value)" />
+                      </td>
+                      <td class="tr-td--right">{{ item.price | currency:'BRL' }}</td>
+                      <td class="tr-td--right">
+                        <strong>{{ item.price * item.quantity | currency:'BRL' }}</strong>
+                      </td>
+                      <td class="tr-td--center">
+                        <button class="tr-btn-danger" (click)="removeNewItem(i)">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <div class="tr-total-bar">
+              <span>Total novos itens:</span>
+              <strong class="tr-total-bar__value">{{ totalNewItems() | currency:'BRL' }}</strong>
+            </div>
+          </div>
+        }
+
+        <div class="tr-panel__footer">
+          <button class="tr-btn tr-btn--secondary" (click)="goToStep(1)">
+            <mat-icon>chevron_left</mat-icon> Voltar
+          </button>
+          <button class="tr-btn tr-btn--primary" (click)="goToStep(3)">
+            Próximo <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ── Step 3 ── -->
+    @if (step() === 3) {
+      <div class="tr-panel">
+        <div class="tr-panel__head">
+          <mat-icon>fact_check</mat-icon>
+          <h2>Confirmar troca</h2>
+        </div>
+
+        <!-- Itens devolvidos -->
+        <div class="tr-summary-section">
+          <h3 class="tr-summary-section__title">
+            <mat-icon>keyboard_return</mat-icon> Itens devolvidos
+          </h3>
+          <div class="tr-summary-list">
+            @for (r of returnItems(); track r.saleItem.id) {
+              @if (r.selected) {
+                <div class="tr-summary-row">
+                  <span>{{ r.quantityToReturn }}x {{ r.saleItem.productName || '(manual)' }}</span>
+                  <span>{{ r.saleItem.productPrice * r.quantityToReturn | currency:'BRL' }}</span>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <!-- Novos itens -->
+        @if (newItems().length > 0) {
+          <div class="tr-summary-section">
+            <h3 class="tr-summary-section__title">
+              <mat-icon>shopping_bag</mat-icon> Novos itens
+            </h3>
+            <div class="tr-summary-list">
+              @for (n of newItems(); track n.productId) {
+                <div class="tr-summary-row">
+                  <span>{{ n.quantity }}x {{ n.productName }}</span>
+                  <span>{{ n.price * n.quantity | currency:'BRL' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Diff box -->
+        <div class="tr-diff-box" [ngClass]="diffClass()">
+          <div class="tr-diff-row">
+            <span>Valor devolvido:</span>
+            <span>{{ totalReturned() | currency:'BRL' }}</span>
+          </div>
+          <div class="tr-diff-row">
+            <span>Novos itens:</span>
+            <span>{{ totalNewItems() | currency:'BRL' }}</span>
+          </div>
+          <div class="tr-diff-box__divider"></div>
+          <div class="tr-diff-row tr-diff-row--total">
+            <strong>{{ diffLabel() }}:</strong>
+            <strong>{{ difference() | currency:'BRL' }}</strong>
+          </div>
+        </div>
+
+        <!-- Formulário -->
+        <div class="tr-form-row">
+          <div class="tr-form-group">
+            <label>Motivo da troca <span class="tr-required">*</span></label>
+            <input
+              type="text"
+              class="tr-form-input"
+              placeholder="Ex: produto com defeito, tamanho errado..."
+              [value]="reason()"
+              (input)="reason.set($any($event.target).value)" />
+          </div>
+          <div class="tr-form-group">
+            <label>Método de pagamento do acerto</label>
+            <select
+              class="tr-form-select"
+              [value]="paymentMethodCode()"
+              (change)="paymentMethodCode.set($any($event.target).value)">
+              <option value="DINHEIRO">Dinheiro</option>
+              <option value="PIX">Pix</option>
+              <option value="CARTAO">Cartão</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tr-panel__footer">
+          <button class="tr-btn tr-btn--secondary" (click)="goToStep(2)">
+            <mat-icon>chevron_left</mat-icon> Voltar
+          </button>
+          <button class="tr-btn tr-btn--confirm"
+                  [disabled]="!canSubmit() || submitting()"
+                  (click)="confirm()">
+            @if (submitting()) {
+              <mat-icon class="tr-spin">refresh</mat-icon> Processando...
+            } @else {
+              <mat-icon>check_circle</mat-icon> Confirmar troca
+            }
+          </button>
+        </div>
+      </div>
+    }
+
+  </div>
+
+  <!-- ── Histórico da sessão ── -->
+  @if (history().length > 0) {
+    <div class="tr-table-card" style="margin-top: 24px">
+      <div class="tr-history-head">
+        <mat-icon>history</mat-icon>
+        <h2>Histórico da sessão</h2>
+      </div>
+      <div class="tr-table-scroll">
+        <table class="tr-table">
+          <thead>
+            <tr>
+              <th>Venda origem</th>
+              <th class="tr-th--right">Devolvido</th>
+              <th class="tr-th--right">Novos itens</th>
+              <th class="tr-th--right">Diferença</th>
+              <th>Resultado</th>
+              <th>Horário</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rec of history(); track rec.id) {
+              <tr>
+                <td><span class="tr-id">#{{ rec.saleId }}</span></td>
+                <td class="tr-td--right tr-money">{{ rec.totalReturned | currency:'BRL' }}</td>
+                <td class="tr-td--right tr-money">{{ rec.totalNewItems | currency:'BRL' }}</td>
+                <td class="tr-td--right">
+                  <span [class]="'tr-diff-pill tr-diff-pill--' + historyDiffClass(rec.difference)">
+                    {{ rec.difference | currency:'BRL' }}
+                  </span>
+                </td>
+                <td>{{ rec.message }}</td>
+                <td class="tr-date">{{ formatDate(rec.doneAt) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
 </div>

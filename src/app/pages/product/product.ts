@@ -232,7 +232,7 @@ export class Product implements OnInit {
     this.api.create(data).subscribe({
       next: newProduct => {
         alert(`Produto "${newProduct.name}" criado com sucesso!`);
-        this.loadPage();   // recarrega a página atual para refletir o novo produto
+        this.loadPage();
       },
       error: err => {
         alert('Erro ao criar produto. Verifique o console.');
@@ -285,7 +285,6 @@ export class Product implements OnInit {
 
     const formData = this.editForm();
 
-    // Validações básicas
     if (!formData.name.trim()) {
       alert('O nome do produto é obrigatório');
       return;
@@ -352,16 +351,14 @@ export class Product implements OnInit {
 
   toggleBulkEdit() {
   if (this.isBulkEditing()) {
-    this.cancelEditing(); // Limpa estados se estiver cancelando
+    this.cancelEditing();
   }
   this.isBulkEditing.set(!this.isBulkEditing());
 }
 
-// 3. Método para salvar todos os produtos da página atual
 saveAllChanges() {
   this.state.set('loading');
 
-  // Mapeia os produtos da tela para o formato que o backend espera
   const updates: ProductBulkRequest[] = this.products().map(p => ({
     id: p.id,
     name: p.name,

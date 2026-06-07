@@ -27,7 +27,6 @@ export class CustomerModal implements OnDestroy {
   isLoading = signal(false);
   errorMessage = signal('');
 
-  // ── Sinais de validação de telefone ──────────────────────
   phoneExists   = signal(false);
   phoneChecked  = signal(false);
   checkingPhone = signal(false);
@@ -97,7 +96,6 @@ export class CustomerModal implements OnDestroy {
       if (finalValue.length > 2) finalValue = `(${finalValue.substring(0, 2)}) ${finalValue.substring(2)}`;
       if (finalValue.length > 9) finalValue = `${finalValue.substring(0, 10)}-${finalValue.substring(10, 14)}`;
 
-      // ── dispara verificação após aplicar máscara ──
       this.phoneChecked.set(false);
       this.phoneExists.set(false);
       this.phoneSubject.next(finalValue);

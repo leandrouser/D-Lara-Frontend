@@ -1,4 +1,3 @@
-// src/app/core/service/product.service.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';

@@ -509,10 +509,9 @@
   }
 }
 
-// Breakpoint definido anteriormente (768px ou conforme sua variável $bp-md)
 @media (max-width: 768px) {
   .table-wrapper {
-    overflow-x: hidden; // Remove scroll horizontal já que vai virar card
+    overflow-x: hidden; 
   }
 
   .sales-table {
@@ -520,7 +519,7 @@
     display: block;
 
     thead {
-      display: none; // Esconde o cabeçalho original
+      display: none;
     }
 
     tbody {
@@ -535,7 +534,6 @@
         overflow: hidden;
         box-shadow: 0 2px 4px rgba(0,0,0,0.04);
 
-        // Estilo específico para destacar clientes inativos no card mobile
         &.inactive {
           border-left: 4px solid #dc2626;
         }
@@ -553,7 +551,6 @@
           width: 100% !important;
           box-sizing: border-box;
 
-          // Injeção do Label via data-label
           &::before {
             content: attr(data-label);
             font-weight: 700;
@@ -565,20 +562,18 @@
             margin-right: 15px;
           }
 
-          // Ajuste para a primeira célula (ID)
           &.client-id {
             background: #f8fafc;
             font-size: 14px;
           }
 
-          // Ajuste para a última célula (Ações)
           &:last-child {
             border-bottom: none;
             background: #f8fafc;
-            justify-content: center; // Centraliza botões de ação no mobile
+            justify-content: center;
 
             &::before {
-              display: none; // Remove o label "Ações" para dar espaço aos botões
+              display: none;
             }
           }
         }
@@ -586,7 +581,6 @@
     }
   }
 
-  // Ajuste dos botões de ação para ocuparem melhor o espaço
   .client-actions {
     display: flex;
     gap: 8px;

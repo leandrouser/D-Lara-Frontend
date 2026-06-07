@@ -178,7 +178,6 @@
       </div>
     </div>
 
-    <!-- ═══════════════════ ABA: RESUMO ═══════════════════ -->
     <div class="tab-content summary-tab" *ngIf="activeTab() === 'summary'">
       @if (isSummaryLoading()) {
         <div class="summary-loading"><mat-spinner diameter="36"></mat-spinner></div>
@@ -230,7 +229,6 @@
       }
     </div>
 
-    <!-- ═══════════════════ ABA: GRÁFICO ═══════════════════ -->
     <div class="tab-content chart-tab" *ngIf="activeTab() === 'chart'">
       @if (!transactions().length) {
         <div class="empty-state">
@@ -244,10 +242,8 @@
       }
     </div>
 
-    <!-- ═══════════════════ ABA: CONFERÊNCIA ═══════════════════ -->
     <div class="tab-content review-tab" *ngIf="activeTab() === 'review' && isAdmin()">
 
-      <!-- PENDENTES DE CONFERÊNCIA -->
       <div class="review-layout">
         <aside class="review-sessions">
           <div class="panel-header">
@@ -438,7 +434,6 @@
         </section>
       </div>
 
-      <!-- CAIXAS JÁ CONFERIDOS -->
       <div class="reviewed-section" style="margin-top:2rem">
         <div class="panel-header" (click)="showReviewed.set(!showReviewed())" style="cursor:pointer">
           <h3><mat-icon>inventory</mat-icon> Caixas já conferidos</h3>
@@ -570,7 +565,6 @@
       </div>
     </div>
 
-    <!-- ═══════════════════ ABA: RELATÓRIOS ═══════════════════ -->
     <div class="tab-content reports-tab" *ngIf="activeTab() === 'reports' && isAdmin()">
       <div class="report-toolbar">
         <input type="date" [ngModel]="reportDateFrom()" (ngModelChange)="reportDateFrom.set($event)">

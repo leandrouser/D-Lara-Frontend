@@ -61,7 +61,6 @@
     </div>
   </div>
 
-  <!-- ── Search & Filters ─────────────────────────────────── -->
   <div class="search-filters">
     <div class="search-box">
       <div class="input-box">
@@ -119,20 +118,17 @@
     </div>
   </div>
 
-  <!-- ── Loading indicator ────────────────────────────────── -->
   <div *ngIf="isLoading()" class="search-loading">
     <mat-icon class="loading-spinner">refresh</mat-icon>
     Buscando produtos...
   </div>
 
-  <!-- ── Search info bar ──────────────────────────────────── -->
   <div *ngIf="search().trim().length >= 1 && !isLoading()" class="search-info">
     <mat-icon>search</mat-icon>
     Buscando por: "{{ search() }}"
     <span>• {{ totalItems() }} resultado(s)</span>
   </div>
 
-  <!-- ── Table container ──────────────────────────────────── -->
   <div class="table-container" [class.is-bulk-editing]="isBulkEditing()">
     <div class="table-wrapper">
       <table>
@@ -150,7 +146,6 @@
         </thead>
 
         <tbody>
-          <!-- Loading state -->
           <tr *ngIf="isLoading() && filteredList().length === 0">
             <td colspan="8" class="loading">
               <mat-icon class="loading-spinner">refresh</mat-icon>
@@ -158,7 +153,6 @@
             </td>
           </tr>
 
-          <!-- Empty state -->
           <tr *ngIf="!isLoading() && filteredList().length === 0">
             <td colspan="8" class="empty">
               <mat-icon>search_off</mat-icon>
@@ -171,15 +165,12 @@
             </td>
           </tr>
 
-          <!-- Product rows -->
           <tr *ngFor="let p of filteredList()"
               [class.low-stock]="isLowStock(p)"
               [class.editing]="editingProductId() === p.id || isBulkEditing()">
 
-            <!-- ID -->
             <td class="product-id" data-label="ID">{{ p.id }}</td>
 
-            <!-- Código -->
             <td class="barcode" data-label="Código">
               <input
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -190,7 +181,6 @@
               <span *ngIf="editingProductId() !== p.id && !isBulkEditing()">{{ p.barcode || 'N/A' }}</span>
             </td>
 
-            <!-- Nome -->
             <td class="product-name" data-label="Nome">
               <input
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -201,7 +191,6 @@
               <span *ngIf="editingProductId() !== p.id && !isBulkEditing()" class="name-text">{{ p.name }}</span>
             </td>
 
-            <!-- Descrição -->
             <td class="product-description" data-label="Descrição">
               <input
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -214,7 +203,6 @@
               </span>
             </td>
 
-            <!-- Categoria -->
             <td class="product-category" data-label="Categoria">
               <select
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -234,7 +222,6 @@
               </span>
             </td>
 
-            <!-- Preço -->
             <td class="price-cell" data-label="Preço">
               <div *ngIf="editingProductId() === p.id || isBulkEditing()" class="edit-input">
                 <span class="currency">R$</span>
@@ -250,7 +237,6 @@
               </span>
             </td>
 
-            <!-- Estoque -->
             <td class="stock-cell" data-label="Estoque">
               <div *ngIf="editingProductId() === p.id || isBulkEditing()" class="edit-input">
                 <input
@@ -271,7 +257,6 @@
               </span>
             </td>
 
-            <!-- Ações -->
             <td class="actions-col" data-label="Ações">
               <div *ngIf="editingProductId() === p.id" class="edit-actions">
                 <button class="mini-btn success" (click)="saveEditing()">
@@ -295,39 +280,30 @@
       </table>
     </div>
 
-    <!-- ── Mobile card list (renderizado via CSS @media, mesmo DOM) ── -->
-    <!-- Os data-label nos <td> já são suficientes para o CSS card mode -->
-
     <div class="pagination-container" *ngIf="totalItems() > 0">
 
-    <!-- Info -->
     <div class="pagination-info">
       Mostrando <strong>{{ getStartIndex() }}</strong>
       até <strong>{{ getEndIndex() }}</strong>
       de <strong>{{ totalItems() }}</strong>
     </div>
 
-    <!-- Controles -->
     <div class="pagination-controls">
 
-      <!-- Botão anterior -->
       <button
         (click)="previousPage()"
         [disabled]="currentPage() === 1">
         <mat-icon>chevron_left</mat-icon>
       </button>
 
-      <!-- Primeira página -->
       <button
         *ngIf="visiblePages().includes(-1)"
         (click)="goToPage(1)">
         1
       </button>
 
-      <!-- Reticências início -->
       <span *ngIf="visiblePages()[0] === -1">...</span>
 
-      <!-- Páginas dinâmicas -->
       <ng-container *ngFor="let page of visiblePages()">
         <button
           *ngIf="page !== -1"
@@ -337,25 +313,20 @@
         </button>
       </ng-container>
 
-      <!-- Reticências fim -->
       <span *ngIf="visiblePages()[visiblePages().length - 1] === -1">...</span>
 
-      <!-- Última página -->
       <button
         *ngIf="visiblePages().includes(-1)"
         (click)="goToPage(totalPages())">
         {{ totalPages() }}
       </button>
 
-      <!-- Próxima -->
       <button
         (click)="nextPage()"
         [disabled]="currentPage() === totalPages()">
         <mat-icon>chevron_right</mat-icon>
       </button>
 
-
-      <!-- Itens por página -->
       <div class="pagination-size">
         <label>Itens por página:</label>
         <select (change)="changeItemsPerPage($event)">

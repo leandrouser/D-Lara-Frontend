@@ -34,7 +34,7 @@ export class Sales implements OnInit, OnDestroy {
   statusFilter = signal<string>('all');
 
   currentPage = signal(0);
-  itemsPerPage = signal(5);
+  itemsPerPage = signal(6);
   totalElements = signal(0);
   totalPages = signal(0);
 
