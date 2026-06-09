@@ -399,12 +399,20 @@
 
     if (sale.items?.length > 0) {
       const newCart = sale.items.map(item => {
-        const isEmbroidery = !!item.embroideryId;
+        const isManual = !item.productId && !item.embroideryId && !!item.manualPrice;
+        const isEmbroidery = !!item.embroideryId || isManual;
         const price = item.manualPrice ?? item.productPrice ?? 0;
         return {
-          product: { id: item.productId || item.embroideryId || 0,
-                    name: item.productName || item.description || '', price, stockQty: 999 } as any,
-          quantity: item.quantity, isEmbroidery, total: price * item.quantity
+          product: {
+            id: item.productId || item.embroideryId || 0,
+            name: item.productName || item.description || '',
+            price,
+            stockQty: 999
+          } as any,
+          quantity: item.quantity,
+          isEmbroidery,
+          embroideryId: item.embroideryId ?? undefined,
+          total: price * item.quantity
         };
       });
       const newDiscountType = isPending && sale.discountType === DiscountType.PERCENTAGE ? 'percent' : 'value' as 'value' | 'percent';
