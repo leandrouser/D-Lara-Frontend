@@ -1,27 +1,29 @@
-// ── Dialog Title ───────────────────────────────────────────
 mat-dialog-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 600;
-  color: #3f51b5;
+  color: #0f172a;
+  padding-bottom: 4px;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; color: #4f46e5; }
 }
 
-// ── Next ID Badge ──────────────────────────────────────────
 .next-id-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
+  background: #f5f3ff;
+  color: #4338ca;
+  border: 0.5px solid #c4b5fd;
+  border-radius: 6px;
   padding: 5px 12px;
-  font-size: 13px;
-  margin: 4px 24px 0;
+  font-size: 12px;
+  margin: 0 24px 4px;
 
-  mat-icon { font-size: 16px; width: 16px; height: 16px; }
-  strong   { font-weight: 700; }
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  strong   { font-weight: 600; }
 
   .id-error {
     display: flex;
@@ -31,29 +33,28 @@ mat-dialog-title {
   }
 }
 
-// ── Form ───────────────────────────────────────────────────
 mat-dialog-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+  padding-top: 8px !important;
 }
 
 mat-form-field {
   width: 100%;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .form-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
+
+  .half-width { flex: 1; }
 }
 
-.half-width { flex: 1; }
-
-// ── Barcode feedback ───────────────────────────────────────
 .barcode-feedback {
-  margin: -6px 0 4px;
-  min-height: 20px;
+  margin: -4px 0 6px;
+  min-height: 18px;
   font-size: 12px;
 
   span {
@@ -61,12 +62,12 @@ mat-form-field {
     align-items: center;
     gap: 4px;
 
-    mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    mat-icon { font-size: 13px; width: 13px; height: 13px; }
   }
 
   .checking { color: #64748b; }
   .error    { color: #dc2626; font-weight: 500; }
-  .success  { color: #15803d; }
+  .success  { color: #16a34a; }
 }
 
 .barcode-duplicate ::ng-deep .mat-mdc-text-field-wrapper {
@@ -74,17 +75,44 @@ mat-form-field {
 }
 
 .icon-error   { color: #dc2626; }
-.icon-success { color: #15803d; }
+.icon-success { color: #16a34a; }
 
-// ── Snackbar ───────────────────────────────────────────────
+mat-dialog-actions {
+  padding: 12px 24px 16px !important;
+  gap: 8px;
+
+  button[mat-button] {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+
+    &:hover { background: #f1f5f9; }
+  }
+
+  button[mat-raised-button] {
+    background: #4f46e5 !important;
+    color: #fff !important;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: none !important;
+    border-radius: 8px;
+    padding: 0 18px;
+
+    &:hover:not(:disabled) { background: #4338ca !important; }
+    &:disabled { background: #e2e8f0 !important; color: #94a3b8 !important; }
+
+    mat-icon { font-size: 16px; width: 16px; height: 16px; margin-right: 4px; }
+  }
+}
+
 ::ng-deep .mat-mdc-snack-bar-container {
   &.snack-success .mdc-snackbar__surface {
-    background: #dcfce7;
-    color: #15803d;
+    background: #f0fdf4;
+    color: #166534;
   }
 
   &.snack-error .mdc-snackbar__surface {
-    background: #fee2e2;
-    color: #dc2626;
+    background: #fef2f2;
+    color: #991b1b;
   }
 }

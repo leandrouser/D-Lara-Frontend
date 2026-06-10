@@ -262,24 +262,11 @@ removeCurrentFile(): void {
   this.showSuccess('Arquivo removido da seleção.');
 }
 
-onQuickCustomerSave(customerData: any): void {
-  this.loading.set(true);
-  this.isCustomerModalOpen = false;
-
-  this.customerService.create(customerData).subscribe({
-    next: (newCustomer: CustomerResponse) => {
-      this.loading.set(false);
-      if (newCustomer?.id) {
-        this.selectCustomer(newCustomer);
-        this.showSuccess('Cliente cadastrado e selecionado!');
-      }
-    },
-    error: (err) => {
-      this.loading.set(false);
-      this.showError('Erro ao cadastrar cliente: ' + (err.error?.message || err.message));
-    }
-  });
-}
+  onCustomerAdded(customer: CustomerResponse): void {
+    this.isCustomerModalOpen = false;
+    this.selectCustomer(customer);
+    this.showSuccess(`Cliente ${customer.name} selecionado!`);
+  }
 
   private parseBackendDate(dateString?: string): Date | null {
     if (!dateString) return null;

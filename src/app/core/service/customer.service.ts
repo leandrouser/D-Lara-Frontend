@@ -93,11 +93,12 @@ export class CustomerService {
   }
 
   checkPhoneExists(phone: string): Observable<boolean> {
-  const digits = phone.replace(/\D/g, '');
-  return this.searchPaged(digits, 0, 5).pipe(
-    map(page => page.content.some(c => c.phone.replace(/\D/g, '') === digits)),
-    catchError(() => of(false))
-  );
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10) return of(false);
+
+    return this.http.get<boolean>(`${this.apiUrl}/check-phone`, {
+      params: new HttpParams().set('phone', digits)
+    }).pipe(catchError(() => of(false)));
   }
 
   findById(id: number): Observable<CustomerResponse> {

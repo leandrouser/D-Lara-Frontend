@@ -65,6 +65,11 @@ export class CustomerModal implements OnDestroy {
       return;
     }
 
+    if (this.checkingPhone()) {
+      this.showTemporaryError('Aguarde a verificação do telefone.');
+      return;
+    }
+
     if (this.phoneExists()) return;
 
     this.errorMessage.set('');

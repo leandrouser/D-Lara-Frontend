@@ -43,6 +43,8 @@ html, body {
 
 .content {
   flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
   padding: 20px;
   transition: margin-left 0.3s ease;
   margin-left: 250px;

@@ -55,26 +55,9 @@
         </div>
 
         <div class="filter-buttons">
-         <button
-    (click)="applyFilter('all')"
-    [class.bg-blue-600]="statusFilter() === 'all'"
-    class="px-4 py-2 border rounded shadow-sm transition-colors">
-    Todos
-  </button>
-          <button
-    (click)="applyFilter('active')"
-    [class.bg-green-600]="statusFilter() === 'active'"
-    [class.text-white]="statusFilter() === 'active'"
-    class="px-4 py-2 border rounded shadow-sm transition-colors">
-    Ativos
-  </button>
-          <button
-    (click)="applyFilter('inactive')"
-    [class.bg-red-600]="statusFilter() === 'inactive'"
-    [class.text-white]="statusFilter() === 'inactive'"
-    class="px-4 py-2 border rounded shadow-sm transition-colors">
-    Inativos
-  </button>
+         <button (click)="applyFilter('all')"    [class.active]="statusFilter() === 'all'">Todos</button>
+          <button (click)="applyFilter('active')" [class.active]="statusFilter() === 'active'">Ativos</button>
+          <button (click)="applyFilter('inactive')" [class.active]="statusFilter() === 'inactive'">Inativos</button>
         </div>
       </div>
 

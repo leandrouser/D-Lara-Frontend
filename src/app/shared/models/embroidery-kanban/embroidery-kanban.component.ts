@@ -23,9 +23,17 @@ export class EmbroideryKanbanComponent {
   @Output() remove        = new EventEmitter<number>();
   @Output() revertStatus = new EventEmitter<{ item: EmbroideryResponse, status: string }>();
 
-  get pending()    { return this.items.filter(e => e.status === 'PENDING');    }
-  get inProduction() { return this.items.filter(e => e.status === 'IN_PRODUCTION'); }
-  get processing() { return this.items.filter(e => e.status === 'PROCESSING'); }
+  private sortByDelivery(items: EmbroideryResponse[]): EmbroideryResponse[] {
+    return [...items].sort((a, b) => {
+      if (!a.deliveryDate) return 1;
+      if (!b.deliveryDate) return -1;
+      return new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime();
+    });
+  }
+
+  get pending()      { return this.sortByDelivery(this.items.filter(e => e.status === 'PENDING')); }
+  get inProduction() { return this.sortByDelivery(this.items.filter(e => e.status === 'IN_PRODUCTION')); }
+  get processing()   { return this.sortByDelivery(this.items.filter(e => e.status === 'PROCESSING')); }
   get completed()  { return this.items.filter(e => e.status === 'COMPLETED');  }
 
   isOverdue(dateStr: string): boolean {
