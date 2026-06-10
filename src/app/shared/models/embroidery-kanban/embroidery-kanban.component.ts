@@ -34,7 +34,16 @@ export class EmbroideryKanbanComponent {
   get pending()      { return this.sortByDelivery(this.items.filter(e => e.status === 'PENDING')); }
   get inProduction() { return this.sortByDelivery(this.items.filter(e => e.status === 'IN_PRODUCTION')); }
   get processing()   { return this.sortByDelivery(this.items.filter(e => e.status === 'PROCESSING')); }
-  get completed()  { return this.items.filter(e => e.status === 'COMPLETED');  }
+  get completed() {
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  return this.items.filter(e => {
+    if (e.status !== 'COMPLETED') return false;
+    if (!e.deliveredAt) return true;
+    return new Date(e.deliveredAt) >= oneWeekAgo;
+  });
+}
 
   isOverdue(dateStr: string): boolean {
     if (!dateStr) return false;
