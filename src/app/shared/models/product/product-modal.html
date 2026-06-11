@@ -17,7 +17,6 @@
 <mat-dialog-content>
   <form #productForm="ngForm">
 
-    <!-- Código de Barras primeiro -->
 <mat-form-field appearance="outline" [class.barcode-duplicate]="barcodeExists()">
   <mat-label>Código de Barras</mat-label>
   <input
@@ -49,10 +48,21 @@
   </span>
 </div>
 
-<!-- Nome depois -->
 <mat-form-field appearance="outline">
   <mat-label>Nome do Produto *</mat-label>
   <input matInput name="name" [(ngModel)]="form.name" required>
+</mat-form-field>
+
+<mat-form-field appearance="outline">
+  <mat-label>Descrição</mat-label>
+  <textarea
+    matInput
+    name="description"
+    [(ngModel)]="form.description"
+    rows="3"
+    maxlength="500">
+  </textarea>
+  <mat-hint align="end">{{ form.description?.length || 0 }}/500</mat-hint>
 </mat-form-field>
 
     <div class="form-row">
