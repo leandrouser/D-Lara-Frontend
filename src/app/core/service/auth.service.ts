@@ -25,10 +25,7 @@ export class AuthService {
       .pipe(
         tap(response => {
           localStorage.setItem('token', response.token);
-
           const user = response.user || { name: 'Usuário', role: 'ADMIN' };
-          console.log('user recebido:', user);
-
           localStorage.setItem('user', JSON.stringify(user));
           this.currentUser.set(user);
 

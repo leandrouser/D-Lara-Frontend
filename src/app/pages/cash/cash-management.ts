@@ -601,7 +601,9 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
       'SUPPLEMENT': 'Suprimento',
       'SANGRIA': 'Sangria',
       'CHANGE': 'Troco',
-      'OPENING': 'Abertura'
+      'OPENING': 'Abertura',
+      'EXCHANGE_RETURN': 'Troca/Devolução',
+      'REFUND': 'Cancelamento'
     };
     return labels[type] || type;
   }
