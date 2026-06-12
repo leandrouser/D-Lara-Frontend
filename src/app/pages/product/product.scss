@@ -392,7 +392,7 @@ table {
 
     & + tr td { border-top: 1px solid $zinc-100; }
 
-    &.row--low-stock { background: $amber-50; &:hover { background: darken($amber-50, 1%); } }
+    &.row--low-stock { background: $amber-50; &:hover { background: color.adjust($amber-50, $lightness: -1%); } }
 
     &.row--editing {
       background: $blue-50 !important;
@@ -407,7 +407,7 @@ table {
 
     & + tr td { border-top: 1px solid $zinc-100; }
 
-    &.row--low-stock { background: $amber-50; &:hover { background: darken($amber-50, 1%); } }
+    &.row--low-stock { background: $amber-50; &:hover { background: color.adjust($amber-50, $lightness: -1%); } }
 
     &.row--editing {
       background: $blue-50 !important;
@@ -579,7 +579,7 @@ table {
 
   &.action-btn--cancel {
     background: none;
-    &:hover { background: $red-50; color: $red-700; border-color: darken($red-100, 5%); }
+    &:hover { background: $red-50; color: $red-700; border-color: color.adjust($red-100, $lightness: -5%); }
   }
 }
 
