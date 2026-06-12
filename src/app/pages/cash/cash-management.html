@@ -158,7 +158,8 @@
                          item.type === 'SUPPLEMENT' ? 'add_circle'    :
                          item.type === 'SANGRIA'    ? 'remove_circle' :
                          item.type === 'CHANGE'     ? 'sync_alt'      :
-                         item.type === 'OPENING'    ? 'vpn_key'       : 'payments' }}
+                         item.type === 'OPENING'    ? 'vpn_key'       :
+                         item.type === 'REFUND'     ? 'cancel'        : 'payments' }}
                     </mat-icon>
                     {{ getTypeLabel(item.type) }}
                   </span>
