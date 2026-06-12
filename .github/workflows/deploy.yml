@@ -13,29 +13,38 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Deploy no VPS
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Recriar environment de produção
+        run: |
+          printf 'export const environment = {\n  production: true,\n  apiUrl: "/api"\n};\n' > src/environments/environment.prod.ts
+
+      - name: Build de produção
+        run: npx ng build --configuration=production
+
+      - name: Copiar dist para VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "dist/dlara-frontend/"
+          target: "/var/www/pdv/dist/"
+          strip_components: 1
+          overwrite: true
+
+      - name: Recarregar nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script_stop: true
           script: |
-            git config --global --add safe.directory /var/www/pdv
-            cd /var/www/pdv
-
-            # 1. Força o servidor a esquecer qualquer alteração local que trave o pull
-            git reset --hard HEAD
-
-            # 2. Puxa o código novo
-            git pull origin main
-
-            # 3. Recria o environment de produção
-            printf 'export const environment = {\n  production: true,\n  apiUrl: "/api"\n};\n' > src/environments/environment.prod.ts
-
-            # 4. Instala e builda
-            npm install
-            npx ng build --configuration=production
-
-            # 5. Atualiza o servidor web
             sudo systemctl reload nginx
