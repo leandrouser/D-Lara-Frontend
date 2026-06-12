@@ -104,18 +104,23 @@
   <div class="table-section" *ngIf="isCashOpen() || isAdmin()">
     <div class="section-header">
       <div class="tabs">
-        <button class="tab-btn" *ngIf="isCashOpen() || isAdmin()"
-          [class.active]="activeTab() === 'movements'" (click)="activeTab.set('movements')">
-          <mat-icon>list_alt</mat-icon> Movimentações
-        </button>
-        <button class="tab-btn" *ngIf="isCashOpen() || isAdmin()"
-          [class.active]="activeTab() === 'summary'" (click)="activeTab.set('summary')">
-          <mat-icon>summarize</mat-icon> Resumo
-        </button>
-        <button class="tab-btn" *ngIf="isCashOpen() || isAdmin()"
-          [class.active]="activeTab() === 'chart'" (click)="activeTab.set('chart')">
-          <mat-icon>pie_chart</mat-icon> Gráfico
-        </button>
+        <!-- Movimentações: só admin vê -->
+          <button class="tab-btn" *ngIf="isCashOpen() && isAdmin()"
+            [class.active]="activeTab() === 'movements'" (click)="activeTab.set('movements')">
+            <mat-icon>list_alt</mat-icon> Movimentações
+          </button>
+
+          <!-- Resumo: só admin -->
+          <button class="tab-btn" *ngIf="isCashOpen() && isAdmin()"
+            [class.active]="activeTab() === 'summary'" (click)="activeTab.set('summary')">
+            <mat-icon>summarize</mat-icon> Resumo
+          </button>
+
+          <!-- Gráfico: só admin -->
+          <button class="tab-btn" *ngIf="isCashOpen() && isAdmin()"
+            [class.active]="activeTab() === 'chart'" (click)="activeTab.set('chart')">
+            <mat-icon>pie_chart</mat-icon> Gráfico
+          </button>
         <button class="tab-btn" *ngIf="isAdmin()"
           [class.active]="activeTab() === 'review'" (click)="activeTab.set('review')">
           <mat-icon>fact_check</mat-icon> Conferencia
@@ -129,7 +134,7 @@
       <span class="session-badge" *ngIf="!isCashOpen() && isAdmin()">Admin</span>
     </div>
 
-    <div class="tab-content" *ngIf="activeTab() === 'movements'">
+    <div class="tab-content" *ngIf="activeTab() === 'movements' && isAdmin()">
       <div class="table-container">
         <table class="cash-table">
           <thead>
@@ -178,7 +183,7 @@
       </div>
     </div>
 
-    <div class="tab-content summary-tab" *ngIf="activeTab() === 'summary'">
+    <div class="tab-content summary-tab" *ngIf="activeTab() === 'summary' && isAdmin()">
       @if (isSummaryLoading()) {
         <div class="summary-loading"><mat-spinner diameter="36"></mat-spinner></div>
       } @else if (sessionSummary(); as summary) {
@@ -229,7 +234,7 @@
       }
     </div>
 
-    <div class="tab-content chart-tab" *ngIf="activeTab() === 'chart'">
+    <div class="tab-content chart-tab" *ngIf="activeTab() === 'chart' && isAdmin()">
       @if (!transactions().length) {
         <div class="empty-state">
           <mat-icon>bar_chart</mat-icon>
@@ -243,7 +248,6 @@
     </div>
 
     <div class="tab-content review-tab" *ngIf="activeTab() === 'review' && isAdmin()">
-
       <div class="review-layout">
         <aside class="review-sessions">
           <div class="panel-header">
@@ -459,6 +463,22 @@
                 <div class="empty-list">
                   <mat-icon>task_alt</mat-icon>
                   <span>Nenhum caixa conferido.</span>
+                </div>
+              }
+
+              @if (reviewedTotalPages() > 1) {
+                <div class="pagination">
+                  <button class="icon-btn"
+                    [disabled]="reviewedPage() === 0"
+                    (click)="goToReviewedPage(reviewedPage() - 1)">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  <span>{{ reviewedPage() + 1 }} / {{ reviewedTotalPages() }}</span>
+                  <button class="icon-btn"
+                    [disabled]="reviewedPage() + 1 >= reviewedTotalPages()"
+                    (click)="goToReviewedPage(reviewedPage() + 1)">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
                 </div>
               }
             </aside>

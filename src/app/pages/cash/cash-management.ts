@@ -1,5 +1,5 @@
 import {
-  Component, inject, OnInit, OnDestroy, signal, computed, effect, ViewChild, ElementRef, AfterViewInit
+  Component, inject, OnInit, OnDestroy, signal, computed, effect, ViewChild, ElementRef, AfterViewInit, untracked
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -87,37 +87,47 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   showReviewed = signal(false);
   selectedReportSession = signal<CashSessionResponse | null>(null);
 
+  reviewedPage = signal(0);
+  reviewedTotalPages = signal(0);
+  reviewedPageSize = 10;
+
   private chartInstance: any = null;
   private chartJsLoaded = false;
 
   constructor() {
     effect(() => {
       const id = this.cashService.activeSessionId();
-      if (id) {
-        this.loadTransactions();
-        this.loadSummary();
-        if (['review', 'reports'].includes(this.activeTab())) {
-          this.activeTab.set('movements');
+      untracked(() => {
+        if (id) {
+          if (this.isAdmin()) {
+            this.loadTransactions();
+            this.loadSummary();
+            if (['review', 'reports'].includes(this.activeTab())) {
+              this.activeTab.set('movements');
+            }
+          }
+        } else {
+          this.transactions.set([]);
+          this.sessionSummary.set(null);
+          if (this.isAdmin()) {
+            this.activeTab.set('review');
+            this.loadReviewSessions();
+          }
         }
-      } else {
-        this.transactions.set([]);
-        this.sessionSummary.set(null);
-        if (this.isAdmin()) {
-          this.activeTab.set('review');
-          this.loadReviewSessions();
-        }
-      }
+      });
     });
 
     effect(() => {
       const tab = this.activeTab();
-      if (tab === 'chart') {
-        setTimeout(() => this.renderChart(), 50);
-      }
-      if (tab === 'review' && this.isAdmin()) {
-        this.loadReviewSessions();
-        this.loadReviewedSessions();
-      }
+      untracked(() => {
+        if (tab === 'chart') {
+          setTimeout(() => this.renderChart(), 50);
+        }
+        if (tab === 'review' && this.isAdmin()) {
+          this.loadReviewSessions();
+          this.loadReviewedSessions();
+        }
+      });
     });
   }
 
@@ -198,66 +208,74 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
     this.destroyChart();
 
     const ctx = this.chartCanvas.nativeElement.getContext('2d');
-    this.chartInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels,
-        datasets: [{
-          data,
-          backgroundColor: colors.slice(0, labels.length),
-          borderWidth: 2,
-          borderColor: '#1e293b'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: '#94a3b8',
-              font: { size: 13 },
-              padding: 20
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: (ctx: any) => {
-                const val = ctx.parsed as number;
-                return ` ${ctx.label}: ${this.formatCurrency(val)}`;
+      this.chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: '#1e293b'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#94a3b8',
+                font: { size: 13 },
+                padding: 20
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx: any) => {
+                  const val = ctx.parsed as number;
+                  return ` ${ctx.label}: ${this.formatCurrency(val)}`;
+                }
               }
             }
           }
         }
-      }
-    });
+      });
+    }
+
+  loadReviewSessions(): void {
+    if (!this.isAdmin()) return;
+    this.isReviewLoading.set(true);
+    this.cashService.getSessionsForReview({}, 0, 100)
+      .pipe(finalize(() => this.isReviewLoading.set(false)))
+      .subscribe({
+        next: (page) => {
+          this.reviewSessions.set(page.content);
+          const selected = this.selectedReviewSession();
+          if (selected && !page.content.some(s => s.id === selected.id)) {
+            this.clearReviewSelection();
+          }
+        },
+        error: () => this.showError('Não foi possível carregar os caixas pendentes de conferência.')
+      });
   }
 
   loadReviewedSessions(): void {
     if (!this.isAdmin()) return;
     this.isReviewedLoading.set(true);
-    this.cashService.getSessionsForReview({ status: 'REVIEWED', reviewStatus: 'APPROVED' })
+    this.cashService.getSessionsForReview(
+      { status: 'REVIEWED', reviewStatus: 'APPROVED' },
+      this.reviewedPage(),
+      this.reviewedPageSize
+    )
       .pipe(finalize(() => this.isReviewedLoading.set(false)))
       .subscribe({
-        next: (sessions) => this.reviewedSessions.set(sessions),
-        error: () => this.showError('Não foi possível carregar os caixas conferidos.')
-      });
-  }
-
-  selectReviewedSession(session: CashSessionResponse): void {
-    this.selectedReviewedSession.set(session);
-    this.isReviewedLoading.set(true);
-    this.cashService.getSessionReview(session.id)
-      .pipe(finalize(() => this.isReviewedLoading.set(false)))
-      .subscribe({
-        next: (review) => {
-          this.selectedReviewedSession.set(review.session);
-          this.reviewedSummary.set(review.summary);
-          this.reviewedMovements.set(review.movements);
-          this.reviewedDetails.set(review.details ?? []);
+        next: (page) => {
+          this.reviewedSessions.set(page.content);
+          this.reviewedTotalPages.set(page.totalPages);
         },
-        error: () => this.showError('Não foi possível carregar os detalhes.')
+        error: () => this.showError('Não foi possível carregar os caixas conferidos.')
       });
   }
 
@@ -391,24 +409,6 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  loadReviewSessions(): void {
-    if (!this.isAdmin()) return;
-
-    this.isReviewLoading.set(true);
-    this.cashService.getSessionsForReview()
-      .pipe(finalize(() => this.isReviewLoading.set(false)))
-      .subscribe({
-        next: (sessions) => {
-          this.reviewSessions.set(sessions);
-          const selected = this.selectedReviewSession();
-          if (selected && !sessions.some(s => s.id === selected.id)) {
-            this.clearReviewSelection();
-          }
-        },
-        error: () => this.showError('Não foi possível carregar os caixas pendentes de conferência.')
-      });
-  }
-
   selectReviewSession(session: CashSessionResponse): void {
     this.selectedReviewSession.set(session);
     this.editingMovementId.set(null);
@@ -432,6 +432,27 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
         },
         error: () => this.showError('Não foi possível carregar a conferência desta sessão.')
       });
+  }
+
+  selectReviewedSession(session: CashSessionResponse): void {
+    this.selectedReviewedSession.set(session);
+    this.isReviewedLoading.set(true);
+    this.cashService.getSessionReview(session.id)
+      .pipe(finalize(() => this.isReviewedLoading.set(false)))
+      .subscribe({
+        next: (review) => {
+          this.selectedReviewedSession.set(review.session);
+          this.reviewedSummary.set(review.summary);
+          this.reviewedMovements.set(review.movements);
+          this.reviewedDetails.set(review.details ?? []);
+        },
+        error: () => this.showError('Não foi possível carregar os detalhes.')
+      });
+  }
+
+  goToReviewedPage(page: number): void {
+    this.reviewedPage.set(page);
+    this.loadReviewedSessions();
   }
 
   startEditMovement(movement: CashMovementResponse): void {
@@ -488,6 +509,12 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
         },
         error: (err) => this.showError(err.error?.message || 'Não foi possível confirmar a conferência.')
       });
+  }
+
+  forceReview(): void {
+    this.activeTab.set('review');
+    this.loadReviewSessions();
+    this.loadReviewedSessions();
   }
 
   loadReports(): void {
@@ -675,8 +702,8 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   }
 
   updateVerifiedAmount(paymentMethodId: number, value: number): void {
-  this.verifiedAmounts.update(current => ({ ...current, [paymentMethodId]: value }));
-}
+    this.verifiedAmounts.update(current => ({ ...current, [paymentMethodId]: value }));
+  }
 
   saveVerification(paymentMethodId: number): void {
     const session = this.selectedReviewSession();
@@ -690,5 +717,9 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
         next: () => this.showSuccess('Valor conferido salvo.'),
         error: () => this.showError('Não foi possível salvar o valor conferido.')
       });
+  }
+
+  isOperator(): boolean {
+    return this.authService.isOperator();
   }
 }

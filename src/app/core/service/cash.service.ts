@@ -11,6 +11,14 @@ export interface OpenSessionRequest {
   value: number;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
 export interface CashRegisterStatus {
   isOpen: boolean;
   cashMovementId: number | null;
@@ -231,13 +239,15 @@ export class CashService {
     return this.http.get<CashMovementResponse[]>(`${this.apiUrl}/session/${sessionId}/movements`);
   }
 
-  getSessionsForReview(filter: CashSessionReportFilter = {}): Observable<CashSessionResponse[]> {
-    return this.http.get<CashSessionResponse[]>(`${this.apiUrl}/sessions`, {
+  getSessionsForReview(filter: CashSessionReportFilter = {}, page = 0, size = 10): Observable<PageResponse<CashSessionResponse>> {
+    return this.http.get<PageResponse<CashSessionResponse>>(`${this.apiUrl}/sessions`, {
       params: this.cleanParams({
         status: filter.status ?? 'CLOSED',
         reviewStatus: filter.reviewStatus ?? 'PENDING_REVIEW',
         dateFrom: filter.dateFrom,
-        dateTo: filter.dateTo
+        dateTo: filter.dateTo,
+        page,
+        size
       })
     });
   }

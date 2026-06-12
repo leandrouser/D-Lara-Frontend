@@ -1,6 +1,5 @@
 <div class="products-container">
 
-  <!-- ── Header ── -->
   <div class="page-header">
     <div class="page-header-left">
       <h1>Produtos</h1>
@@ -23,7 +22,6 @@
     </div>
   </div>
 
-  <!-- ── Metric cards ── -->
   <div class="metric-grid">
     <div class="metric-card">
       <div class="metric-label">
@@ -80,7 +78,6 @@
     </div>
   </div>
 
-  <!-- ── Toolbar ── -->
   <div class="toolbar">
     <div class="search-box">
       <mat-icon class="search-icon">search</mat-icon>
@@ -120,7 +117,6 @@
     </div>
   </div>
 
-  <!-- ── Search state feedback ── -->
   <div *ngIf="isLoading()" class="search-loading">
     <mat-icon class="loading-spinner">refresh</mat-icon>
     Buscando produtos...
@@ -132,7 +128,6 @@
     <span class="result-count">{{ totalItems() }} resultado(s)</span>
   </div>
 
-  <!-- ── Table ── -->
   <div class="table-card" [class.is-bulk-editing]="isBulkEditing()">
 
     <div *ngIf="isBulkEditing()" class="bulk-banner">
@@ -159,7 +154,6 @@
         </thead>
 
         <tbody>
-          <!-- Loading state -->
           <tr *ngIf="isLoading() && filteredList().length === 0">
             <td colspan="8" class="state-cell">
               <mat-icon class="loading-spinner">refresh</mat-icon>
@@ -167,7 +161,6 @@
             </td>
           </tr>
 
-          <!-- Empty state -->
           <tr *ngIf="!isLoading() && filteredList().length === 0">
             <td colspan="8" class="state-cell">
               <mat-icon>search_off</mat-icon>
@@ -180,17 +173,14 @@
             </td>
           </tr>
 
-          <!-- Rows -->
           <tr *ngFor="let p of filteredList()"
               [class.row--low-stock]="isLowStock(p)"
               [class.row--editing]="editingProductId() === p.id || isBulkEditing()">
 
-            <!-- ID -->
             <td class="col-id" data-label="ID">
               <span class="text-mono text-muted">{{ p.id }}</span>
             </td>
 
-            <!-- Barcode -->
             <td class="col-barcode" data-label="Código">
               <input
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -203,7 +193,6 @@
               </span>
             </td>
 
-            <!-- Name -->
             <td class="col-name" data-label="Nome">
               <input
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -216,7 +205,6 @@
               </span>
             </td>
 
-            <!-- Description -->
             <td class="col-description" data-label="Descrição">
               <input
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -229,7 +217,6 @@
               </span>
             </td>
 
-            <!-- Category -->
             <td class="col-category" data-label="Categoria">
               <select
                 *ngIf="editingProductId() === p.id || isBulkEditing()"
@@ -248,7 +235,6 @@
               </span>
             </td>
 
-            <!-- Price -->
             <td class="col-price right" data-label="Preço">
               <div *ngIf="editingProductId() === p.id || isBulkEditing()" class="input-prefix-wrap">
                 <span class="input-prefix">R$</span>
@@ -265,7 +251,6 @@
               </span>
             </td>
 
-            <!-- Stock -->
             <td class="col-stock" data-label="Estoque">
               <div *ngIf="editingProductId() === p.id || isBulkEditing()" class="input-suffix-wrap">
                 <input
@@ -285,7 +270,6 @@
               </span>
             </td>
 
-            <!-- Actions -->
             <td class="col-actions center" data-label="Ações">
               <div *ngIf="editingProductId() === p.id" class="edit-action-group">
                 <button class="action-btn action-btn--save" (click)="saveEditing()">
@@ -310,7 +294,6 @@
       </table>
     </div>
 
-    <!-- ── Pagination ── -->
     <div class="pagination" *ngIf="totalItems() > 0">
       <div class="pagination-info">
         Mostrando <strong>{{ getStartIndex() }}</strong> – <strong>{{ getEndIndex() }}</strong>

@@ -45,7 +45,8 @@
         <span class="icon">🧵</span>
         <span class="menu-text">Bordados</span>
       </li>
-      <li *ngIf="authService.isAdmin()" routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
+      <li *ngIf="authService.isAdmin() || authService.isOperator()" 
+          routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
         <span class="icon">💵</span>
         <span class="menu-text">Caixa</span>
       </li>

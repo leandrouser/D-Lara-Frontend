@@ -27,6 +27,7 @@ export class AuthService {
           localStorage.setItem('token', response.token);
 
           const user = response.user || { name: 'Usuário', role: 'ADMIN' };
+          console.log('user recebido:', user);
 
           localStorage.setItem('user', JSON.stringify(user));
           this.currentUser.set(user);
@@ -60,5 +61,9 @@ export class AuthService {
   getUserId(): number | null {
     const user = this.currentUser();
     return user ? user.id : null;
+  }
+
+  isOperator(): boolean {
+    return this.currentUser()?.role === 'OPERATOR';
   }
 }
