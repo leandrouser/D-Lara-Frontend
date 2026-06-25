@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnChanges, SimpleChanges, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -12,7 +12,7 @@ import { BrlCurrencyPipe } from '../../../shared/pipes/brl-currency.pipe';
   templateUrl: './embroidery-kanban.component.html',
   styleUrls: ['./embroidery-kanban.component.scss']
 })
-export class EmbroideryKanbanComponent {
+export class EmbroideryKanbanComponent implements AfterViewInit, OnDestroy, OnChanges {
   @Input() items: EmbroideryResponse[] = [];
   @Input() loading = false;
 
@@ -22,6 +22,13 @@ export class EmbroideryKanbanComponent {
   @Output() edit          = new EventEmitter<EmbroideryResponse>();
   @Output() remove        = new EventEmitter<number>();
   @Output() revertStatus = new EventEmitter<{ item: EmbroideryResponse, status: string }>();
+
+  @ViewChild('kbCols') kbColsRef!: ElementRef<HTMLDivElement>;
+
+  // Navegação do carrossel mobile
+  activeColumnIndex = signal(0);
+  readonly totalColumns = 4;
+  readonly columnLabels = ['Pendente', 'Em Produção', 'Pronto p/ entrega', 'Entregue'];
 
   private sortByDelivery(items: EmbroideryResponse[]): EmbroideryResponse[] {
     return [...items].sort((a, b) => {
@@ -69,5 +76,52 @@ export class EmbroideryKanbanComponent {
       'COMPLETED':     'Voltar para Pronto'
     };
     return map[status] ?? '';
+  }
+
+  // ===================== Carrossel mobile =====================
+
+  ngAfterViewInit(): void {
+    this.kbColsRef?.nativeElement.addEventListener('scroll', this.onScroll, { passive: true });
+  }
+
+  ngOnDestroy(): void {
+    this.kbColsRef?.nativeElement.removeEventListener('scroll', this.onScroll);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Se os itens mudarem (ex: após mover um card), o conteúdo da coluna ativa
+    // pode encolher; não precisamos resetar o índice, só evitar ficar fora do range.
+    if (changes['items'] && this.activeColumnIndex() > this.totalColumns - 1) {
+      this.activeColumnIndex.set(this.totalColumns - 1);
+    }
+  }
+
+  private onScroll = (): void => {
+    const el = this.kbColsRef?.nativeElement;
+    if (!el) return;
+    const colWidth = el.clientWidth;
+    if (!colWidth) return;
+    const index = Math.round(el.scrollLeft / colWidth);
+    if (index !== this.activeColumnIndex()) {
+      this.activeColumnIndex.set(index);
+    }
+  };
+
+  goToColumn(index: number): void {
+    const el = this.kbColsRef?.nativeElement;
+    if (!el) return;
+    const clamped = Math.max(0, Math.min(index, this.totalColumns - 1));
+    el.scrollTo({ left: clamped * el.clientWidth, behavior: 'smooth' });
+    this.activeColumnIndex.set(clamped);
+  }
+
+  prevColumn(): void { this.goToColumn(this.activeColumnIndex() - 1); }
+  nextColumn(): void { this.goToColumn(this.activeColumnIndex() + 1); }
+
+  isFirstColumn(): boolean { return this.activeColumnIndex() === 0; }
+  isLastColumn(): boolean  { return this.activeColumnIndex() === this.totalColumns - 1; }
+
+  getColumnLabel(index: number): string {
+    return this.columnLabels[index] ?? '';
   }
 }

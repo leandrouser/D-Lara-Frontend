@@ -1,5 +1,68 @@
 .kb-root { width: 100%; }
 
+// ====== Navegação mobile (setas + dots) ======
+// Só aparece em telas pequenas
+.kb-mobile-nav {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  @media (max-width: 768px) { display: flex; }
+}
+
+.kb-nav-btn {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  transition: opacity 0.15s, background 0.15s;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+
+  &:hover:not(:disabled) { background: #f8fafc; }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.kb-nav-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.kb-nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.active {
+    width: 22px;
+    border-radius: 4px;
+    background: #2563eb;
+  }
+}
+
+// ====== Grid / Carrossel ======
 .kb-cols {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -7,8 +70,23 @@
   min-height: 480px;
 
   @media (max-width: 1024px) { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 768px)  { grid-template-columns: 1fr; }
+
+  @media (max-width: 768px) {
+    // Carrossel horizontal com scroll-snap: cada coluna ocupa a tela toda
+    display: flex;
+    grid-template-columns: unset;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    min-height: unset;
+    gap: 0;
+    margin: 0 -16px; // "escapa" do padding do container pra ocupar a largura toda
+    padding: 0 16px;
+    scrollbar-width: none; // esconde a scrollbar (Firefox)
+    &::-webkit-scrollbar { display: none; } // esconde a scrollbar (Chrome/Safari)
   }
+}
 
 .kb-col {
   background: #f9fafb;
@@ -19,7 +97,16 @@
   overflow: hidden;
   max-height: 70vh;
 
-  @media (max-width: 768px) { max-height: unset; }
+  @media (max-width: 768px) {
+    max-height: unset;
+    flex: 0 0 100%;
+    width: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    margin-right: 12px;
+
+    &:last-child { margin-right: 0; }
+  }
 }
 
 .kb-col-header {
@@ -56,6 +143,11 @@
   flex: 1; padding: 10px;
   display: flex; flex-direction: column; gap: 8px;
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    max-height: calc(100vh - 320px);
+    min-height: 200px;
+  }
 }
 
 .kb-card {
@@ -121,6 +213,7 @@
   &.in-production { color: #10b981; &:hover { background: #ecfdf5; } }
   &.deliver{ color: #16a34a; &:hover { background: #f0fdf4; } }
   &.danger { color: #ef4444; &:hover { background: #fef2f2; } }
+  &.revert { color: #f59e0b; &:hover { background: rgba(245, 158, 11, 0.1); } }
 }
 
 .kb-empty {

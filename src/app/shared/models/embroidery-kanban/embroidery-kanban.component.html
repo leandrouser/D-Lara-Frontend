@@ -1,5 +1,32 @@
 <div class="kb-root">
-  <div class="kb-cols">
+
+  <!-- Navegação mobile: setas + dots (só aparece em telas pequenas via CSS) -->
+  <div class="kb-mobile-nav">
+    <button class="kb-nav-btn"
+            (click)="prevColumn()"
+            [disabled]="isFirstColumn()"
+            matTooltip="Coluna anterior">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <div class="kb-nav-dots">
+      <button class="kb-nav-dot"
+              *ngFor="let label of columnLabels; let i = index"
+              [class.active]="activeColumnIndex() === i"
+              (click)="goToColumn(i)"
+              [attr.aria-label]="label">
+      </button>
+    </div>
+
+    <button class="kb-nav-btn"
+            (click)="nextColumn()"
+            [disabled]="isLastColumn()"
+            matTooltip="Próxima coluna">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+
+  <div class="kb-cols" #kbCols>
 
     <!-- PENDENTE -->
     <div class="kb-col">
