@@ -533,15 +533,49 @@ $white:     #ffffff;
   overflow: hidden;
 }
 
+.pdv-desc-wrap {
+  position: relative;
+}
+
 .pdv-prod-desc {
   font-size: 11px;
   color: $slate-500;
   margin: 0;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  min-height: 15px;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover { color: $slate-700; text-decoration: underline dotted; text-underline-offset: 2px; }
+
+  &--expanded {
+    color: $primary;
+    font-weight: 600;
+  }
+}
+
+.pdv-desc-popover {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  margin-top: 4px;
+  background: $white;
+  border: 1px solid $slate-200;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.15);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: $slate-700;
+  max-height: 160px;
+  overflow-y: auto;
+  white-space: normal;
+  cursor: default;
 }
 
 .pdv-delivery {
@@ -1423,6 +1457,7 @@ $white:     #ffffff;
 }
 
 .pdv-prod-stock--hidden,
-.pdv-delivery--hidden {
+.pdv-delivery--hidden,
+.pdv-prod-desc--hidden {
   visibility: hidden;
 }

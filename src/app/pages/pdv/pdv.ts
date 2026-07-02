@@ -63,6 +63,7 @@
     discountInput    = signal<number>(this.pdvService.state().discountInput);
     activeSaleId     = signal<number | null>(this.pdvService.state().activeSaleId);
     isCopiedSale     = signal<boolean>(this.pdvService.state().isCopiedSale);
+    expandedDescId = signal<number | null>(null);
 
     pageTitle = signal('Frente de Caixa');
     pageSubtitle = signal('Vendas e Ordens de Serviço');
@@ -790,5 +791,16 @@
         },
         error: () => {}
       });
+    }
+
+    toggleDescription(event: Event, id: number | undefined) {
+      event.stopPropagation();
+      if (id === undefined || id === null) return;
+      this.expandedDescId.update(curr => curr === id ? null : id);
+    }
+
+    @HostListener('document:click')
+    onDocumentClick() {
+      if (this.expandedDescId() !== null) this.expandedDescId.set(null);
     }
   }

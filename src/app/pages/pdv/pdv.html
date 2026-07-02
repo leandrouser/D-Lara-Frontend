@@ -128,11 +128,21 @@
 
                 <h3 class="pdv-prod-name">{{ p.name }}</h3>
 
-                @if (p.categoryEnum !== CategoryEnum.BORDADO && p.description) {
-                  <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ p.description?.length > 50 ? '…' : '' }}</p>
-                }
+               <div class="pdv-desc-wrap">
+                  <p class="pdv-prod-desc"
+                    [class.pdv-prod-desc--hidden]="!p.description"
+                    [class.pdv-prod-desc--expanded]="expandedDescId() === p.id"
+                    (click)="toggleDescription($event, p.id)">
+                    {{ p.description || 'placeholder' }}
+                  </p>
+                  @if (expandedDescId() === p.id && p.description) {
+                    <div class="pdv-desc-popover" (click)="$event.stopPropagation()">
+                      {{ p.description }}
+                    </div>
+                  }
+                </div>
+
                 @if (p.categoryEnum === CategoryEnum.BORDADO) {
-                  <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ (p.description?.length ?? 0) > 50 ? '…' : '' }}</p>
                   <div class="pdv-delivery" [class.pdv-delivery--hidden]="!p.deliveryDate" [class.pdv-delivery--overdue]="isOverdue(p.deliveryDate)">
                     <mat-icon>event</mat-icon>
                     {{ p.deliveryDate ? ('Entrega: ' + (p.deliveryDate | date:'dd/MM/yyyy')) : 'placeholder' }}
@@ -170,10 +180,6 @@
                 </span>
 
                 <h3 class="pdv-prod-name">{{ p.name }}</h3>
-
-                @if (p.description) {
-                  <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ p.description.length > 50 ? '…' : '' }}</p>
-                }
 
                 <div class="pdv-prod-card__footer">
                   @if (p.barcode) {
