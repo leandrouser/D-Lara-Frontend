@@ -409,11 +409,13 @@
                         }
                       </td>
                       <td class="row-actions">
-                        @if (editingMovementId() === item.id) {
-                          <button class="icon-btn success" (click)="saveMovementEdit(item)"><mat-icon>check</mat-icon></button>
-                          <button class="icon-btn" (click)="cancelEditMovement()"><mat-icon>close</mat-icon></button>
-                        } @else {
-                          <button class="icon-btn" (click)="startEditMovement(item)"><mat-icon>edit</mat-icon></button>
+                        @if (item.type !== 'OPENING') {
+                          @if (editingMovementId() === item.id) {
+                            <button class="icon-btn success" (click)="saveMovementEdit(item)"><mat-icon>check</mat-icon></button>
+                            <button class="icon-btn" (click)="cancelEditMovement()"><mat-icon>close</mat-icon></button>
+                          } @else {
+                            <button class="icon-btn" (click)="startEditMovement(item)"><mat-icon>edit</mat-icon></button>
+                          }
                         }
                       </td>
                     </tr>

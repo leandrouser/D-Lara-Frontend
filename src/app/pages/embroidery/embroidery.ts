@@ -50,7 +50,7 @@ export class Embroidery implements OnInit {
   pendingRevenue  = signal(0);
   inProductionCount = signal(0);
 
-  viewMode = signal<'table' | 'kanban'>('table');
+  viewMode = signal<'table' | 'kanban'>('kanban');
   allItems  = signal<EmbroideryResponse[]>([]);
 
   constructor(
@@ -59,9 +59,13 @@ export class Embroidery implements OnInit {
     private embroideryService: EmbroideryService
   ) {}
 
-  ngOnInit(): void {
-    this.loadData();
-    this.loadGlobalMetrics();
+    ngOnInit(): void {
+      if (this.viewMode() === 'kanban') {
+        this.loadAllForKanban();
+      } else {
+        this.loadData();
+      }
+      this.loadGlobalMetrics();
 
     this.searchControl.valueChanges.pipe(
       debounceTime(400),

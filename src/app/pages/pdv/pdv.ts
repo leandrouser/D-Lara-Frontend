@@ -219,8 +219,8 @@
       }
 
       refreshSearch() {
-        const el = document.querySelector('.search-input-wrapper input') as HTMLInputElement;
-        this.productSearchSubject.next(el?.value || '');
+        const val = this.searchInput()?.nativeElement.value || '';
+        this.productSearchSubject.next(val);
       }
 
       handleButtonClick() {
@@ -446,6 +446,7 @@
     this.discountType.set('value');
     this.pdvService.reset();
     this.setDefaultCustomer();
+    setTimeout(() => this.searchInput()?.nativeElement.focus(), 100);
     }
 
     changeDiscountType(type: 'value' | 'percent') {
@@ -513,12 +514,12 @@
       this.isClosingModalOpen.set(false);
     }
 
-    setProductFilter(filter: 'all' | CategoryEnum) {
-      this.productCategoryFilter.set(filter);
-      this.currentPage.set(0);
-      const el = document.querySelector('.search-input-wrapper input') as HTMLInputElement;
-      setTimeout(() => this.productSearchSubject.next(el?.value || ''), 0);
-    }
+   setProductFilter(filter: 'all' | CategoryEnum) {
+    this.productCategoryFilter.set(filter);
+    this.currentPage.set(0);
+    const val = this.searchInput()?.nativeElement.value || '';
+    setTimeout(() => this.productSearchSubject.next(val), 0);
+  }
 
     private lastSearchTerm = '';
 
@@ -572,7 +573,9 @@
     private setupProductSearch() {
       this.productSearchSubject.pipe(
         switchMap(term => {
-          if (!term || term.trim().length === 0) {
+          const isBordado = this.productCategoryFilter() === CategoryEnum.BORDADO;
+
+          if (!isBordado && (!term || term.trim().length === 0)) {
             this.isLoading.set(false);
             this.filteredProducts.set([]);
             this.allFilteredProducts.set([]);

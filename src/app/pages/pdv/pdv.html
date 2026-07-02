@@ -118,7 +118,9 @@
                   <span class="pdv-prod-price">{{ p.price | brlCurrency }}</span>
                 </div>
 
-                @if (p.categoryEnum !== CategoryEnum.BORDADO) {
+                @if (p.categoryEnum === CategoryEnum.BORDADO) {
+                  <span class="pdv-prod-stock pdv-prod-stock--hidden">placeholder</span>
+                } @else {
                   <span class="pdv-prod-stock" [class.pdv-prod-stock--low]="p.stockQty <= 5">
                     {{ p.stockQty }} em estoque
                   </span>
@@ -130,13 +132,11 @@
                   <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ p.description?.length > 50 ? '…' : '' }}</p>
                 }
                 @if (p.categoryEnum === CategoryEnum.BORDADO) {
-                  <p class="pdv-prod-desc">{{ p.description | slice:0:35 }}{{ (p.description?.length ?? 0) > 35 ? '…' : '' }}</p>
-                  @if (p.deliveryDate) {
-                    <div class="pdv-delivery" [class.pdv-delivery--overdue]="isOverdue(p.deliveryDate)">
-                      <mat-icon>event</mat-icon>
-                      Entrega: {{ p.deliveryDate | date:'dd/MM/yyyy' }}
-                    </div>
-                  }
+                  <p class="pdv-prod-desc">{{ p.description | slice:0:50 }}{{ (p.description?.length ?? 0) > 50 ? '…' : '' }}</p>
+                  <div class="pdv-delivery" [class.pdv-delivery--hidden]="!p.deliveryDate" [class.pdv-delivery--overdue]="isOverdue(p.deliveryDate)">
+                    <mat-icon>event</mat-icon>
+                    {{ p.deliveryDate ? ('Entrega: ' + (p.deliveryDate | date:'dd/MM/yyyy')) : 'placeholder' }}
+                  </div>
                 }
 
                 <div class="pdv-prod-card__footer">
@@ -399,7 +399,6 @@
         <div class="pdv-modal__field">
           <label>Descrição <small>(opcional)</small></label>
           <input type="text"
-                 [(ngModel)]="bordadoDescription"
                  [ngModel]="bordadoDescription()"
                  (ngModelChange)="bordadoDescription.set($event)"
                  placeholder="Ex: Bordado floral manga direita"

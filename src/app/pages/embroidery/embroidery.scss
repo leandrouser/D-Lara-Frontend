@@ -94,8 +94,8 @@ $bp-lg: 1024px;
   }
 
   .search-box {
-    flex: 1;
-    min-width: 0;
+    flex: 0 1 320px;
+    min-width: 220px;
 
     .input-box {
       display: flex;
@@ -569,4 +569,46 @@ table {
 .kb-btn.revert {
   color: #f59e0b;
   &:hover { background: rgba(245, 158, 11, 0.1); }
+}
+
+.view-toggle {
+  display: flex;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 4px;
+  flex-shrink: 0;
+
+  @media (max-width: $bp-md) { width: 100%; }
+
+  .vt-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+
+    @media (max-width: $bp-md) { flex: 1; }
+
+    mat-icon { font-size: 17px; width: 17px; height: 17px; }
+
+    &:hover:not(.active) { background: #e2e8f0; }
+
+    &.active {
+      background: $primary-blue;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+  }
 }

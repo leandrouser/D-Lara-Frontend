@@ -92,16 +92,16 @@
 
     <div class="view-toggle">
       <button class="vt-btn"
-              [class.active]="viewMode() === 'table'"
-              (click)="setViewMode('table')"
-              matTooltip="Tabela">
-        <mat-icon>table_rows</mat-icon>
+              [class.active]="viewMode() === 'kanban'"
+              (click)="setViewMode('kanban')">
+        <mat-icon>view_kanban</mat-icon>
+        <span>Kanban</span>
       </button>
       <button class="vt-btn"
-              [class.active]="viewMode() === 'kanban'"
-              (click)="setViewMode('kanban')"
-              matTooltip="Kanban">
-        <mat-icon>view_kanban</mat-icon>
+              [class.active]="viewMode() === 'table'"
+              (click)="setViewMode('table')">
+        <mat-icon>table_rows</mat-icon>
+        <span>Tabela</span>
       </button>
     </div>
 
