@@ -424,6 +424,7 @@ $white:     #ffffff;
 .pdv-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-auto-rows: max-content;
   gap: 10px;
   padding: 10px;
   overflow-y: auto;
@@ -450,7 +451,8 @@ $white:     #ffffff;
   transition: all 0.2s;
   position: relative;
   min-height: 180px;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
 
   &:hover {
     transform: translateY(-2px);
