@@ -1,0 +1,64 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h2>Registrar Recebimento</h2>
+      <button class="close-btn" (click)="closeModal()" [disabled]="isLoading()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="customer">
+      <div class="customer-info">
+        <span class="customer-name">{{ customer.name }}</span>
+        <span class="customer-debt">Saldo devedor: <strong>{{ formatCurrency(customer.debtBalance) }}</strong></span>
+      </div>
+
+      <div class="form-group">
+        <label>Forma de recebimento *</label>
+        <div class="methods-grid">
+          <button
+            type="button"
+            *ngFor="let method of paymentMethods()"
+            class="method-btn"
+            [class.active]="selectedMethodId() === method.id"
+            (click)="selectedMethodId.set(method.id)">
+            {{ method.displayName }}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Valor recebido (R$) *</label>
+        <div class="amount-input-wrapper">
+          <span class="currency">R$</span>
+          <input
+            type="number"
+            [ngModel]="amount()"
+            (ngModelChange)="amount.set($event)"
+            min="0"
+            [max]="maxAmount"
+            step="0.01"
+            placeholder="0,00">
+          <button type="button" class="btn-full" (click)="setFullAmount()">Total</button>
+        </div>
+        <small class="hint">Máximo: {{ formatCurrency(maxAmount) }}</small>
+      </div>
+
+      <div class="error-container" *ngIf="errorMessage()">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()" [disabled]="isLoading()">Cancelar</button>
+      <button class="btn-save" (click)="submitPayment()" [disabled]="isLoading()">
+        <mat-icon *ngIf="!isLoading()">check_circle</mat-icon>
+        <mat-icon *ngIf="isLoading()" class="spin">refresh</mat-icon>
+        {{ isLoading() ? 'Registrando...' : 'Confirmar Recebimento' }}
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -45,10 +45,15 @@
         <span class="icon">🧵</span>
         <span class="menu-text">Bordados</span>
       </li>
-      <li *ngIf="authService.isAdmin() || authService.isOperator()" 
+      <li *ngIf="authService.isAdmin() || authService.isOperator()"
           routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
         <span class="icon">💵</span>
         <span class="menu-text">Caixa</span>
+      </li>
+      <li *ngIf="authService.isAdmin() || authService.isOperator()"
+          routerLink="/fiado" routerLinkActive="active" (click)="toggleMobile()">
+        <span class="icon">📒</span>
+        <span class="menu-text">Fiado</span>
       </li>
 
       <li *ngIf="authService.isAdmin()" routerLink="/payment" routerLinkActive="active" (click)="toggleMobile()">

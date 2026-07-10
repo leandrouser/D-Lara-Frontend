@@ -58,5 +58,10 @@ export const routes: Routes = [
         import('./pages/exchange/exchange.component').then(m => m.ExchangeComponent),
     canActivate: [authGuard]
     },
+    {
+    path: 'fiado',
+    loadComponent: () => import('./pages/fiado/fiado').then((m: any) => m.Fiado),
+    canActivate: [authGuard]
+    },
 
 ];

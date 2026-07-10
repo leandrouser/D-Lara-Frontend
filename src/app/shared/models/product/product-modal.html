@@ -20,6 +20,7 @@
 <mat-form-field appearance="outline" [class.barcode-duplicate]="barcodeExists()">
   <mat-label>Código de Barras</mat-label>
   <input
+   #barcodeInput
     matInput
     name="barcode"
     [(ngModel)]="form.barcode"

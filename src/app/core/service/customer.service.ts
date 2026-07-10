@@ -36,6 +36,33 @@ export interface CustomerStats {
   inactive: number;
 }
 
+export interface CustomerAccountSummary {
+  customerId: number;
+  name: string;
+  debtBalance: number;
+  creditLimit: number;
+  availableCredit: number;
+}
+
+export type LedgerEntryType = 'DEBIT_SALE' | 'CREDIT_PAYMENT' | 'MANUAL_DEBIT_ADJUSTMENT' | 'MANUAL_CREDIT_ADJUSTMENT';
+
+export interface CustomerLedgerEntry {
+  id: number;
+  type: LedgerEntryType;
+  amount: number;
+  createdAt: string;
+  saleId: number | null;
+  paymentMethodName: string | null;
+  operatorName: string;
+  note: string | null;
+}
+
+export interface RegisterPaymentRequest {
+  customerId: number;
+  amount: number;
+  paymentMethodId: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
   private http = inject(HttpClient);
@@ -88,11 +115,12 @@ export class CustomerService {
   }
 
   private handleError(error: any) {
-    return throwError(() => new Error(error.message || 'Erro no servidor'));
+    const backendMessage = error?.error?.message || error?.message || 'Erro no servidor';
+    return throwError(() => new Error(backendMessage));
   }
 
   searchCustomers(term: string, page: number, size: number): Observable<Page<CustomerResponse>> {
-  return this.searchPaged(term, page, size);
+    return this.searchPaged(term, page, size);
   }
 
   checkPhoneExists(phone: string): Observable<boolean> {
@@ -105,6 +133,24 @@ export class CustomerService {
   }
 
   findById(id: number): Observable<CustomerResponse> {
-  return this.http.get<CustomerResponse>(`${this.apiUrl}/${id}`);
+    return this.http.get<CustomerResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  getAccountSummary(customerId: number): Observable<CustomerAccountSummary> {
+    return this.http.get<CustomerAccountSummary>(`${this.apiUrl}/${customerId}/account/summary`)
+      .pipe(catchError(this.handleError));
+  }
+
+  getLedger(customerId: number, page: number, size: number): Observable<Page<CustomerLedgerEntry>> {
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<Page<CustomerLedgerEntry>>(`${this.apiUrl}/${customerId}/account/ledger`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  registerPayment(request: RegisterPaymentRequest): Observable<CustomerLedgerEntry> {
+    return this.http.post<CustomerLedgerEntry>(`${this.apiUrl}/${request.customerId}/account/payments`, {
+      amount: request.amount,
+      paymentMethodId: request.paymentMethodId
+    }).pipe(catchError(this.handleError));
   }
 }

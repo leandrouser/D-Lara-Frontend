@@ -1,0 +1,206 @@
+<div class="fd-wrap">
+
+  <!-- ── Header ── -->
+  <div class="fd-header">
+    <div>
+      <h1 class="fd-title">
+        <mat-icon>menu_book</mat-icon>
+        Fiado
+      </h1>
+      <p class="fd-subtitle">Gerencie vendas a prazo e recebimentos de clientes</p>
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ── -->
+  <div class="fd-kpi-row">
+
+    <div class="fd-kpi fd-kpi--red">
+      <div class="fd-kpi__top">
+        <span class="fd-kpi__label">Total a receber</span>
+        <span class="fd-kpi__icon"><mat-icon>account_balance_wallet</mat-icon></span>
+      </div>
+      <strong class="fd-kpi__value">{{ formatCurrency(fiadoStats().totalReceivable) }}</strong>
+      <span class="fd-kpi__sub">{{ fiadoStats().customersWithDebt }} clientes devendo</span>
+    </div>
+
+    <div class="fd-kpi fd-kpi--orange">
+      <div class="fd-kpi__top">
+        <span class="fd-kpi__label">Clientes com saldo devedor</span>
+        <span class="fd-kpi__icon"><mat-icon>people</mat-icon></span>
+      </div>
+      <strong class="fd-kpi__value">{{ fiadoStats().customersWithDebt }}</strong>
+      <span class="fd-kpi__sub">De {{ totalElements() }} clientes cadastrados</span>
+    </div>
+
+    <div class="fd-kpi fd-kpi--purple">
+      <div class="fd-kpi__top">
+        <span class="fd-kpi__label">Crédito total concedido</span>
+        <span class="fd-kpi__icon"><mat-icon>credit_card</mat-icon></span>
+      </div>
+      <strong class="fd-kpi__value">{{ formatCurrency(fiadoStats().totalCreditGranted) }}</strong>
+      <span class="fd-kpi__sub">Soma dos limites cadastrados</span>
+    </div>
+
+    <div class="fd-kpi fd-kpi--green">
+      <div class="fd-kpi__top">
+        <span class="fd-kpi__label">Crédito disponível</span>
+        <span class="fd-kpi__icon"><mat-icon>check_circle</mat-icon></span>
+      </div>
+      <strong class="fd-kpi__value">{{ formatCurrency(fiadoStats().totalAvailable) }}</strong>
+      <span class="fd-kpi__sub">Limite ainda não utilizado</span>
+    </div>
+
+  </div>
+
+  <!-- ── Filtros ── -->
+  <div class="fd-filters">
+    <div class="fd-search">
+      <mat-icon class="fd-search__icon">search</mat-icon>
+      <input
+        type="text"
+        class="fd-search__input"
+        placeholder="Buscar por nome ou telefone..."
+        [value]="search()"
+        (input)="onSearchInput($any($event.target).value)"
+      />
+    </div>
+
+    <div class="fd-filter-btns">
+      <button class="fd-filter-btn" [class.fd-filter-btn--active]="statusFilter() === 'withDebt'" (click)="setFilter('withDebt')">
+        <mat-icon>trending_up</mat-icon>
+        Com Saldo Devedor
+      </button>
+      <button class="fd-filter-btn" [class.fd-filter-btn--active]="statusFilter() === 'all'" (click)="setFilter('all')">
+        <mat-icon>apps</mat-icon>
+        Todos os Clientes
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Erro ── -->
+  @if (error()) {
+    <div class="fd-error">
+      <mat-icon>warning</mat-icon>
+      <span>{{ error() }}</span>
+      <button class="fd-error__btn" (click)="retryLoad()">
+        <mat-icon>refresh</mat-icon>
+        Tentar novamente
+      </button>
+    </div>
+  }
+
+  <!-- ── Tabela ── -->
+  <div class="fd-table-card">
+    <div class="fd-table-scroll">
+      <table class="fd-table">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Telefone</th>
+            <th class="fd-th--right">Limite</th>
+            <th class="fd-th--right">Saldo Devedor</th>
+            <th class="fd-th--right">Disponível</th>
+            <th class="fd-th--center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="fd-td-state">
+                <mat-icon class="fd-spin">refresh</mat-icon>
+                Carregando clientes...
+              </td>
+            </tr>
+          } @else if (displayedCustomers().length === 0 && !error()) {
+            <tr>
+              <td colspan="6" class="fd-td-state">
+                <mat-icon>search_off</mat-icon>
+                @if (statusFilter() === 'withDebt') {
+                  Nenhum cliente com saldo devedor
+                } @else {
+                  Nenhum cliente encontrado
+                }
+              </td>
+            </tr>
+          } @else if (!error()) {
+            @for (client of displayedCustomers(); track client.id) {
+              <tr [class]="'fd-tr fd-tr--' + getDebtStatusClass(client)">
+                <td><strong class="fd-customer">{{ client.name }}</strong></td>
+                <td class="fd-phone">{{ client.phone | phoneFormat }}</td>
+                <td class="fd-td--right fd-money">{{ formatCurrency(client.creditLimit) }}</td>
+                <td class="fd-td--right">
+                  <span [class]="'fd-debt-pill fd-debt-pill--' + getDebtStatusClass(client)">
+                    {{ formatCurrency(client.debtBalance) }}
+                  </span>
+                </td>
+                <td class="fd-td--right fd-available">{{ formatCurrency(client.creditLimit - client.debtBalance) }}</td>
+                <td class="fd-td--center">
+                  <div class="fd-actions">
+                    <button class="fd-btn fd-btn--view" (click)="openLedger(client)" title="Ver extrato">
+                      <mat-icon>receipt_long</mat-icon>
+                      Extrato
+                    </button>
+                    <button
+                      class="fd-btn fd-btn--receive"
+                      (click)="openPayment(client)"
+                      [disabled]="client.debtBalance <= 0"
+                      title="Registrar recebimento">
+                      <mat-icon>payments</mat-icon>
+                      Receber
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Paginação ── -->
+  <div class="fd-pager-bar">
+    <span class="fd-pager-bar__info">
+      Mostrando {{ paginationInfo().start }}–{{ paginationInfo().end }}
+      de {{ paginationInfo().total }} registros
+    </span>
+    <div class="fd-pager">
+      <button class="fd-pg" (click)="prevPage()" [disabled]="currentPage() === 0">
+        <mat-icon>chevron_left</mat-icon>
+        <span class="fd-pg__text">Anterior</span>
+      </button>
+      <div class="fd-pg-numbers">
+        @for (page of getPageNumbers(); track $index) {
+          @if (page === '...') {
+            <span class="fd-pg-dots">…</span>
+          } @else {
+            <button
+              class="fd-pg fd-pg--num"
+              [class.fd-pg--active]="currentPage() === ($any(page) - 1)"
+              (click)="goToPage($any(page))">
+              {{ page }}
+            </button>
+          }
+        }
+      </div>
+      <button class="fd-pg" (click)="nextPage()" [disabled]="currentPage() >= totalPages() - 1">
+        <span class="fd-pg__text">Próxima</span>
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<fiado-ledger-modal
+  [isOpen]="showLedgerModal()"
+  [customer]="selectedCustomer()"
+  (close)="closeLedgerModal()">
+</fiado-ledger-modal>
+
+<fiado-payment-modal
+  [isOpen]="showPaymentModal()"
+  [customer]="selectedCustomer()"
+  (close)="closePaymentModal()"
+  (paymentRegistered)="onPaymentRegistered()">
+</fiado-payment-modal>

@@ -1,0 +1,94 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <div class="header-title">
+        <mat-icon>receipt_long</mat-icon>
+        <div>
+          <h2>Extrato de {{ customer?.name }}</h2>
+          <span class="subtitle">{{ customer?.phone }}</span>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeModal()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="balance-summary" *ngIf="customer">
+        <div class="balance-item">
+          <span class="label">Limite de Crédito</span>
+          <strong>{{ formatCurrency(customer.creditLimit) }}</strong>
+        </div>
+        <div class="balance-item">
+          <span class="label">Saldo Devedor</span>
+          <strong class="debt">{{ formatCurrency(customer.debtBalance) }}</strong>
+        </div>
+        <div class="balance-item">
+          <span class="label">Disponível</span>
+          <strong class="available">{{ formatCurrency(customer.creditLimit - customer.debtBalance) }}</strong>
+        </div>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <mat-icon class="loading-spinner">refresh</mat-icon>
+          Carregando extrato...
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="error-state">
+          <mat-icon>warning</mat-icon>
+          {{ errorMessage() }}
+        </div>
+      }
+
+      @if (!isLoading() && !errorMessage() && entries().length === 0) {
+        <div class="empty-state">
+          <mat-icon>inbox</mat-icon>
+          <p>Nenhum lançamento encontrado.</p>
+        </div>
+      }
+
+      @if (!isLoading() && entries().length > 0) {
+        <div class="ledger-list">
+          @for (entry of entries(); track entry.id) {
+            <div class="ledger-item" [class.debit]="isDebit(entry.type)" [class.credit]="!isDebit(entry.type)">
+              <div class="ledger-icon">
+                <mat-icon>{{ typeIcon(entry.type) }}</mat-icon>
+              </div>
+              <div class="ledger-info">
+                <span class="ledger-type">{{ typeLabel(entry.type) }}</span>
+                <span class="ledger-meta">
+                  {{ entry.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  <ng-container *ngIf="entry.saleId"> • Venda #{{ entry.saleId }}</ng-container>
+                  <ng-container *ngIf="entry.paymentMethodName"> • {{ entry.paymentMethodName }}</ng-container>
+                </span>
+                <span class="ledger-operator" *ngIf="entry.operatorName">Operador: {{ entry.operatorName }}</span>
+              </div>
+              <div class="ledger-amount" [class.debit]="isDebit(entry.type)" [class.credit]="!isDebit(entry.type)">
+                {{ isDebit(entry.type) ? '+' : '-' }} {{ formatCurrency(entry.amount) }}
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (paged() && paged()!.totalPages > 1) {
+          <div class="pagination">
+            <button (click)="prevPage()" [disabled]="page() === 0">‹ Anterior</button>
+            <span>Página {{ page() + 1 }} de {{ paged()!.totalPages }}</span>
+            <button (click)="nextPage()" [disabled]="paged()!.last">Próxima ›</button>
+          </div>
+        }
+      }
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeModal()">Fechar</button>
+    </div>
+
+  </div>
+</div>

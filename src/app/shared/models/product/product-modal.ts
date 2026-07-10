@@ -104,7 +104,7 @@ export class ProductCreateDialogComponent implements OnDestroy {
         this.loadNextId();
 
         setTimeout(() => {
-          document.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
+          document.querySelector<HTMLInputElement>('input[name="barcode"]')?.focus();
         }, 100);
       },
       error: (err) => {
