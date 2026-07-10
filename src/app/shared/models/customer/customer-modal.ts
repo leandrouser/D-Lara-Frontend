@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,21 +15,25 @@ import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } fro
   templateUrl: './customer-modal.html',
   styleUrls: ['./customer-modal.scss']
 })
-export class CustomerModal implements OnDestroy {
+export class CustomerModal implements OnChanges, OnDestroy {
   private customerService = inject(CustomerService);
   private snackBar = inject(MatSnackBar);
 
   @Input() isOpen: boolean = false;
+  @Input() customerToEdit: CustomerResponse | null = null; // <- novo
   @Output() close = new EventEmitter<void>();
   @Output() customerAdded = new EventEmitter<CustomerResponse>();
+  @Output() customerUpdated = new EventEmitter<CustomerResponse>(); // <- novo
 
-  formData = signal<CustomerRequest>({ name: '', phone: '', active: true });
+  formData = signal<CustomerRequest>({ name: '', phone: '', active: true, creditLimit: 0 });
   isLoading = signal(false);
   errorMessage = signal('');
 
   phoneExists   = signal(false);
   phoneChecked  = signal(false);
   checkingPhone = signal(false);
+
+  private originalPhoneDigits: string | null = null; // <- novo, pra não acusar duplicado no próprio telefone
 
   private phoneSubject = new Subject<string>();
   private destroy$     = new Subject<void>();
@@ -40,12 +44,22 @@ export class CustomerModal implements OnDestroy {
       distinctUntilChanged(),
       switchMap(phone => {
         const digits = phone.replace(/\D/g, '');
+
         if (digits.length < 10) {
           this.phoneExists.set(false);
           this.phoneChecked.set(false);
           this.checkingPhone.set(false);
           return [];
         }
+
+        // Edição: se o telefone não mudou em relação ao original, não precisa checar
+        if (this.originalPhoneDigits && digits === this.originalPhoneDigits) {
+          this.phoneExists.set(false);
+          this.phoneChecked.set(true);
+          this.checkingPhone.set(false);
+          return [];
+        }
+
         this.checkingPhone.set(true);
         return this.customerService.checkPhoneExists(phone);
       }),
@@ -55,6 +69,30 @@ export class CustomerModal implements OnDestroy {
       this.phoneChecked.set(true);
       this.checkingPhone.set(false);
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['customerToEdit']) {
+      const customer = this.customerToEdit;
+
+      if (customer) {
+        this.formData.set({
+          name: customer.name,
+          phone: customer.phone,
+          active: customer.active,
+          creditLimit: customer.creditLimit ?? 0
+        });
+        this.originalPhoneDigits = (customer.phone || '').replace(/\D/g, '');
+        this.phoneChecked.set(true);
+        this.phoneExists.set(false);
+      } else {
+        this.resetForm();
+      }
+    }
+  }
+
+  get isEdit(): boolean {
+    return !!this.customerToEdit?.id;
   }
 
   saveCustomer(): void {
@@ -75,22 +113,41 @@ export class CustomerModal implements OnDestroy {
     this.errorMessage.set('');
     this.isLoading.set(true);
 
-    this.customerService.create(data).subscribe({
-      next: (res) => {
-        this.customerAdded.emit(res);
-        this.snackBar.open(`Cliente ${res.name} cadastrado com sucesso!`, 'OK', {
-          duration: 3000,
-          verticalPosition: 'top',
-          horizontalPosition: 'center',
-        });
-        this.resetForm();
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        this.handleError(err);
-      }
-    });
+    if (this.isEdit && this.customerToEdit) {
+      this.customerService.update(this.customerToEdit.id, data).subscribe({
+        next: (res) => {
+          this.customerUpdated.emit(res);
+          this.snackBar.open(`Cliente ${res.name} atualizado com sucesso!`, 'OK', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'center',
+          });
+          this.resetForm();
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.handleError(err);
+        }
+      });
+    } else {
+      this.customerService.create(data).subscribe({
+        next: (res) => {
+          this.customerAdded.emit(res);
+          this.snackBar.open(`Cliente ${res.name} cadastrado com sucesso!`, 'OK', {
+            duration: 3000,
+            verticalPosition: 'top',
+            horizontalPosition: 'center',
+          });
+          this.resetForm();
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+          this.handleError(err);
+        }
+      });
+    }
   }
 
   updateField(key: keyof CustomerRequest, value: any): void {
@@ -104,6 +161,10 @@ export class CustomerModal implements OnDestroy {
       this.phoneChecked.set(false);
       this.phoneExists.set(false);
       this.phoneSubject.next(finalValue);
+    }
+
+    if (key === 'creditLimit') {
+      finalValue = value === null || value === '' || isNaN(value) ? 0 : Number(value);
     }
 
     this.formData.update(current => ({ ...current, [key]: finalValue }));
@@ -136,10 +197,11 @@ export class CustomerModal implements OnDestroy {
   }
 
   private resetForm(): void {
-    this.formData.set({ name: '', phone: '', active: true });
+    this.formData.set({ name: '', phone: '', active: true, creditLimit: 0 });
     this.errorMessage.set('');
     this.phoneExists.set(false);
     this.phoneChecked.set(false);
     this.checkingPhone.set(false);
+    this.originalPhoneDigits = null;
   }
 }

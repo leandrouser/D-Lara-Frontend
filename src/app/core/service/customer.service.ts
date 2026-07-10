@@ -8,6 +8,7 @@ export interface CustomerRequest {
   name: string;
   phone: string;
   active?: boolean;
+  creditLimit?: number;
 }
 
 export interface CustomerResponse {
@@ -15,6 +16,8 @@ export interface CustomerResponse {
   name: string;
   phone: string;
   active: boolean;
+  creditLimit: number;
+  debtBalance: number;
 }
 
 export interface Page<T> {

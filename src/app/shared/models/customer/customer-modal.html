@@ -2,7 +2,7 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
 
     <div class="modal-header">
-      <h2>Novo Cliente</h2>
+      <h2>{{ isEdit ? 'Editar Cliente' : 'Novo Cliente' }}</h2>
       <button type="button" class="close-btn" (click)="closeModal()">
         <mat-icon>close</mat-icon>
       </button>
@@ -41,6 +41,24 @@
           <mat-icon class="phone-icon checking" *ngIf="checkingPhone()">autorenew</mat-icon>
           <mat-icon class="phone-icon error"    *ngIf="!checkingPhone() && phoneExists()">error</mat-icon>
           <mat-icon class="phone-icon success"  *ngIf="!checkingPhone() && phoneChecked() && !phoneExists() && formData().phone">check_circle</mat-icon>
+        </div>
+
+        <div class="form-group">
+          <label for="creditLimit">Limite de crédito (fiado)</label>
+          <div class="currency-input-wrapper">
+            <span class="currency-prefix">R$</span>
+            <input
+              type="number"
+              id="creditLimit"
+              [ngModel]="formData().creditLimit"
+              (ngModelChange)="updateField('creditLimit', $event)"
+              name="creditLimit"
+              placeholder="0,00"
+              min="0"
+              step="0.01"
+              [disabled]="isLoading()">
+          </div>
+          <small class="hint">Valor máximo que o cliente pode dever em vendas a prazo. Deixe 0 para não permitir fiado.</small>
         </div>
 
         <div class="phone-feedback">
@@ -85,8 +103,8 @@
           [class.loading]="isLoading()"
           [disabled]="!formData().name || !formData().phone || isLoading() || phoneExists() || checkingPhone()">
           <ng-container *ngIf="!isLoading()">
-            <mat-icon>person_add</mat-icon>
-            Salvar e Continuar
+            <mat-icon>{{ isEdit ? 'edit' : 'person_add' }}</mat-icon>
+            {{ isEdit ? 'Atualizar' : 'Salvar e Continuar' }}
           </ng-container>
           <ng-container *ngIf="isLoading()">
             <span class="spinner"></span> Salvando...

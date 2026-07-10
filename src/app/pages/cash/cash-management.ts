@@ -134,7 +134,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     this.paymentService.listPaymentMethods().subscribe({
       next: (methods) => {
-        this.paymentMethods.set(methods.map(m => ({ id: m.id, name: m.displayName })));
+    this.paymentMethods.set(methods.map(m => ({ id: m.id, name: m.displayName })));
       }
     });
     this.loadChartJs();

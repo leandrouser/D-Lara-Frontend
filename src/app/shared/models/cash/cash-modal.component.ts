@@ -32,6 +32,7 @@ interface ClosingResult {
   initialValue: number;
   totalSalesOnly: number;
   totalSalesCash: number;
+  totalCreditSales: number;
 }
 
 @Component({
@@ -97,11 +98,13 @@ export class CashModalComponent implements OnInit, OnChanges {
 }
 
   private initializeClosingCounts(): void {
-    this.closingCounts = this.paymentMethods.map(m => ({
-      id: m.id,
-      name: m.name,
-      physicalAmount: 0
-    }));
+    this.closingCounts = this.paymentMethods
+      .filter(m => !m.name.trim().toLowerCase().includes('a prazo') && m.name.trim().toLowerCase() !== 'fiado')
+      .map(m => ({
+        id: m.id,
+        name: m.name,
+        physicalAmount: 0
+      }));
   }
 
   updateCount(methodId: number, event: Event): void {
@@ -139,7 +142,8 @@ submitClosing(): void {
     totalSistema: result.totalSystemExpected,
     totalInformado: result.totalUserReported,
     totalDiferenca: result.totalDiscrepancy,
-    totalDescontos: result.totalDiscounts ?? 0
+    totalDescontos: result.totalDiscounts ?? 0,
+    totalCreditoAPrazo: result.totalCreditSales ?? 0
   };
 
   this.printService.imprimirFechamento(fechamento).subscribe({

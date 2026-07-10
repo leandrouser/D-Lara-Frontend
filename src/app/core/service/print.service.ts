@@ -40,6 +40,7 @@ export interface FechamentoCaixaRequest {
   totalInformado: number;
   totalDiferenca: number;
   totalDescontos: number;
+  totalCreditoAPrazo: number;
 }
 
 @Injectable({ providedIn: 'root' })

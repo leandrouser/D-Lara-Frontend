@@ -75,6 +75,7 @@ export interface CloseSessionResponse {
   initialValue: number;
   totalSalesOnly: number;
   totalSalesCash: number;
+  totalCreditSales: number;
 }
 
 export interface MethodComparisonDTO {
@@ -113,6 +114,7 @@ export interface CashSummaryResponse {
   totalExchangeReturn: number;
   currentBalance: number;
   openingDate: string;
+  totalCreditSales: number;
 }
 
 export interface CashSessionReportFilter {

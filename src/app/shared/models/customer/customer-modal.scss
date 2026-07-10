@@ -75,7 +75,8 @@
   }
 
   input[type="text"],
-  input[type="email"] {
+  input[type="email"],
+  input[type="number"] {
     width: 100%;
     padding: 10px 5px;
     border: 1px solid #d1d5db;
@@ -92,6 +93,13 @@
     &::placeholder {
       color: #9ca3af;
     }
+  }
+
+  > .hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #9ca3af;
   }
 }
 
@@ -294,4 +302,45 @@
   .error    { color: #dc2626; font-weight: 500; }
   .success  { color: #15803d; }
   .hint     { color: #9ca3af; }
+}
+
+.currency-input-wrapper {
+  position: relative;
+
+  input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 10px 10px 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    &::placeholder { color: #9ca3af; }
+
+    // remove as setinhas nativas do input number
+    -moz-appearance: textfield;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  .currency-prefix {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    pointer-events: none;
+  }
 }

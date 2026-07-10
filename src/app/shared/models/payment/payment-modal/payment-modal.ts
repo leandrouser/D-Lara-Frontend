@@ -19,6 +19,7 @@ export interface PaymentData {
   saleId: number;
   totalAmount: number;
   customerName: string;
+  customerId?: number | null;
   items?: PaymentItemSummary[];
 }
 
@@ -49,7 +50,7 @@ export class PaymentModal implements OnChanges, OnInit {
 
   dbPaymentMethods = signal<PaymentMethodResponse[]>([]);
 
-  paymentMethods = ['DINHEIRO', 'CARTAO_DE_CREDITO', 'CARTAO_DE_DEBITO', 'PIX'] as const;
+  paymentMethods = ['DINHEIRO', 'CARTAO_DE_CREDITO', 'CARTAO_DE_DEBITO', 'PIX', 'A_PRAZO'] as const;
 
   @Input() paymentData: PaymentData | null = null;
   @Input() isOpen: boolean = false;
@@ -218,12 +219,10 @@ export class PaymentModal implements OnChanges, OnInit {
     setTimeout(() => this.focusAmountInput(), 50);
   }
 
-  // Atualiza valor arredondando para 2 casas
   updateCurrentAmount(value: number) {
     this.currentAmount.set(this.round2(Math.max(0, value || 0)));
   }
 
-  // Impede digitação de mais de 2 casas decimais no input
   onAmountInput(event: Event) {
     const input = event.target as HTMLInputElement;
     const raw = input.value;
@@ -296,7 +295,8 @@ export class PaymentModal implements OnChanges, OnInit {
 
     } catch (e) {
       console.error('Erro ao processar pagamento múltiplo:', e);
-      alert('Erro ao processar pagamento.');
+      const message = (e as any)?.error?.message || 'Erro ao processar pagamento.';
+      alert(message);
     } finally {
       this.isProcessing.set(false);
     }
@@ -336,7 +336,8 @@ export class PaymentModal implements OnChanges, OnInit {
       'DINHEIRO': 'Dinheiro',
       'CARTAO_DE_CREDITO': 'Crédito',
       'CARTAO_DE_DEBITO': 'Débito',
-      'PIX': 'PIX'
+      'PIX': 'PIX',
+      'A_PRAZO': 'A Prazo'
     };
     return map[method] || method;
   }

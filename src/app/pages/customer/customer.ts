@@ -204,6 +204,12 @@ private loadStatsFromExistingEndpoint() {
     this.searchSubject.next(value);
   }
 
+  onCustomerUpdated(updatedCustomer: CustomerResponse): void {
+    this.closeModal();
+    this.loadCustomers();
+    this.loadCustomerStats();
+  }
+
   createCustomer(data: any) {
     this.api.create(data).subscribe({
       next: (newCustomer) => {

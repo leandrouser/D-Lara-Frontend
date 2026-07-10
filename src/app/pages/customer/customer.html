@@ -219,6 +219,8 @@
 
 <customer-modal
   [isOpen]="showModal()"
+  [customerToEdit]="selectedCustomer()"
   (customerAdded)="onCustomerAdded($event)"
+  (customerUpdated)="onCustomerUpdated($event)"
   (close)="closeModal()">
 </customer-modal>

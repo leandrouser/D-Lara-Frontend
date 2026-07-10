@@ -166,6 +166,28 @@
         </div>
       </div>
 
+      <div class="sales-summary-card" *ngIf="closingResult.totalCreditSales > 0">
+        <div class="sales-summary-header">
+          <mat-icon>event_repeat</mat-icon>
+          <span>Vendas a Prazo (Fiado)</span>
+        </div>
+        <div class="sales-summary-body">
+          <div class="summary-row">
+            <span class="summary-label">
+              <mat-icon>info</mat-icon>
+              Total vendido a prazo hoje
+            </span>
+            <span class="summary-value neutral">
+              {{ closingResult.totalCreditSales | currency:'BRL' }}
+            </span>
+          </div>
+        </div>
+        <div class="discrepancy-note">
+          <mat-icon>info</mat-icon>
+          <p>Este valor não é contabilizado na conferência de caixa físico, pois representa crédito concedido ao cliente, não dinheiro recebido.</p>
+        </div>
+      </div>
+
       <div class="reconciliation-table">
         <div class="table-header">
           <div>Método</div>
@@ -175,16 +197,17 @@
         </div>
 
         <ng-container *ngFor="let detail of closingResult.details">
-          <div class="table-row" [class.has-diff]="detail.difference !== 0">
-            <div class="method-name">{{ detail.methodName }}</div>
-            <div class="value-system">{{ detail.expectedAmount | currency:'BRL' }}</div>
-            <div class="value-reported">{{ detail.reportedAmount | currency:'BRL' }}</div>
-            <div class="value-diff" [ngClass]="diffClass(detail.difference)">
-              <mat-icon *ngIf="detail.difference > 0">arrow_upward</mat-icon>
-              <mat-icon *ngIf="detail.difference < 0">arrow_downward</mat-icon>
-              <span>{{ detail.difference | currency:'BRL' }}</span>
+          <ng-container *ngIf="detail.methodName !== 'A Prazo'">
+            <div class="table-row" [class.has-diff]="detail.difference !== 0">
+              <div class="method-name">{{ detail.methodName }}</div>
+              <div class="value-system">{{ detail.expectedAmount | currency:'BRL' }}</div>
+              <div class="value-reported">{{ detail.reportedAmount | currency:'BRL' }}</div>
+              <div class="value-diff" [ngClass]="diffClass(detail.difference)">
+                <mat-icon *ngIf="detail.difference > 0">arrow_upward</mat-icon>
+                <mat-icon *ngIf="detail.difference < 0">arrow_downward</mat-icon>
+                <span>{{ detail.difference | currency:'BRL' }}</span>
+              </div>
             </div>
-          </div>
           <div class="table-subrow" *ngIf="detail.initialValue > 0">
             <div class="subrow-item">
               <mat-icon>vpn_key</mat-icon>
@@ -193,8 +216,9 @@
             <div class="subrow-item">
               <mat-icon>trending_up</mat-icon>
               Vendas líquidas: {{ detail.salesOnly | currency:'BRL' }}
+              </div>
             </div>
-          </div>
+          </ng-container>
         </ng-container>
       </div>
 
