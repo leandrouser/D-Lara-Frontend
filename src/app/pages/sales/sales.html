@@ -16,11 +16,11 @@
 
     <div class="sh-kpi sh-kpi--green">
       <div class="sh-kpi__top">
-        <span class="sh-kpi__label">Total em vendas</span>
+        <span class="sh-kpi__label">Total em vendas (mês)</span>
         <span class="sh-kpi__icon"><mat-icon>payments</mat-icon></span>
       </div>
-      <strong class="sh-kpi__value">{{ formatCurrency(salesStats().totalAmount) }}</strong>
-      <span class="sh-kpi__sub">{{ salesStats().totalSales }} vendas</span>
+      <strong class="sh-kpi__value">{{ formatCurrency(salesStats().monthAmount) }}</strong>
+      <span class="sh-kpi__sub">{{ salesStats().monthSales }} vendas no mês</span>
     </div>
 
     <div class="sh-kpi sh-kpi--blue">
@@ -50,13 +50,13 @@
       <span class="sh-kpi__sub">{{ formatCurrency(salesStats().pendingAmount) }}</span>
     </div>
 
-    <div class="sh-kpi sh-kpi--orange">
+    <div class="sh-kpi sh-kpi--orange sh-kpi--clickable" (click)="cycleTicketPeriod()">
       <div class="sh-kpi__top">
         <span class="sh-kpi__label">Ticket médio</span>
         <span class="sh-kpi__icon"><mat-icon>trending_up</mat-icon></span>
       </div>
       <strong class="sh-kpi__value">{{ formatCurrency(getAverageTicket()) }}</strong>
-      <span class="sh-kpi__sub">Por venda</span>
+      <span class="sh-kpi__sub">{{ getTicketPeriodLabel() }}</span>
     </div>
 
   </div>
@@ -106,7 +106,7 @@
     </div>
   }
 
-  
+
 
   <!-- ── Tabela ── -->
   <div class="sh-table-card">

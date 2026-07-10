@@ -27,6 +27,8 @@ export class Sales implements OnInit, OnDestroy {
   isAdmin = computed(() => this.authService.isAdmin());
   isCancelling = signal(false);
 
+  ticketPeriod = signal<'week' | 'month' | 'year'>('month');
+
   sales = signal<SaleResponse[]>([]);
   isLoading = signal(true);
   error = signal('');
@@ -42,9 +44,12 @@ export class Sales implements OnInit, OnDestroy {
   selectedSale = signal<SaleResponse | null>(null);
 
   salesStats = signal({
-    totalAmount: 0, totalSales: 0, todaySales: 0, todayAmount: 0,
-    paidSales: 0, pendingSales: 0, cancelledSales: 0, pendingAmount: 0
-  });
+  totalAmount: 0, totalSales: 0, todaySales: 0, todayAmount: 0,
+  paidSales: 0, pendingSales: 0, cancelledSales: 0, pendingAmount: 0,
+  monthAmount: 0, monthSales: 0,
+  weekAmount: 0, weekSales: 0,
+  yearAmount: 0, yearSales: 0
+});
 
   ngOnInit() {
     this.searchSubject.pipe(
@@ -125,15 +130,47 @@ export class Sales implements OnInit, OnDestroy {
       complete: () => this.isCancelling.set(false)
     });
   }
-  
+
+  private getStartOfWeek(date: Date): Date {
+    const d = new Date(date);
+    const day = d.getDay(); // 0 = domingo, 1 = segunda...
+    const diff = day === 0 ? 6 : day - 1; // segunda-feira como início da semana
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
   private calculateSalesStats(sales: SaleResponse[]): void {
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const today = now.toISOString().split('T')[0];
+    const startOfWeek = this.getStartOfWeek(now);
+
     const stats = sales.reduce((acc, sale) => {
+      const saleDate = new Date(sale.dateSale);
       const isToday = sale.dateSale.split('T')[0] === today;
+      const isCurrentMonth = saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+      const isCurrentYear = saleDate.getFullYear() === currentYear;
+      const isCurrentWeek = saleDate >= startOfWeek;
+
       acc.totalSales++;
       if (sale.saleStatus === 'PAID') {
         acc.paidSales++;
         acc.totalAmount += sale.total;
+
+        if (isCurrentMonth) {
+          acc.monthSales++;
+          acc.monthAmount += sale.total;
+        }
+        if (isCurrentYear) {
+          acc.yearSales++;
+          acc.yearAmount += sale.total;
+        }
+        if (isCurrentWeek) {
+          acc.weekSales++;
+          acc.weekAmount += sale.total;
+        }
         if (isToday) { acc.todaySales++; acc.todayAmount += sale.total; }
       } else if (sale.saleStatus === 'PENDING') {
         acc.pendingSales++;
@@ -144,7 +181,10 @@ export class Sales implements OnInit, OnDestroy {
       return acc;
     }, {
       totalAmount: 0, totalSales: 0, todaySales: 0, todayAmount: 0,
-      paidSales: 0, pendingSales: 0, cancelledSales: 0, pendingAmount: 0
+      paidSales: 0, pendingSales: 0, cancelledSales: 0, pendingAmount: 0,
+      monthAmount: 0, monthSales: 0,
+      weekAmount: 0, weekSales: 0,
+      yearAmount: 0, yearSales: 0
     });
     this.salesStats.set(stats);
   }
@@ -165,7 +205,27 @@ export class Sales implements OnInit, OnDestroy {
 
   getAverageTicket(): number {
     const stats = this.salesStats();
-    return stats.totalSales > 0 ? stats.totalAmount / stats.totalSales : 0;
+    const period = this.ticketPeriod();
+
+    if (period === 'week') {
+      return stats.weekSales > 0 ? stats.weekAmount / stats.weekSales : 0;
+    }
+    if (period === 'year') {
+      return stats.yearSales > 0 ? stats.yearAmount / stats.yearSales : 0;
+    }
+    return stats.monthSales > 0 ? stats.monthAmount / stats.monthSales : 0;
+  }
+
+  cycleTicketPeriod(): void {
+    const order: ('week' | 'month' | 'year')[] = ['week', 'month', 'year'];
+    const currentIndex = order.indexOf(this.ticketPeriod());
+    const nextIndex = (currentIndex + 1) % order.length;
+    this.ticketPeriod.set(order[nextIndex]);
+  }
+
+  getTicketPeriodLabel(): string {
+    const labels = { week: 'Por venda (semana)', month: 'Por venda (mês)', year: 'Por venda (ano)' };
+    return labels[this.ticketPeriod()];
   }
 
   formatCurrency(value: number): string {
