@@ -273,11 +273,11 @@ export class PaymentModal implements OnChanges, OnInit {
       const response = await new Promise<any>((resolve, reject) => {
         this.paymentService.processMultiPayment(requestBody).subscribe({ next: resolve, error: reject });
       });
-
+    
       if (response.cupom) {
         this.lastCupom.set(response.cupom);
       }
-
+    
       if (response.saleCompleted && response.cupom) {
         this.printService.imprimir(response.cupom).subscribe({
           next: () => console.log('Cupom enviado para impressão'),
@@ -288,19 +288,18 @@ export class PaymentModal implements OnChanges, OnInit {
           ).onAction().subscribe(() => this.reimprimir())
         });
       }
-
+    
       this.paymentProcessed.emit(response);
       this.paymentSuccess.set(response);
       setTimeout(() => this.closeModal(), 2000);
-
+    
     } catch (e) {
       console.error('Erro ao processar pagamento múltiplo:', e);
       const message = (e as any)?.error?.message || 'Erro ao processar pagamento.';
-      alert(message);
+      this.snackBar.open(message, 'OK', { duration: 6000, panelClass: ['error-snack'] });
     } finally {
       this.isProcessing.set(false);
     }
-  }
 
   validatePayments(): { valid: boolean; error?: string } {
     const methods = this.selectedPaymentMethods()
