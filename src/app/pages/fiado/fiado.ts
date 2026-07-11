@@ -5,9 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { CustomerService, CustomerResponse, Page } from '../../core/service/customer.service';
 import { PhoneFormatPipe } from '../../shared/pipes/phone-pipe';
-import { FiadoLedgerModal } from '../../shared/models/fiado/fiado-ledger-modal';
-import { FiadoPaymentModal } from '../../shared/models/fiado/fiado-payment/fiado-payment.modal';
-
+import { FiadoLedgerModal } from '../../shared/models/fiado/fiado-ledger-modal/fiado-ledger-modal';
+import { FiadoPaymentModal } from '../../shared/models/fiado/fiado-payment-modal/fiado-payment-modal';
 
 type FiadoFilter = 'all' | 'withDebt';
 
@@ -47,18 +46,33 @@ export class Fiado implements OnInit, OnDestroy {
   showPaymentModal = signal(false);
   selectedCustomer = signal<CustomerResponse | null>(null);
 
+  // Todos os clientes com saldo devedor (carregado à parte, independente da paginação da tabela)
+  private allDebtors = signal<CustomerResponse[]>([]);
+
   displayedCustomers = computed(() => {
-    const list = this.customers();
     if (this.statusFilter() === 'withDebt') {
-      return list.filter(c => (c.debtBalance ?? 0) > 0);
+      const start = this.currentPage() * this.itemsPerPage();
+      const end = start + this.itemsPerPage();
+      return this.allDebtors().slice(start, end);
     }
-    return list;
+    return this.customers();
   });
 
+  private effectiveTotalElements = computed(() =>
+    this.statusFilter() === 'withDebt' ? this.allDebtors().length : this.totalElements()
+  );
+
+  private effectiveTotalPages = computed(() =>
+    this.statusFilter() === 'withDebt'
+      ? Math.max(1, Math.ceil(this.allDebtors().length / this.itemsPerPage()))
+      : this.totalPages()
+  );
+
   paginationInfo = computed(() => {
-    const start = this.currentPage() * this.itemsPerPage() + 1;
-    const end = Math.min((this.currentPage() + 1) * this.itemsPerPage(), this.totalElements());
-    return { start, end, total: this.totalElements() };
+    const total = this.effectiveTotalElements();
+    const start = total === 0 ? 0 : this.currentPage() * this.itemsPerPage() + 1;
+    const end = Math.min((this.currentPage() + 1) * this.itemsPerPage(), total);
+    return { start, end, total };
   });
 
   ngOnInit() {
@@ -104,7 +118,10 @@ export class Fiado implements OnInit, OnDestroy {
 
   private loadStats(): void {
     this.api.searchPaged('', 0, 9999).subscribe({
-      next: (page: Page<CustomerResponse>) => this.calculateStats(page.content)
+      next: (page: Page<CustomerResponse>) => {
+        this.calculateStats(page.content);
+        this.allDebtors.set(page.content.filter(c => (c.debtBalance ?? 0) > 0));
+      }
     });
   }
 
@@ -140,7 +157,7 @@ export class Fiado implements OnInit, OnDestroy {
   }
 
   nextPage() {
-    if (this.currentPage() < this.totalPages() - 1) {
+    if (this.currentPage() < this.effectiveTotalPages() - 1) {
       this.goToPage(this.currentPage() + 2);
     }
   }
@@ -152,7 +169,7 @@ export class Fiado implements OnInit, OnDestroy {
   }
 
   getPageNumbers(): (number | string)[] {
-    const total = this.totalPages();
+    const total = this.effectiveTotalPages();
     const current = this.currentPage() + 1;
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
     if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
