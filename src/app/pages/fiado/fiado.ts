@@ -5,8 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { CustomerService, CustomerResponse, Page } from '../../core/service/customer.service';
 import { PhoneFormatPipe } from '../../shared/pipes/phone-pipe';
-import { FiadoLedgerModal } from '../../shared/models/fiado/fiado-ledger-modal/fiado-ledger-modal';
-import { FiadoPaymentModal } from '../../shared/models/fiado/fiado-payment-modal/fiado-payment-modal';
+import { FiadoLedgerModal } from '../../shared/models/fiado/fiado-ledger-modal';
+import { FiadoPaymentModal } from '../../shared/models/fiado/fiado-payment/fiado-payment.modal';
 
 type FiadoFilter = 'all' | 'withDebt';
 
