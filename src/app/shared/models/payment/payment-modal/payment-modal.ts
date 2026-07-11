@@ -19,7 +19,6 @@ export interface PaymentData {
   saleId: number;
   totalAmount: number;
   customerName: string;
-  customerId?: number | null;
   items?: PaymentItemSummary[];
 }
 
@@ -214,15 +213,17 @@ export class PaymentModal implements OnChanges, OnInit {
   }
 
   selectCurrentPaymentMethod(method: string) {
-    this.currentPaymentMethod.set(method as 'DINHEIRO' | 'CARTAO_DE_CREDITO' | 'CARTAO_DE_DEBITO' | 'PIX');
+    this.currentPaymentMethod.set(method as 'DINHEIRO' | 'CARTAO_DE_CREDITO' | 'CARTAO_DE_DEBITO' | 'PIX' | 'A_PRAZO');
     this.currentAmount.set(this.round2(this.remainingAmount()));
     setTimeout(() => this.focusAmountInput(), 50);
   }
 
+  // Atualiza valor arredondando para 2 casas
   updateCurrentAmount(value: number) {
     this.currentAmount.set(this.round2(Math.max(0, value || 0)));
   }
 
+  // Impede digitação de mais de 2 casas decimais no input
   onAmountInput(event: Event) {
     const input = event.target as HTMLInputElement;
     const raw = input.value;
@@ -273,11 +274,11 @@ export class PaymentModal implements OnChanges, OnInit {
       const response = await new Promise<any>((resolve, reject) => {
         this.paymentService.processMultiPayment(requestBody).subscribe({ next: resolve, error: reject });
       });
-    
+
       if (response.cupom) {
         this.lastCupom.set(response.cupom);
       }
-    
+
       if (response.saleCompleted && response.cupom) {
         this.printService.imprimir(response.cupom).subscribe({
           next: () => console.log('Cupom enviado para impressão'),
@@ -288,18 +289,19 @@ export class PaymentModal implements OnChanges, OnInit {
           ).onAction().subscribe(() => this.reimprimir())
         });
       }
-    
+
       this.paymentProcessed.emit(response);
       this.paymentSuccess.set(response);
       setTimeout(() => this.closeModal(), 2000);
-    
+
     } catch (e) {
       console.error('Erro ao processar pagamento múltiplo:', e);
       const message = (e as any)?.error?.message || 'Erro ao processar pagamento.';
-      this.snackBar.open(message, 'OK', { duration: 6000, panelClass: ['error-snack'] });
+      alert(message);
     } finally {
       this.isProcessing.set(false);
     }
+  }
 
   validatePayments(): { valid: boolean; error?: string } {
     const methods = this.selectedPaymentMethods()
