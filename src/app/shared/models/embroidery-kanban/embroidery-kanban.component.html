@@ -35,11 +35,21 @@
         <span class="kb-col-label">1. Pendente</span>
         <span class="kb-col-count">{{ pending.length }}</span>
       </div>
-      <div class="kb-col-body">
+      <div class="kb-col-body"
+           id="col-pending"
+           cdkDropList
+           [cdkDropListData]="pending"
+           [cdkDropListDisabled]="isMobile()"
+           [cdkDropListConnectedTo]="['col-in-production']"
+           (cdkDropListDropped)="onCardDrop($event)">
         <ng-container *ngIf="pending.length > 0; else emptyPending">
           <div class="kb-card"
                *ngFor="let e of pending"
-               [class.late]="isOverdue(e.deliveryDate)">
+               [class.late]="isOverdue(e.deliveryDate)"
+               cdkDrag
+                [cdkDragDisabled]="isMobile()"
+                (cdkDragStarted)="onDragStarted()"
+                (cdkDragEnded)="onDragEnded()">
             <div class="kb-card-top">
               <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
@@ -93,11 +103,21 @@
         <span class="kb-col-label">2. Em Produção</span>
         <span class="kb-col-count">{{ inProduction.length }}</span>
       </div>
-      <div class="kb-col-body">
+      <div class="kb-col-body"
+           id="col-in-production"
+           cdkDropList
+           [cdkDropListData]="inProduction"
+           [cdkDropListDisabled]="isMobile()"
+           [cdkDropListConnectedTo]="['col-pending', 'col-processing']"
+           (cdkDropListDropped)="onCardDrop($event)">
         <ng-container *ngIf="inProduction.length > 0; else emptyInProduction">
           <div class="kb-card"
                *ngFor="let e of inProduction"
-               [class.late]="isOverdue(e.deliveryDate)">
+               [class.late]="isOverdue(e.deliveryDate)"
+               cdkDrag
+               [cdkDragDisabled]="isMobile()"
+               (cdkDragStarted)="onDragStarted()"
+                (cdkDragEnded)="onDragEnded()">
             <div class="kb-card-top">
               <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
@@ -151,9 +171,20 @@
         <span class="kb-col-label">3. Pronto para entrega</span>
         <span class="kb-col-count">{{ processing.length }}</span>
       </div>
-      <div class="kb-col-body">
+      <div class="kb-col-body"
+           id="col-processing"
+           cdkDropList
+           [cdkDropListData]="processing"
+           [cdkDropListDisabled]="isMobile()"
+           [cdkDropListConnectedTo]="['col-in-production', 'col-completed']"
+           (cdkDropListDropped)="onCardDrop($event)">
         <ng-container *ngIf="processing.length > 0; else emptyProcessing">
-          <div class="kb-card" *ngFor="let e of processing">
+          <div class="kb-card"
+               *ngFor="let e of processing"
+               cdkDrag
+               [cdkDragDisabled]="isMobile()"
+               (cdkDragStarted)="onDragStarted()"
+                (cdkDragEnded)="onDragEnded()">
             <div class="kb-card-top">
               <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
@@ -201,9 +232,20 @@
         <span class="kb-col-label">4. Entregue</span>
         <span class="kb-col-count">{{ completed.length }}</span>
       </div>
-      <div class="kb-col-body">
+      <div class="kb-col-body"
+           id="col-completed"
+           cdkDropList
+           [cdkDropListData]="completed"
+           [cdkDropListDisabled]="isMobile()"
+           [cdkDropListConnectedTo]="['col-processing']"
+           (cdkDropListDropped)="onCardDrop($event)">
         <ng-container *ngIf="completed.length > 0; else emptyCompleted">
-          <div class="kb-card completed-card" *ngFor="let e of completed">
+          <div class="kb-card completed-card"
+               *ngFor="let e of completed"
+               cdkDrag
+               [cdkDragDisabled]="isMobile()"
+               (cdkDragStarted)="onDragStarted()"
+                (cdkDragEnded)="onDragEnded()">
             <div class="kb-card-top">
               <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>

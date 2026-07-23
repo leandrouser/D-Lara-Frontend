@@ -87,7 +87,7 @@ export class FiadoPaymentModal implements OnChanges {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Erro ao registrar pagamento.');
+        this.errorMessage.set(err?.message || 'Erro ao registrar pagamento.');
         console.error(err);
       }
     });

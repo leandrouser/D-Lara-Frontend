@@ -1,14 +1,15 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnChanges, SimpleChanges, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnChanges, SimpleChanges, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { EmbroideryResponse } from '../../../core/service/embroidery.service';
 import { BrlCurrencyPipe } from '../../../shared/pipes/brl-currency.pipe';
 
 @Component({
   selector: 'app-embroidery-kanban',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatTooltipModule, BrlCurrencyPipe],
+  imports: [CommonModule, MatIconModule, MatTooltipModule, DragDropModule, BrlCurrencyPipe],
   templateUrl: './embroidery-kanban.component.html',
   styleUrls: ['./embroidery-kanban.component.scss']
 })
@@ -30,6 +31,14 @@ export class EmbroideryKanbanComponent implements AfterViewInit, OnDestroy, OnCh
   readonly totalColumns = 4;
   readonly columnLabels = ['Pendente', 'Em Produção', 'Pronto p/ entrega', 'Entregue'];
 
+  // Drag & drop desabilitado no mobile (conflita com o carrossel de scroll-snap)
+  isMobile = signal(typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.isMobile.set(window.innerWidth <= 768);
+  }
+
   private sortByDelivery(items: EmbroideryResponse[]): EmbroideryResponse[] {
     return [...items].sort((a, b) => {
       if (!a.deliveryDate) return 1;
@@ -42,15 +51,15 @@ export class EmbroideryKanbanComponent implements AfterViewInit, OnDestroy, OnCh
   get inProduction() { return this.sortByDelivery(this.items.filter(e => e.status === 'IN_PRODUCTION')); }
   get processing()   { return this.sortByDelivery(this.items.filter(e => e.status === 'PROCESSING')); }
   get completed() {
-  const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  return this.items.filter(e => {
-    if (e.status !== 'COMPLETED') return false;
-    if (!e.deliveredAt) return true;
-    return new Date(e.deliveredAt) >= oneWeekAgo;
-  });
-}
+    return this.items.filter(e => {
+      if (e.status !== 'COMPLETED') return false;
+      if (!e.deliveredAt) return true;
+      return new Date(e.deliveredAt) >= oneWeekAgo;
+    });
+  }
 
   isOverdue(dateStr: string): boolean {
     if (!dateStr) return false;
@@ -78,6 +87,31 @@ export class EmbroideryKanbanComponent implements AfterViewInit, OnDestroy, OnCh
     return map[status] ?? '';
   }
 
+  // ===================== Drag & Drop =====================
+
+  /**
+   * Reaproveita os mesmos outputs usados pelos botões de ação.
+   * Só permite mover entre colunas adjacentes (mesma regra de negócio dos botões).
+   */
+  onCardDrop(event: CdkDragDrop<EmbroideryResponse[]>): void {
+    if (event.previousContainer === event.container) return; // sem reordenação dentro da mesma coluna
+
+    const item = event.previousContainer.data[event.previousIndex];
+    const fromId = event.previousContainer.id;
+    const toId = event.container.id;
+
+    const transitions: Record<string, () => void> = {
+      'col-pending->col-in-production':      () => this.markInProduction.emit(item),
+      'col-in-production->col-processing':   () => this.markReady.emit(item),
+      'col-processing->col-completed':       () => this.markDelivered.emit(item),
+      'col-in-production->col-pending':      () => this.revertStatus.emit({ item, status: 'PENDING' }),
+      'col-processing->col-in-production':   () => this.revertStatus.emit({ item, status: 'IN_PRODUCTION' }),
+      'col-completed->col-processing':       () => this.revertStatus.emit({ item, status: 'PROCESSING' }),
+    };
+
+    transitions[`${fromId}->${toId}`]?.();
+  }
+
   // ===================== Carrossel mobile =====================
 
   ngAfterViewInit(): void {
@@ -89,8 +123,6 @@ export class EmbroideryKanbanComponent implements AfterViewInit, OnDestroy, OnCh
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Se os itens mudarem (ex: após mover um card), o conteúdo da coluna ativa
-    // pode encolher; não precisamos resetar o índice, só evitar ficar fora do range.
     if (changes['items'] && this.activeColumnIndex() > this.totalColumns - 1) {
       this.activeColumnIndex.set(this.totalColumns - 1);
     }
@@ -123,5 +155,13 @@ export class EmbroideryKanbanComponent implements AfterViewInit, OnDestroy, OnCh
 
   getColumnLabel(index: number): string {
     return this.columnLabels[index] ?? '';
+  }
+
+  onDragStarted(): void {
+    document.body.classList.add('kb-dragging');
+  }
+
+  onDragEnded(): void {
+    document.body.classList.remove('kb-dragging');
   }
 }
