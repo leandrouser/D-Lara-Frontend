@@ -241,7 +241,10 @@ setViewMode(mode: 'table' | 'kanban') {
       width: '600px', data, disableClose: true
     });
     dialogRef.afterClosed().subscribe(result => {
-      if (result) { this.loadData(); this.loadGlobalMetrics(); }
+      if (result) {
+        this.refreshCurrentView();
+        this.loadGlobalMetrics();
+      }
     });
   }
 
@@ -249,9 +252,17 @@ setViewMode(mode: 'table' | 'kanban') {
     if (confirm('Deseja realmente excluir este bordado?')) {
       this.embroideryService.delete(id).subscribe(() => {
         this.showSuccess('Bordado excluído!');
-        this.loadData();
+        this.refreshCurrentView();
         this.loadGlobalMetrics();
       });
+    }
+  }
+
+  private refreshCurrentView(): void {
+    if (this.viewMode() === 'kanban') {
+      this.loadAllForKanban();
+    } else {
+      this.loadData();
     }
   }
 

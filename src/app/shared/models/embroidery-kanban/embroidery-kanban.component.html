@@ -41,9 +41,12 @@
                *ngFor="let e of pending"
                [class.late]="isOverdue(e.deliveryDate)">
             <div class="kb-card-top">
-              <div>
+              <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
-                <div class="kb-card-name">{{ e.customerName }}</div>
+                <div class="kb-card-name-row">
+                  <span class="kb-card-name">{{ e.customerName }}</span>
+                  <span class="kb-card-phone" *ngIf="e.customerPhone">{{ e.customerPhone }}</span>
+                </div>
               </div>
               <span class="kb-late-badge" *ngIf="isOverdue(e.deliveryDate)">Atrasado</span>
             </div>
@@ -96,9 +99,12 @@
                *ngFor="let e of inProduction"
                [class.late]="isOverdue(e.deliveryDate)">
             <div class="kb-card-top">
-              <div>
+              <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
-                <div class="kb-card-name">{{ e.customerName }}</div>
+                <div class="kb-card-name-row">
+                  <span class="kb-card-name">{{ e.customerName }}</span>
+                  <span class="kb-card-phone" *ngIf="e.customerPhone">{{ e.customerPhone }}</span>
+                </div>
               </div>
               <span class="kb-late-badge" *ngIf="isOverdue(e.deliveryDate)">Atrasado</span>
             </div>
@@ -149,9 +155,12 @@
         <ng-container *ngIf="processing.length > 0; else emptyProcessing">
           <div class="kb-card" *ngFor="let e of processing">
             <div class="kb-card-top">
-              <div>
+              <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
-                <div class="kb-card-name">{{ e.customerName }}</div>
+                <div class="kb-card-name-row">
+                  <span class="kb-card-name">{{ e.customerName }}</span>
+                  <span class="kb-card-phone" *ngIf="e.customerPhone">{{ e.customerPhone }}</span>
+                </div>
               </div>
             </div>
             <div class="kb-card-desc">{{ e.description }}</div>
@@ -196,9 +205,12 @@
         <ng-container *ngIf="completed.length > 0; else emptyCompleted">
           <div class="kb-card completed-card" *ngFor="let e of completed">
             <div class="kb-card-top">
-              <div>
+              <div class="kb-card-info">
                 <div class="kb-card-id">#{{ e.id }}</div>
-                <div class="kb-card-name">{{ e.customerName }}</div>
+                <div class="kb-card-name-row">
+                  <span class="kb-card-name">{{ e.customerName }}</span>
+                  <span class="kb-card-phone" *ngIf="e.customerPhone">{{ e.customerPhone }}</span>
+                </div>
               </div>
               <span class="kb-delivered-badge">Entregue</span>
             </div>

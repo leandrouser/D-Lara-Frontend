@@ -16,6 +16,7 @@ export interface EmbroideryResponse {
   status: EmbroideryStatus;
   customerId: number;
   customerName: string;
+  customerPhone: string;
   description: string;
   price: number;
   fileName: string;
