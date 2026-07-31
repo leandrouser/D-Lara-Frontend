@@ -19,6 +19,8 @@ export interface EmbroideryResponse {
   customerPhone: string;
   description: string;
   price: number;
+  paidAmount: number;
+  remainingAmount: number;
   fileName: string;
   createdAt: string;
   deliveryDate: string;

@@ -57,6 +57,19 @@ export interface CustomerLedgerEntry {
   note: string | null;
 }
 
+export interface CustomerPaymentReceiptResponse {
+  entryId: number;
+  customerId: number;
+  customerName: string;
+  paymentDateTime: string;
+  previousBalance: number;
+  amountPaid: number;
+  remainingBalance: number;
+  paymentMethodId: number;
+  paymentMethodName: string;
+  operatorName: string;
+}
+
 export interface RegisterPaymentRequest {
   customerId: number;
   amount: number;
@@ -147,8 +160,8 @@ export class CustomerService {
       .pipe(catchError(this.handleError));
   }
 
-  registerPayment(request: RegisterPaymentRequest): Observable<CustomerLedgerEntry> {
-    return this.http.post<CustomerLedgerEntry>(`${this.apiUrl}/${request.customerId}/account/payments`, {
+  registerPayment(request: RegisterPaymentRequest): Observable<CustomerPaymentReceiptResponse> {
+    return this.http.post<CustomerPaymentReceiptResponse>(`${this.apiUrl}/${request.customerId}/account/payments`, {
       amount: request.amount,
       paymentMethodId: request.paymentMethodId
     }).pipe(catchError(this.handleError));

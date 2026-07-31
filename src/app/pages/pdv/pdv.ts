@@ -65,6 +65,10 @@
     isCopiedSale     = signal<boolean>(this.pdvService.state().isCopiedSale);
     expandedDescId = signal<number | null>(null);
 
+    selectedEmbroideryForPayment = signal<any | null>(null);
+    embroideryPaymentInput = signal<number | null>(null);
+    isEmbroideryPaymentModalOpen = signal(false);
+
     pageTitle = signal('Frente de Caixa');
     pageSubtitle = signal('Vendas e Ordens de Serviço');
     isLoading = signal(false);
@@ -598,7 +602,10 @@
                 content: res.content.map((emb: any) => ({
                   ...emb, name: emb.customerName, description: emb.description,
                   deliveryDate: emb.deliveryDate, categoryEnum: CategoryEnum.BORDADO,
-                  price: emb.price, stockQty: 0
+                  price: emb.remainingAmount,       // valor a cobrar agora (padrão)
+                  fullPrice: emb.price,             // valor total do bordado
+                  paidAmount: emb.paidAmount,
+                  stockQty: 0
                 })),
                 totalElements: res.totalElements, totalPages: res.totalPages,
                 serverPaged: true, exactBarcode: false, exactProduct: null, forcedQty: null
@@ -677,61 +684,63 @@
       if (!this.selectedCustomer()) { this.showWarning('Por favor, selecione um cliente antes de finalizar a venda.'); return; }
       if (this.cart().length === 0)  { this.snackBar.open('Carrinho vazio!', 'Aviso', { duration: 2000 }); return; }
       const sessionId = this.activeSessionId();
-      if (!sessionId) { this.showError('Nenhum caixa aberto encontrado!'); return; }
-
-  const saleRequest: SaleRequest = {
-    customerId: this.selectedCustomer()?.id || null,
-    cashSessionId: sessionId,
-    discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
-    discountValue: this.discountInput(),
-    items: this.cart().map(item => ({
-      productId:    item.isEmbroidery ? null : item.product.id,
-      embroideryId: item.isEmbroidery ? (item.embroideryId ?? null) : null,
-      quantity:     item.quantity,
-      manualPrice:  item.isEmbroidery ? item.product.price : null,
-      description:  item.product.name
-    }))
-  };
-
-  this.isLoading.set(true);
-  const action$ = this.activeSaleId()
-    ? this.saleService.update(this.activeSaleId()!, saleRequest)
-    : this.saleService.createSale(saleRequest);
-
-    action$.pipe(take(1)).subscribe({
-        next: (sale: SaleResponse) => {
-      this.activeSaleId.set(sale.id);
-      this.pdvService.patch({ activeSaleId: sale.id });
-
-      this.paymentData.set(null);
-      this.isPaymentModalOpen.set(false);
-
-      setTimeout(() => {
-        this.paymentData.set({
-          saleId: sale.id,
-          totalAmount: this.totalWithDiscount(),
-          customerName: this.selectedCustomer()?.name || 'Consumidor Final',
-          items: this.cart().map(i => ({
-            name: i.product.name,
-            qty: i.quantity,
-            price: i.product.price,
-            total: i.total
-          }))
-        });
-        this.isPaymentModalOpen.set(true);
-        this.isLoading.set(false);
-      }, 50);
-    },
-    error: (err) => {
-      this.isLoading.set(false);
-      const msg = err?.error?.message;
-      if (err?.status === 422 && msg) {
-        this.showError(msg);
-      } else {
-        this.showError('Erro ao gerar venda para pagamento.');
-      }
+      if (!sessionId) { this.showError('Nenhum caixa aberto encontrado!'); return;
     }
-  });
+
+    const saleRequest: SaleRequest = {
+      customerId: this.selectedCustomer()?.id || null,
+      cashSessionId: sessionId,
+      discountType: this.discountType() === 'percent' ? 'PERCENTAGE' : 'FIXED',
+      discountValue: this.discountInput(),
+      items: this.cart().map(item => ({
+        productId:    item.isEmbroidery ? null : item.product.id,
+        embroideryId: item.isEmbroidery ? (item.embroideryId ?? null) : null,
+        quantity:     item.quantity,
+        manualPrice:  item.isEmbroidery && !item.embroideryId ? item.product.price : null,
+        embroideryPaymentAmount: item.isEmbroidery && item.embroideryId ? (item.embroideryPaymentAmount ?? item.product.price) : null,
+        description:  item.product.name
+      }))
+    };
+
+    this.isLoading.set(true);
+    const action$ = this.activeSaleId()
+      ? this.saleService.update(this.activeSaleId()!, saleRequest)
+      : this.saleService.createSale(saleRequest);
+
+      action$.pipe(take(1)).subscribe({
+          next: (sale: SaleResponse) => {
+        this.activeSaleId.set(sale.id);
+        this.pdvService.patch({ activeSaleId: sale.id });
+
+        this.paymentData.set(null);
+        this.isPaymentModalOpen.set(false);
+
+        setTimeout(() => {
+          this.paymentData.set({
+            saleId: sale.id,
+            totalAmount: this.totalWithDiscount(),
+            customerName: this.selectedCustomer()?.name || 'Consumidor Final',
+            items: this.cart().map(i => ({
+              name: i.product.name,
+              qty: i.quantity,
+              price: i.product.price,
+              total: i.total
+            }))
+          });
+          this.isPaymentModalOpen.set(true);
+          this.isLoading.set(false);
+        }, 50);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err?.error?.message;
+        if (err?.status === 422 && msg) {
+          this.showError(msg);
+        } else {
+          this.showError('Erro ao gerar venda para pagamento.');
+        }
+      }
+    });
   }
 
     handlePaymentProcessed(response: any) {
@@ -802,5 +811,36 @@
     @HostListener('document:click')
     onDocumentClick() {
       if (this.expandedDescId() !== null) this.expandedDescId.set(null);
+    }
+
+    openEmbroideryPaymentModal(p: any) {
+      this.selectedEmbroideryForPayment.set(p);
+      this.embroideryPaymentInput.set(p.price); // já vem como remainingAmount
+      this.isEmbroideryPaymentModalOpen.set(true);
+    }
+
+    closeEmbroideryPaymentModal() {
+      this.isEmbroideryPaymentModalOpen.set(false);
+      this.selectedEmbroideryForPayment.set(null);
+      this.embroideryPaymentInput.set(null);
+    }
+
+    confirmEmbroideryPayment() {
+      const p = this.selectedEmbroideryForPayment();
+      const amount = this.embroideryPaymentInput();
+      if (!p || !amount || amount <= 0) { this.showWarning('Informe um valor válido.'); return; }
+      if (amount > p.price) { this.showWarning('Valor maior que o saldo restante do bordado.'); return; }
+
+      this.cart.update(items => [...items, {
+        product: { id: p.id, name: p.name, price: amount, barcode: '', stockQty: 0 },
+        quantity: 1,
+        total: amount,
+        isEmbroidery: true,
+        embroideryId: p.id,
+        embroideryPaymentAmount: amount
+      }]);
+      this.pdvService.patch({ cart: this.cart() });
+      this.snackBar.open('Bordado adicionado!', '', { duration: 1000 });
+      this.closeEmbroideryPaymentModal();
     }
   }

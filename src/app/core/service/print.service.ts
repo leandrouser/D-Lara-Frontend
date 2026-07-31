@@ -43,6 +43,19 @@ export interface FechamentoCaixaRequest {
   totalCreditoAPrazo: number;
 }
 
+export interface ReciboFiadoRequest {
+  entryId: number;
+  customerId: number;
+  customerName: string;
+  paymentDateTime: string;
+  previousBalance: number;
+  amountPaid: number;
+  remainingBalance: number;
+  paymentMethodId: number;
+  paymentMethodName: string;
+  operatorName: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PrintService {
   private http = inject(HttpClient);
@@ -58,5 +71,9 @@ export class PrintService {
 
   imprimirFechamento(fechamento: FechamentoCaixaRequest): Observable<string> {
     return this.http.post(`${this.printAgentUrl}/fechar-caixa`, fechamento, { responseType: 'text' });
+  }
+
+  imprimirPagamentoFiado(recibo: ReciboFiadoRequest): Observable<string> {
+    return this.http.post(`${this.printAgentUrl}/pagamento-fiado`, recibo, { responseType: 'text' });
   }
 }

@@ -2,7 +2,8 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { CustomerService, CustomerResponse } from '../../../../core/service/customer.service';
+import { CustomerService, CustomerResponse, CustomerPaymentReceiptResponse } from '../../../../core/service/customer.service';
+import { PrintService } from '../../../../core/service/print.service';
 import { PaymentMethodResponse, PaymentService } from '../../../../core/service/payment.service';
 
 @Component({
@@ -15,6 +16,7 @@ import { PaymentMethodResponse, PaymentService } from '../../../../core/service/
 export class FiadoPaymentModal implements OnChanges {
   private customerService = inject(CustomerService);
   private paymentService = inject(PaymentService);
+  private printService = inject(PrintService);
 
   @Input() isOpen = false;
   @Input() customer: CustomerResponse | null = null;
@@ -81,15 +83,22 @@ export class FiadoPaymentModal implements OnChanges {
       amount: value,
       paymentMethodId: this.selectedMethodId()!
     }).subscribe({
-      next: () => {
+      next: (receipt) => {
         this.isLoading.set(false);
         this.paymentRegistered.emit();
+        this.printReceipt(receipt);
       },
       error: (err) => {
         this.isLoading.set(false);
         this.errorMessage.set(err?.message || 'Erro ao registrar pagamento.');
         console.error(err);
       }
+    });
+  }
+
+  private printReceipt(receipt: CustomerPaymentReceiptResponse) {
+    this.printService.imprimirPagamentoFiado(receipt).subscribe({
+      error: (err) => console.error('Erro ao imprimir recibo de pagamento:', err)
     });
   }
 

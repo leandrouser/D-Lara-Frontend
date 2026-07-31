@@ -30,6 +30,7 @@ export interface SaleItemRequest {
   productId: number | null;
   quantity: number;
   manualPrice?: number | null;
+  embroideryPaymentAmount?: number | null;
   description?: string;
   embroideryId?: number | null;
 }

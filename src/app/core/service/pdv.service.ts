@@ -19,6 +19,7 @@ export interface CartItem {
   isEmbroidery?: boolean;
   observations?: string;
   embroideryId?: number;
+  embroideryPaymentAmount?: number;
 }
 
 export interface PdvState {
