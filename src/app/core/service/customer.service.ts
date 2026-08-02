@@ -70,10 +70,33 @@ export interface CustomerPaymentReceiptResponse {
   operatorName: string;
 }
 
+export interface CustomerPaymentSplitDetail {
+  paymentMethodId: number;
+  paymentMethodName: string;
+  amountPaid: number;
+}
+
+export interface CustomerPaymentReceiptResponse {
+  paymentGroupId: string;
+  customerId: number;
+  customerName: string;
+  paymentDateTime: string;
+  previousBalance: number;
+  totalPaid: number;
+  remainingBalance: number;
+  totalChange: number;
+  payments: CustomerPaymentSplitDetail[];
+  operatorName: string;
+}
+
+export interface PaymentSplitRequest {
+  paymentMethodId: number;
+  amountPaid: number;
+}
+
 export interface RegisterPaymentRequest {
   customerId: number;
-  amount: number;
-  paymentMethodId: number;
+  payments: PaymentSplitRequest[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -162,8 +185,8 @@ export class CustomerService {
 
   registerPayment(request: RegisterPaymentRequest): Observable<CustomerPaymentReceiptResponse> {
     return this.http.post<CustomerPaymentReceiptResponse>(`${this.apiUrl}/${request.customerId}/account/payments`, {
-      amount: request.amount,
-      paymentMethodId: request.paymentMethodId
+      customerId: request.customerId,
+      payments: request.payments
     }).pipe(catchError(this.handleError));
   }
 }

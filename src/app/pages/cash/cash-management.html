@@ -154,12 +154,13 @@
                 <td>
                   <span [class]="'type-badge ' + item.type.toLowerCase()">
                     <mat-icon>
-                      {{ item.type === 'SALE'       ? 'shopping_cart' :
-                         item.type === 'SUPPLEMENT' ? 'add_circle'    :
-                         item.type === 'SANGRIA'    ? 'remove_circle' :
-                         item.type === 'CHANGE'     ? 'sync_alt'      :
-                         item.type === 'OPENING'    ? 'vpn_key'       :
-                         item.type === 'REFUND'     ? 'cancel'        : 'payments' }}
+                      {{ item.type === 'SALE'            ? 'shopping_cart' :
+                        item.type === 'SUPPLEMENT'      ? 'add_circle'    :
+                        item.type === 'SANGRIA'         ? 'remove_circle' :
+                        item.type === 'CHANGE'          ? 'sync_alt'      :
+                        item.type === 'OPENING'         ? 'vpn_key'       :
+                        item.type === 'REFUND'          ? 'cancel'        :
+                        item.type === 'RECEIVABLE_PAYMENT' ? 'event_repeat'  : 'payments' }}
                     </mat-icon>
                     {{ getTypeLabel(item.type) }}
                   </span>
@@ -388,6 +389,8 @@
                             <option value="SUPPLEMENT">Suprimento</option>
                             <option value="SANGRIA">Sangria</option>
                             <option value="CHANGE">Troco</option>
+                            <option value="REFUND">Estorno</option>
+                            <option value="RECEIVABLE_PAYMENT">FIADO</option>
                           </select>
                         } @else {
                           {{ getTypeLabel(item.type) }}

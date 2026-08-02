@@ -144,7 +144,6 @@
           <mat-icon>print</mat-icon> Reimprimir
         </button>
         <button
-          #confirmBtn
           class="btn-confirm"
           [disabled]="!canProcessPayment()"
           (click)="processPayments()"

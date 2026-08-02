@@ -44,16 +44,22 @@ export interface FechamentoCaixaRequest {
 }
 
 export interface ReciboFiadoRequest {
-  entryId: number;
+  paymentGroupId: string;
   customerId: number;
   customerName: string;
   paymentDateTime: string;
   previousBalance: number;
-  amountPaid: number;
+  totalPaid: number;
   remainingBalance: number;
+  totalChange: number;
+  payments: ReciboFiadoSplit[];
+  operatorName: string;
+}
+
+export interface ReciboFiadoSplit {
   paymentMethodId: number;
   paymentMethodName: string;
-  operatorName: string;
+  amountPaid: number;
 }
 
 @Injectable({ providedIn: 'root' })

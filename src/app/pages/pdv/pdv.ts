@@ -98,6 +98,9 @@
 
     saleSuggestions = signal<SaleResponse[]>([]);
     showSaleSuggestions = signal(false);
+    shouldPrintReceipt = signal<boolean>(this.loadPrintReceiptPreference());
+
+    private static readonly PRINT_RECEIPT_KEY = 'pdv_print_receipt';
 
     paymentData = signal<PaymentData | null>(null);
     paymentMethods = signal<{ id: number, name: string }[]>([]);
@@ -283,6 +286,19 @@
     clearCustomer() {
     this.selectedCustomer.set(null);
     this.pdvService.patch({ selectedCustomer: null });
+    }
+
+    private loadPrintReceiptPreference(): boolean {
+      const saved = localStorage.getItem(Pdv.PRINT_RECEIPT_KEY);
+      return saved === null ? true : saved === 'true';
+    }
+
+    togglePrintReceipt() {
+      this.shouldPrintReceipt.update(v => {
+        const newValue = !v;
+        localStorage.setItem(Pdv.PRINT_RECEIPT_KEY, String(newValue));
+        return newValue;
+      });
     }
 
     addToCart(p: any) {

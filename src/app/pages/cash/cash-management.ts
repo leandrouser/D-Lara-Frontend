@@ -603,7 +603,8 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
       'CHANGE': 'Troco',
       'OPENING': 'Abertura',
       'EXCHANGE_RETURN': 'Troca/Devolução',
-      'REFUND': 'Cancelamento'
+      'REFUND': 'Cancelamento',
+      'RECEIVABLE_PAYMENT': 'Pagto Fiado'
     };
     return labels[type] || type;
   }

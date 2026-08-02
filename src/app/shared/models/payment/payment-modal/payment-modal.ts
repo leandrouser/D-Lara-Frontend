@@ -53,6 +53,7 @@ export class PaymentModal implements OnChanges, OnInit {
 
   @Input() paymentData: PaymentData | null = null;
   @Input() isOpen: boolean = false;
+  @Input() printReceipt = true;
 
   @Output() paymentProcessed = new EventEmitter<PaymentResponse>();
   @Output() close = new EventEmitter<void>();
@@ -279,7 +280,7 @@ export class PaymentModal implements OnChanges, OnInit {
         this.lastCupom.set(response.cupom);
       }
 
-      if (response.saleCompleted && response.cupom) {
+      if (this.printReceipt && response.saleCompleted && response.cupom) {
         this.printService.imprimir(response.cupom).subscribe({
           next: () => console.log('Cupom enviado para impressão'),
           error: () => this.snackBar.open(

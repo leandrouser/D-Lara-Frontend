@@ -1,18 +1,31 @@
 <div class="pdv-wrap">
 
   <div class="pdv-header">
-    <div class="pdv-header__info">
-      <h1 class="pdv-header__title">
-        <mat-icon>shopping_cart_checkout</mat-icon>
-        {{ pageTitle() }}
-      </h1>
-      <p class="pdv-header__sub">{{ pageSubtitle() }}</p>
-    </div>
+  <div class="pdv-header__info">
+    <h1 class="pdv-header__title">
+      <mat-icon>shopping_cart_checkout</mat-icon>
+      {{ pageTitle() }}
+    </h1>
+    <p class="pdv-header__sub">{{ pageSubtitle() }}</p>
+  </div>
+
+  <div class="pdv-header__actions">
+    <button
+      type="button"
+      class="pdv-print-toggle"
+      [class.pdv-print-toggle--active]="shouldPrintReceipt()"
+      (click)="togglePrintReceipt()"
+      [title]="shouldPrintReceipt() ? 'Cupom será impresso automaticamente' : 'Cupom NÃO será impresso'">
+      <mat-icon>{{ shouldPrintReceipt() ? 'print' : 'print_disabled' }}</mat-icon>
+      <span>{{ shouldPrintReceipt() ? 'Imprimir cupom' : 'Não imprimir' }}</span>
+    </button>
+
     <button class="pdv-cash-btn" [class.pdv-cash-btn--open]="isCashRegisterOpen()" (click)="handleButtonClick()">
       <mat-icon>{{ isCashRegisterOpen() ? 'lock' : 'lock_open' }}</mat-icon>
       <span>{{ isCashRegisterOpen() ? 'Fechar Caixa' : 'Abrir Caixa' }}</span>
     </button>
   </div>
+</div>
 
   <div class="pdv-layout">
 
@@ -528,6 +541,7 @@
 <payment-modal
   [isOpen]="isPaymentModalOpen()"
   [paymentData]="paymentData()"
+  [printReceipt]="shouldPrintReceipt()"
   (close)="closePaymentModal()"
   (paymentProcessed)="handlePaymentProcessed($event)">
 </payment-modal>
