@@ -29,6 +29,27 @@ jobs:
       - name: Build de produção
         run: npx ng build --configuration=production
 
+      # --- STEP DE DIAGNÓSTICO (temporário) ---
+      # Mostra o IP público de saída do runner e a quem ele pertence (ASN/org).
+      # Isso ajuda a confirmar se a Hostinger está bloqueando ranges de datacenter/cloud
+      # (Azure, no caso dos runners hospedados do GitHub Actions).
+      - name: Diagnóstico - IP de saída do runner
+        run: |
+          echo "== IP público do runner =="
+          RUNNER_IP=$(curl -4 -s ifconfig.me)
+          echo "IP: $RUNNER_IP"
+
+          echo ""
+          echo "== Informações de ASN/organização (via ipinfo.io) =="
+          curl -s "https://ipinfo.io/${RUNNER_IP}/json" || true
+
+          echo ""
+          echo ""
+          echo "== Teste de conectividade TCP na porta 22 da VPS =="
+          timeout 10 bash -c "cat < /dev/null > /dev/tcp/${{ secrets.VPS_HOST }}/22" \
+            && echo "Conexão TCP na porta 22: OK" \
+            || echo "Conexão TCP na porta 22: FALHOU (timeout ou recusada)"
+
       - name: Copiar dist para VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -39,6 +60,8 @@ jobs:
           target: "/var/www/pdv/dist/"
           strip_components: 1
           overwrite: true
+          timeout: 60s
+          command_timeout: 10m
 
       - name: Recarregar nginx
         uses: appleboy/ssh-action@v1.0.3
