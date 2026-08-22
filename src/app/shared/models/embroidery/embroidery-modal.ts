@@ -180,7 +180,9 @@ export class EmbroideryModal implements OnInit {
 
     formData.append('customerId', customer.id.toString());
     formData.append('description', formValue.description);
-    formData.append('price', String(formValue.price));
+    if (formValue.price !== null && formValue.price !== '') {
+      formData.append('price', String(formValue.price));
+    }
 
     if (formValue.deliveryDate) {
       formData.append('deliveryDate', this.formatDateForBackend(formValue.deliveryDate));
@@ -285,7 +287,7 @@ removeCurrentFile(): void {
   private initializeForm(): void {
     this.form = this.fb.group({
       description: [this.data?.description || '', [Validators.required, Validators.maxLength(500)]],
-      price: [this.data?.price || 0, [Validators.required, Validators.min(0.01)]],
+      price: [this.data?.price ?? null, [Validators.min(0.01)]],
       deliveryDate: [this.parseBackendDate(this.data?.deliveryDate), [Validators.required]],
       fileName: [this.data?.fileName || null],
       status: [this.data?.status || 'PENDING']

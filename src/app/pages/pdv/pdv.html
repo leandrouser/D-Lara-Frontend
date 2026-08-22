@@ -176,7 +176,7 @@
                   }
                   <button class="pdv-btn-add"
                           [disabled]="p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0"
-                          (click)="p.categoryEnum === CategoryEnum.BORDADO ? openEmbroideryPaymentModal(p) : addToCart(p)">                    
+                      (click)="addToCart(p)">                    
                           <span>{{ (p.categoryEnum !== CategoryEnum.BORDADO && p.stockQty <= 0) ? 'Sem estoque' : 'Adicionar' }}</span>
                     <mat-icon>{{ p.categoryEnum === CategoryEnum.BORDADO ? 'brush' : 'add_shopping_cart' }}</mat-icon>
                   </button>

@@ -30,7 +30,7 @@ export interface EmbroideryResponse {
 export interface EmbroideryRequest {
   customerId: number;
   description: string;
-  price: number;
+  price?: number;
   deliveryDate: string;
   fileName?: string;
   fileData?: string;

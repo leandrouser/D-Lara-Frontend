@@ -303,6 +303,18 @@
 
     addToCart(p: any) {
     const isEmb = p.categoryEnum === CategoryEnum.BORDADO || !!p.embroideryId;
+    const itemPrice = Number(p.price ?? p.remainingAmount ?? 0);
+
+    if (isEmb && itemPrice <= 0) {
+      this.showWarning('Este bordado não possui valor pendente para pagamento.');
+      return;
+    }
+
+    if (isEmb && p.embroideryId && this.cart().some(item => item.embroideryId === p.embroideryId)) {
+      this.showWarning('Este bordado já está no carrinho.');
+      return;
+    }
+
     if (!isEmb) {
       const itemNoCarrinho = this.cart().find(i => i.product.id === p.id && !i.isEmbroidery);
       const qtdNoCarrinho = itemNoCarrinho?.quantity ?? 0;
@@ -316,7 +328,9 @@
     }
 
     this.cart.update(items => {
-      const existing = items.find(i => i.product.id === p.id && i.isEmbroidery === isEmb);
+      const existing = !isEmb
+        ? items.find(i => i.product.id === p.id && !i.isEmbroidery)
+        : undefined;
       if (existing) {
         return items.map(i => i === existing
           ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.product.price }
@@ -326,14 +340,15 @@
         product: {
           id: p.id,
           name: p.name,
-          price: p.price,
+          price: itemPrice,
           barcode: p.barcode,
           stockQty: p.stockQty ?? 0
         },
         quantity: 1,
-        total: p.price,
+        total: itemPrice,
         isEmbroidery: isEmb,
-        embroideryId: isEmb ? p.id : undefined
+        embroideryId: isEmb ? p.id : undefined,
+        embroideryPaymentAmount: isEmb ? itemPrice : undefined
       }];
     });
     this.pdvService.patch({ cart: this.cart() });
@@ -615,14 +630,21 @@
           if (this.productCategoryFilter() === CategoryEnum.BORDADO) {
             return this.embroideryService.search(searchTerm, 'PENDING', this.currentPage(), this.pageSize(), 'FALTA_PAGAMENTO').pipe(
               map(res => ({
-                content: res.content.map((emb: any) => ({
-                  ...emb, name: emb.customerName, description: emb.description,
-                  deliveryDate: emb.deliveryDate, categoryEnum: CategoryEnum.BORDADO,
-                  price: emb.remainingAmount,       // valor a cobrar agora (padrão)
-                  fullPrice: emb.price,             // valor total do bordado
-                  paidAmount: emb.paidAmount,
-                  stockQty: 0
-                })),
+                content: res.content.map((emb: any) => {
+                  const fullPrice = Number(emb.price ?? 0);
+                  const paidAmount = Number(emb.paidAmount ?? 0);
+                  const remainingAmount = Number(emb.remainingAmount ?? (fullPrice - paidAmount));
+
+                  return {
+                    ...emb, name: emb.customerName, description: emb.description,
+                    deliveryDate: emb.deliveryDate, categoryEnum: CategoryEnum.BORDADO,
+                    price: remainingAmount,      // valor a cobrar agora
+                    fullPrice,
+                    paidAmount,
+                    remainingAmount,
+                    stockQty: 0
+                  };
+                }),
                 totalElements: res.totalElements, totalPages: res.totalPages,
                 serverPaged: true, exactBarcode: false, exactProduct: null, forcedQty: null
               }))
@@ -713,7 +735,7 @@
         embroideryId: item.isEmbroidery ? (item.embroideryId ?? null) : null,
         quantity:     item.quantity,
         manualPrice:  item.isEmbroidery && !item.embroideryId ? item.product.price : null,
-        embroideryPaymentAmount: item.isEmbroidery && item.embroideryId ? (item.embroideryPaymentAmount ?? item.product.price) : null,
+        embroideryPaymentAmount: item.isEmbroidery && item.embroideryId ? item.total : null,
         description:  item.product.name
       }))
     };

@@ -46,25 +46,31 @@ export class Fiado implements OnInit, OnDestroy {
   showPaymentModal = signal(false);
   selectedCustomer = signal<CustomerResponse | null>(null);
 
-  // Todos os clientes com saldo devedor (carregado à parte, independente da paginação da tabela)
   private allDebtors = signal<CustomerResponse[]>([]);
+
+  private filteredDebtors = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    const debtors = this.allDebtors();
+    if (!term) return debtors;
+    return debtors.filter(c => c.name?.toLowerCase().includes(term));
+  });
 
   displayedCustomers = computed(() => {
     if (this.statusFilter() === 'withDebt') {
       const start = this.currentPage() * this.itemsPerPage();
       const end = start + this.itemsPerPage();
-      return this.allDebtors().slice(start, end);
+      return this.filteredDebtors().slice(start, end);
     }
     return this.customers();
   });
 
   private effectiveTotalElements = computed(() =>
-    this.statusFilter() === 'withDebt' ? this.allDebtors().length : this.totalElements()
+    this.statusFilter() === 'withDebt' ? this.filteredDebtors().length : this.totalElements()
   );
 
   private effectiveTotalPages = computed(() =>
     this.statusFilter() === 'withDebt'
-      ? Math.max(1, Math.ceil(this.allDebtors().length / this.itemsPerPage()))
+      ? Math.max(1, Math.ceil(this.filteredDebtors().length / this.itemsPerPage()))
       : this.totalPages()
   );
 
