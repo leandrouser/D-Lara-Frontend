@@ -55,7 +55,13 @@
       @if (!isLoading() && entries().length > 0) {
         <div class="ledger-list">
           @for (entry of entries(); track entry.id) {
-            <div class="ledger-item" [class.debit]="isDebit(entry.type)" [class.credit]="!isDebit(entry.type)">
+            <div
+              class="ledger-item"
+              [class.debit]="isDebit(entry.type)"
+              [class.credit]="!isDebit(entry.type)"
+              [class.clickable]="!!entry.saleId"
+              [class.loading]="isSaleLoading() && selectedSale() === null && !!entry.saleId"
+              (click)="openSaleDetails(entry)">
               <div class="ledger-icon">
                 <mat-icon>{{ typeIcon(entry.type) }}</mat-icon>
               </div>
@@ -68,6 +74,7 @@
                 </span>
                 <span class="ledger-operator" *ngIf="entry.operatorName">Operador: {{ entry.operatorName }}</span>
               </div>
+              <mat-icon class="ledger-open-icon" *ngIf="entry.saleId">chevron_right</mat-icon>
               <div class="ledger-amount" [class.debit]="isDebit(entry.type)" [class.credit]="!isDebit(entry.type)">
                 {{ isDebit(entry.type) ? '+' : '-' }} {{ formatCurrency(entry.amount) }}
               </div>
@@ -92,3 +99,7 @@
 
   </div>
 </div>
+
+@if (selectedSale(); as sale) {
+  <app-sale-details-modal [sale]="sale" (onClose)="closeSaleDetails()"></app-sale-details-modal>
+}

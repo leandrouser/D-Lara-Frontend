@@ -2,16 +2,19 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { CustomerLedgerEntry, CustomerResponse, CustomerService, Page } from '../../../core/service/customer.service';
+import { SaleResponse, SaleService } from '../../../core/service/sale.service';
+import { SaleDetailsModalComponent } from '../sale/sale-details/sale-details';
 
 @Component({
   selector: 'fiado-ledger-modal',
   standalone: true,
-  imports: [CommonModule, MatIconModule],
+  imports: [CommonModule, MatIconModule, SaleDetailsModalComponent],
   templateUrl: './fiado-ledger-modal.html',
   styleUrls: ['./fiado-ledger-modal.scss']
 })
 export class FiadoLedgerModal implements OnChanges {
   private customerService = inject(CustomerService);
+  private saleService = inject(SaleService);
 
   @Input() isOpen = false;
   @Input() customer: CustomerResponse | null = null;
@@ -24,6 +27,8 @@ export class FiadoLedgerModal implements OnChanges {
 
   isLoading = signal(false);
   errorMessage = signal('');
+  selectedSale = signal<SaleResponse | null>(null);
+  isSaleLoading = signal(false);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen']?.currentValue === true && this.customer) {
@@ -68,7 +73,29 @@ export class FiadoLedgerModal implements OnChanges {
   }
 
   closeModal() {
+    this.closeSaleDetails();
     this.close.emit();
+  }
+
+  openSaleDetails(entry: CustomerLedgerEntry) {
+    if (!entry.saleId || this.isSaleLoading()) return;
+
+    this.isSaleLoading.set(true);
+    this.saleService.getSaleById(entry.saleId).subscribe({
+      next: sale => {
+        this.selectedSale.set(sale);
+        this.isSaleLoading.set(false);
+      },
+      error: err => {
+        this.isSaleLoading.set(false);
+        console.error('Erro ao carregar detalhes da venda.', err);
+      }
+    });
+  }
+
+  closeSaleDetails() {
+    this.selectedSale.set(null);
+    this.isSaleLoading.set(false);
   }
 
   formatCurrency(value: number): string {
