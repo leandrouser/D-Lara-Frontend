@@ -28,6 +28,8 @@
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1000;
 }
 
 .sidebar-header {
