@@ -3,8 +3,9 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PaymentService, PaymentMethodResponse } from '../../core/service/payment.service';
 
-import { SaleService, SaleResponse, SaleItemResponse } from '../../core/service/sale.service';
+import { SaleService, SaleResponse, SaleItemResponse, SaleStatus } from '../../core/service/sale.service';
 import {
   ExchangeService,
   ExchangeResponse,
@@ -45,6 +46,7 @@ export class ExchangeComponent implements OnInit {
   private saleService  = inject(SaleService);
   private exchangeService = inject(ExchangeService);
   private snackBar = inject(MatSnackBar);
+  private paymentService = inject(PaymentService);
 
   step = signal<1 | 2 | 3>(1);
 
@@ -63,6 +65,10 @@ export class ExchangeComponent implements OnInit {
   reason            = signal('');
   paymentMethodCode = signal('DINHEIRO');
   submitting        = signal(false);
+
+  paymentMethods = signal<PaymentMethodResponse[]>([]);
+  loadingPaymentMethods = signal(false);
+  paymentMethodsError = signal('');
 
   history = signal<ExchangeRecord[]>([]);
   private nextHistoryId = 1;
@@ -88,10 +94,14 @@ export class ExchangeComponent implements OnInit {
   );
 
   canSubmit = computed(() =>
-    this.canGoStep2() && this.reason().trim().length > 0
+    this.canGoStep2() &&
+    this.reason().trim().length > 0 &&
+    this.paymentMethodCode().length > 0
   );
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.loadPaymentMethods();
+  }
 
   goToStep(n: 1 | 2 | 3) { this.step.set(n); }
 
@@ -106,31 +116,33 @@ export class ExchangeComponent implements OnInit {
 
     this.saleService.getSaleById(id).subscribe({
       next: (s) => {
-        if (s.saleStatus !== 'PAID') {
-          this.saleError.set('Apenas vendas com status PAGO podem ser trocadas.');
-          this.loadingSale.set(false);
-          return;
-        }
+        if (s.saleStatus !== SaleStatus.PAID && s.saleStatus !== SaleStatus.PARTIALLY_EXCHANGED) {
+        this.saleError.set('Apenas vendas pagas ou parcialmente trocadas podem ser trocadas.');
+        this.loadingSale.set(false);
+        return;
+      }
 
         this.sale.set(s);
         this.returnItems.set(
-          (s.items ?? []).map((item) => ({
-            saleItem: item,
-            selected: false,
-            quantityToReturn: item.quantity,
-          }))
+          (s.items ?? [])
+            .filter(item => item.quantity - item.returnedQuantity > 0)
+            .map((item) => ({
+              saleItem: item,
+              selected: false,
+              quantityToReturn: item.quantity - item.returnedQuantity,
+            }))
         );
         this.loadingSale.set(false);
       },
       error: (err) => {
         this.loadingSale.set(false);
         const message = err?.error?.message || 'Venda não encontrada. Verifique o número e tente novamente.';
-        
+
         this.snackBar.open(message, 'Fechar', {
           duration: 5000,
           panelClass: ['error-snackbar']
         });
-        
+
         this.saleError.set(message);
       }
     });
@@ -147,7 +159,9 @@ export class ExchangeComponent implements OnInit {
   }
 
   updateReturnQty(idx: number, val: string) {
-    const qty = Math.max(1, Math.min(Number(val), this.returnItems()[idx].saleItem.quantity));
+    const row = this.returnItems()[idx];
+    const disponivel = row.saleItem.quantity - row.saleItem.returnedQuantity;
+    const qty = Math.max(1, Math.min(Number(val), disponivel));
     const items = [...this.returnItems()];
     items[idx] = { ...items[idx], quantityToReturn: qty };
     this.returnItems.set(items);
@@ -305,5 +319,27 @@ export class ExchangeComponent implements OnInit {
     if (diff > 0) return 'diff-positive';
     if (diff < 0) return 'diff-negative';
     return 'diff-neutral';
+  }
+
+  private loadPaymentMethods() {
+    this.loadingPaymentMethods.set(true);
+    this.paymentMethodsError.set('');
+
+    this.paymentService.listActiveMethods(['A_PRAZO', 'FIADO']).subscribe({
+      next: (methods) => {
+        this.paymentMethods.set(methods);
+        const dinheiro = methods.find(m => m.code === 'DINHEIRO');
+        this.paymentMethodCode.set(dinheiro?.code ?? methods[0]?.code ?? '');
+        this.loadingPaymentMethods.set(false);
+      },
+      error: () => {
+        this.paymentMethodsError.set('Não foi possível carregar os métodos de pagamento.');
+        this.loadingPaymentMethods.set(false);
+      }
+    });
+  }
+
+  retryLoadPaymentMethods() {
+    this.loadPaymentMethods();
   }
 }

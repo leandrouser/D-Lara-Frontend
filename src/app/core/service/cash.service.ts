@@ -3,7 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environments';
 
-export type MovementType = 'OPENING' | 'SUPPLEMENT' | 'SANGRIA' | 'SALE' | 'CHANGE' | 'EXCHANGE_RETURN' | 'REFUND' | 'RECEIVABLE_PAYMENT';
+export type MovementType =
+  | 'OPENING'
+  | 'SUPPLEMENT'
+  | 'SANGRIA'
+  | 'SALE'
+  | 'CHANGE'
+  | 'EXCHANGE_RETURN'
+  | 'EXCHANGE_SUPPLEMENT'
+  | 'EXCHANGE_REFUND'
+  | 'REFUND'
+  | 'RECEIVABLE_PAYMENT';
+
 export type CashSessionStatus = 'OPEN' | 'CLOSED' | 'REVIEWED';
 export type CashReviewStatus = 'PENDING_REVIEW' | 'UNDER_REVIEW' | 'APPROVED' | 'ADJUSTED';
 

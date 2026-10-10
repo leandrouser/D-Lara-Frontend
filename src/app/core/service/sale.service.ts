@@ -23,7 +23,8 @@ export interface TopSellingProductResponse {
 export enum SaleStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
-  CANCELED = 'CANCELED'
+  CANCELED = 'CANCELED',
+  PARTIALLY_EXCHANGED = "PARTIALLY_EXCHANGED"
 }
 
 export interface SaleItemRequest {
@@ -43,6 +44,7 @@ export interface SaleItemResponse {
   description?: string;
   manualPrice?: number;
   quantity: number;
+  returnedQuantity: number;
   total: number;
   category?: CategoryEnum;
   productName: string;

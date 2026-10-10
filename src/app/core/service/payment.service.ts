@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environments';
 import { Observable } from 'rxjs';
 
@@ -94,5 +94,11 @@ export class PaymentService {
 
   updateMethod(id: number, request: PaymentMethodRequest): Observable<PaymentMethodResponse> {
     return this.http.put<PaymentMethodResponse>(`${environment.apiUrl}/payment-methods/${id}`, request);
+  }
+
+  listActiveMethods(exclude: string[] = []): Observable<PaymentMethodResponse[]> {
+    let params = new HttpParams().set('activeOnly', 'true');
+    exclude.forEach(code => (params = params.append('exclude', code)));
+    return this.http.get<PaymentMethodResponse[]>(`${environment.apiUrl}/payment-methods`, { params });
   }
 }

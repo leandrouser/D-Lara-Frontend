@@ -177,14 +177,14 @@
                         </div>
                       </td>
                       <td class="tr-td--center">
-                        <span class="tr-qty-badge">{{ row.saleItem.quantity }}</span>
+                        <span class="tr-qty-badge">{{ row.saleItem.quantity - row.saleItem.returnedQuantity }}</span>
                       </td>
                       <td class="tr-td--center">
                         <input type="number" class="tr-qty-input"
                                [disabled]="!row.selected"
                                [value]="row.quantityToReturn"
                                min="1"
-                               [max]="row.saleItem.quantity"
+                               [max]="row.saleItem.quantity - row.saleItem.returnedQuantity"
                                (change)="updateReturnQty(i, $any($event.target).value)" />
                       </td>
                       <td class="tr-td--right">{{ row.saleItem.productPrice | currency:'BRL' }}</td>
@@ -398,14 +398,27 @@
           </div>
           <div class="tr-form-group">
             <label>Método de pagamento do acerto</label>
-            <select
-              class="tr-form-select"
-              [value]="paymentMethodCode()"
-              (change)="paymentMethodCode.set($any($event.target).value)">
-              <option value="DINHEIRO">Dinheiro</option>
-              <option value="PIX">Pix</option>
-              <option value="CARTAO">Cartão</option>
-            </select>
+
+            @if (loadingPaymentMethods()) {
+              <div class="tr-hint">
+                <mat-icon class="tr-spin">refresh</mat-icon> Carregando métodos de pagamento...
+              </div>
+            } @else if (paymentMethodsError()) {
+              <div class="tr-alert tr-alert--warn">
+                <mat-icon>warning</mat-icon>
+                <span>{{ paymentMethodsError() }}</span>
+                <button class="tr-btn-link" (click)="retryLoadPaymentMethods()">Tentar novamente</button>
+              </div>
+            } @else {
+              <select
+                class="tr-form-select"
+                [value]="paymentMethodCode()"
+                (change)="paymentMethodCode.set($any($event.target).value)">
+                @for (pm of paymentMethods(); track pm.id) {
+                  <option [value]="pm.code">{{ pm.displayName }}</option>
+                }
+              </select>
+            }
           </div>
         </div>
 
