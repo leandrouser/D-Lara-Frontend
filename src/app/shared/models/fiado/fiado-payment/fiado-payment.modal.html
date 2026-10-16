@@ -4,7 +4,7 @@
     <div class="modal-header">
       <div class="header-title">
         <mat-icon>point_of_sale</mat-icon>
-        <div>
+        <div class="title-text">
           <h2>Registrar Recebimento</h2>
           <span class="customer-name">{{ customer?.name }}</span>
         </div>
@@ -16,29 +16,43 @@
 
     <div class="modal-body" *ngIf="customer">
 
-      <div class="summary-cards">
-        <div class="card total">
-          <small>Saldo Devedor</small>
-          <span>{{ formatCurrency(maxAmount) }}</span>
+      <!-- SUMÁRIO ESTILO CARDS (Igual à página de Pagamentos) -->
+      <div class="summary-cards-wrapper">
+    <div class="summary-cards">
+      <div class="card blue">
+        <div class="info">
+          <span>Saldo Devedor</span>
+          <strong>{{ formatCurrency(maxAmount) }}</strong>
         </div>
-        <div class="card paid" [class.completed]="remainingAmount() === 0 && totalPaid() > 0">
-          <small>Pago</small>
-          <span>{{ formatCurrency(totalPaid()) }}</span>
-        </div>
-        <div class="card remaining" *ngIf="remainingAmount() > 0">
-          <small>Falta Pagar</small>
-          <span>{{ formatCurrency(remainingAmount()) }}</span>
-        </div>
-        <div class="card change" *ngIf="totalChange() > 0">
-          <small>Troco</small>
-          <span>{{ formatCurrency(totalChange()) }}</span>
-        </div>
+        <mat-icon class="icon">account_balance_wallet</mat-icon>
       </div>
+      <div class="card green" [class.completed]="remainingAmount() === 0 && totalPaid() > 0">
+        <div class="info">
+          <span>Total Abatido</span>
+          <strong>{{ formatCurrency(totalDebtReduction()) }}</strong>
+        </div>
+        <mat-icon class="icon">check_circle</mat-icon>
+      </div>
+      <div class="card orange" *ngIf="remainingAmount() > 0">
+        <div class="info">
+          <span>Falta Pagar</span>
+          <strong>{{ formatCurrency(remainingAmount()) }}</strong>
+        </div>
+        <mat-icon class="icon">warning</mat-icon>
+      </div>
+      <div class="card purple" *ngIf="totalChange() > 0">
+        <div class="info">
+          <span>Troco</span>
+          <strong>{{ formatCurrency(totalChange()) }}</strong>
+        </div>
+        <mat-icon class="icon">currency_exchange</mat-icon>
+      </div>
+    </div>
+  </div>
 
       <div class="main-content-grid">
-
         <div class="payment-controls">
-          <label class="section-label">Selecione o Método:</label>
+          <label class="section-label">Método de Recebimento</label>
 
           <div class="methods-grid">
             <button
@@ -46,17 +60,33 @@
               class="method-btn"
               [class.active]="currentPaymentMethodId() === method.id"
               (click)="selectCurrentPaymentMethod(method.id)">
-              <mat-icon *ngIf="method.code === 'DINHEIRO'">payments</mat-icon>
-              <mat-icon *ngIf="method.code === 'CARTAO_DE_CREDITO'">credit_card</mat-icon>
-              <mat-icon *ngIf="method.code === 'CARTAO_DE_DEBITO'">credit_score</mat-icon>
-              <mat-icon *ngIf="method.code === 'PIX'">qr_code_2</mat-icon>
-              <mat-icon *ngIf="!['DINHEIRO','CARTAO_DE_CREDITO','CARTAO_DE_DEBITO','PIX'].includes(method.code)">payment</mat-icon>
+              <mat-icon>{{ getMethodIcon(method.code) }}</mat-icon>
               <span>{{ getPaymentMethodText(method) }}</span>
             </button>
           </div>
 
+          <!-- NOVO: CONTROLE DE DESCONTO COMPACTO -->
+          <div class="discount-control-group">
+            <label class="section-label">Desconto</label>
+            <div class="discount-input-container">
+              <div class="type-toggle">
+                <button [class.active]="discountType() === 'FIXED'" (click)="toggleDiscountType()">R$</button>
+                <button [class.active]="discountType() === 'PERCENTAGE'" (click)="toggleDiscountType()">%</button>
+              </div>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  [ngModel]="discountValue()"
+                  (ngModelChange)="updateDiscount($event)"
+                  placeholder="0,00">
+                <span class="currency-unit">{{ discountType() === 'FIXED' ? 'BRL' : '%' }}</span>
+              </div>
+            </div>
+          </div>
+
           <div class="amount-entry">
-            <label>Valor Recebido (R$)</label>
+            <label class="section-label">Valor Recebido</label>
             <div class="input-group">
               <span class="currency-symbol">R$</span>
               <input
@@ -67,11 +97,7 @@
                 (ngModelChange)="updateCurrentAmount($event)"
                 placeholder="0,00"
                 (keyup.enter)="addPaymentMethod()">
-
-              <button
-                class="btn-add"
-                (click)="addPaymentMethod()"
-                [disabled]="currentAmount() <= 0 || !currentPaymentMethodId()">
+              <button class="btn-add" (click)="addPaymentMethod()" [disabled]="currentAmount() <= 0 || !currentPaymentMethodId()">
                 <mat-icon>add</mat-icon>
               </button>
             </div>
@@ -82,10 +108,11 @@
         </div>
 
         <div class="payment-list-container">
-          <label class="section-label">Pagamentos Adicionados:</label>
+          <label class="section-label">Lançamentos do Recebimento</label>
 
           <div class="empty-list" *ngIf="displayItems().length === 0">
-            Nenhum pagamento adicionado.
+            <mat-icon>receipt_long</mat-icon>
+            <span>Nenhum pagamento adicionado.</span>
           </div>
 
           <ul class="payment-list" *ngIf="displayItems().length > 0">
@@ -140,19 +167,16 @@
         <button
           *ngIf="lastReceipt()"
           class="btn-reprint"
-          (click)="reimprimir()"
-          title="Reimprimir recibo">
+          (click)="reimprimir()">
           <mat-icon>print</mat-icon> Reimprimir
         </button>
         <button
           class="btn-confirm"
           [disabled]="!canProcessPayment()"
-          (click)="submitPayment()"
-          [title]="paymentItems().length === 0 ? 'Adicione um pagamento' : 'Confirmar recebimento'">
+          (click)="submitPayment()">
           Confirmar Recebimento
         </button>
       </div>
     </div>
-
   </div>
 </div>

@@ -1,63 +1,70 @@
-<div class="sidebar-overlay"
-     (click)="toggleMobile()"
-     *ngIf="open() && isMobileScreen()">
-</div>
-
 <div class="sidebar" (mouseenter)="onMouseEnterSidebar()" (mouseleave)="onMouseLeaveSidebar()">
-  <div class="sidebar-header">
-    <div class="logo-section">
-      <h3 class="logo">Sistema</h3>
-      <p class="subtitle">PDV</p>
-    </div>
 
-    <button class="toggle-btn" (click)="toggleSidebar()" *ngIf="!isMobile()">
-      <span [class.rotated]="collapsed()">⮜</span>
-    </button>
+  <div class="sidebar-header">
+    <div class="header-main-group">
+
+      <div class="logo-section">
+        <h3 class="logo">Sistema</h3>
+        <p class="subtitle">PDV</p>
+      </div>
+
+      <!-- APENAS ESTE BOTÃO deve controlar o movimento da sidebar -->
+      <button class="toggle-btn" (click)="toggleSidebar()" *ngIf="!isMobile()">
+        <span [class.rotated]="collapsed()">⮜</span>
+      </button>
+
+    </div>
   </div>
 
   <nav class="sidebar-nav">
     <ul>
-     <li routerLink="/dashboard" routerLinkActive="active" (click)="toggleMobile()">
+     <!-- REMOVIDOS todos os (click)="toggleMobile()" abaixo -->
+     <li routerLink="/dashboard" routerLinkActive="active">
       <span class="icon">🏠</span>
       <span class="menu-text">Dashboard</span>
     </li>
-    <li routerLink="/sales" routerLinkActive="active" (click)="toggleMobile()">
+    <li routerLink="/sales" routerLinkActive="active">
       <span class="icon">🛒</span>
       <span class="menu-text">Vendas</span>
     </li>
-    <li routerLink="/exchange" routerLinkActive="active" (click)="toggleMobile()">
+    <li routerLink="/exchange" routerLinkActive="active">
       <span class="icon">🔄</span>
       <span class="menu-text">Trocas</span>
     </li>
-      <li routerLink="/pdv" routerLinkActive="active" (click)="toggleMobile()">
+      <li routerLink="/pdv" routerLinkActive="active">
         <span class="icon">💳</span>
         <span class="menu-text">PDV</span>
       </li>
-      <li routerLink="/products" routerLinkActive="active" (click)="toggleMobile()">
+      <li routerLink="/products" routerLinkActive="active">
         <span class="icon">📦</span>
         <span class="menu-text">Produtos</span>
       </li>
-      <li routerLink="/customers" routerLinkActive="active" (click)="toggleMobile()">
+      <li routerLink="/customers" routerLinkActive="active">
         <span class="icon">👥</span>
         <span class="menu-text">Clientes</span>
       </li>
-      <li routerLink="/embroidery" routerLinkActive="active" (click)="toggleMobile()">
+      <li routerLink="/embroidery" routerLinkActive="active">
         <span class="icon">🧵</span>
         <span class="menu-text">Bordados</span>
       </li>
       <li *ngIf="authService.isAdmin() || authService.isOperator()"
-          routerLink="/cash" routerLinkActive="active" (click)="toggleMobile()">
+          routerLink="/cash" routerLinkActive="active">
         <span class="icon">💵</span>
         <span class="menu-text">Caixa</span>
       </li>
       <li *ngIf="authService.isAdmin() || authService.isOperator()"
-          routerLink="/fiado" routerLinkActive="active" (click)="toggleMobile()">
+          routerLink="/fiado" routerLinkActive="active">
         <span class="icon">📒</span>
         <span class="menu-text">Fiado</span>
       </li>
 
-      <li *ngIf="authService.isAdmin()" routerLink="/payment" routerLinkActive="active" (click)="toggleMobile()">
-        <span class="icon">⚙️</span>
+      <li *ngIf="authService.isAdmin()" routerLink="/audit" routerLinkActive="active">
+        <mat-icon class="icon">security</mat-icon>
+        <span class="menu-text">Auditoria</span>
+      </li>
+
+      <li *ngIf="authService.isAdmin()" routerLink="/payment" routerLinkActive="active">
+        <mat-icon class="icon">settings</mat-icon>
         <span class="menu-text" *ngIf="!collapsed()">Configurações</span>
       </li>
 

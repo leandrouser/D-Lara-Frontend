@@ -80,4 +80,21 @@ export class SaleModal {
   closeModal() {
     this.close.emit();
   }
+
+
+parseExchangeItem(itemString: string) {
+  const regex = /^(\d+)x\s+(.*?)\s+\(R\$\s+([\d,.]+)\)$/;
+  const match = itemString.match(regex);
+
+  if (match) {
+    return {
+      quantity: match[1],
+      name: match[2],
+      price: match[3]
+    };
+  }
+
+  return { quantity: '', name: itemString, price: '' };
+}
+
 }

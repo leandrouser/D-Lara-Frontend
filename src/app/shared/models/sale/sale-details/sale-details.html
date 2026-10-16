@@ -153,6 +153,90 @@
           </div>
         </div>
       </section>
+
+      @if (!loadingExchanges() && exchanges().length > 0) {
+        <section class="section exchanges-section">
+          <div class="section-header">
+            <mat-icon>history</mat-icon>
+            <h3>Histórico de Trocas</h3>
+          </div>
+
+          <div class="exchanges-timeline">
+            @for (exchange of exchanges(); track exchange.id) {
+              <div class="exchange-event">
+                <div class="event-indicator">
+                  <div class="dot"></div>
+                  <div class="line"></div>
+                </div>
+
+                <div class="event-content">
+                  <div class="event-header">
+                    <span class="event-date">{{ formatDate(exchange.doneAt) }}</span>
+                    <span [class]="'exchange-diff-pill ' + (exchange.difference > 0 ? 'diff-positive' : exchange.difference < 0 ? 'diff-negative' : 'diff-neutral')">
+                      {{ exchange.difference | currency:'BRL' }}
+                    </span>
+                  </div>
+
+                  <div class="event-body">
+                    <div class="exchange-comparison">
+                      <div class="comparison-side returned">
+                        <span class="side-label">Devolvidos</span>
+                        <ul class="item-list">
+                          @for (item of exchange.returnedItems; track item) {
+                            <!-- Criamos uma variável local 'parsed' para guardar o resultado do parse -->
+                            @let parsed = parseExchangeItem(item);
+
+                            <li class="exchange-item-row">
+                              <span class="item-info">
+                                <span class="item-qty">{{ parsed.quantity }}x</span>
+                                <span class="item-name">{{ parsed.name }}</span>
+                              </span>
+                              <span class="item-price">{{ parsed.price | currency:'BRL' }}</span>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+
+                      <div class="comparison-arrow">
+                        <mat-icon>arrow_forward</mat-icon>
+                      </div>
+
+                      <div class="comparison-side new">
+                        <span class="side-label">Novos Itens</span>
+                        <ul class="item-list">
+                          @for (item of exchange.newItems; track item) {
+                            @let parsed = parseExchangeItem(item);
+
+                            <li class="exchange-item-row">
+                              <span class="item-info">
+                                <span class="item-qty">{{ parsed.quantity }}x</span>
+                                <span class="item-name">{{ parsed.name }}</span>
+                              </span>
+                              <span class="item-price">{{ parsed.price | currency:'BRL' }}</span>
+                            </li>
+                          }
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div class="event-footer">
+                      <span class="event-detail">
+                        <mat-icon>comment</mat-icon>
+                        <strong>Motivo:</strong> {{ exchange.reason || 'Não informado' }}
+                      </span>
+                      <span class="event-detail" *ngIf="exchange.observation">
+                        <mat-icon>description</mat-icon>
+                        <strong>Obs:</strong> {{ exchange.observation }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
     </div>
 
     <div class="modal-footer">

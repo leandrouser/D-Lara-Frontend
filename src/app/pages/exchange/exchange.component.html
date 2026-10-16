@@ -457,6 +457,7 @@
               <th class="tr-th--right">Novos itens</th>
               <th class="tr-th--right">Diferença</th>
               <th>Resultado</th>
+              <th>Observação</th>
               <th>Horário</th>
             </tr>
           </thead>
@@ -472,6 +473,7 @@
                   </span>
                 </td>
                 <td>{{ rec.message }}</td>
+                <td>{{ rec.observation || '-' }}</td>
                 <td class="tr-date">{{ formatDate(rec.doneAt) }}</td>
               </tr>
             }

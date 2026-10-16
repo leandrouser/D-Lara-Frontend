@@ -416,7 +416,7 @@
 
   @keyframes slideUpMobile {
     from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
+    to { transform: translateY(0); }
   }
 
   .modal-header,
@@ -507,5 +507,235 @@
 
 @keyframes spin {
   from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
+
+// ── EXCHANGES TIMELINE (DESIGN INTEGRADO) ──────────────────
+.exchanges-section {
+  // Herda .section do seu HTML
+
+  .exchanges-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0; // Espaçamento controlado pelos eventos
+  }
+
+  .exchange-event {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    padding-bottom: 24px;
+
+    &:last-child {
+      .event-indicator .line { display: none; }
+    }
+
+    .event-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        background: #2563eb;
+        border: 3px solid #dbeafe;
+        border-radius: 50%;
+        z-index: 2;
+      }
+
+      .line {
+        flex: 1;
+        width: 2px;
+        background: #e5e7eb;
+        margin: 4px 0;
+      }
+    }
+
+    .event-content {
+      flex: 1;
+      padding-bottom: 8px;
+
+      .event-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+
+        .event-date {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #6b7280;
+        }
+      }
+
+      .event-body {
+        background: #f9fafb;
+        border: 0.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 12px;
+
+        .exchange-comparison {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+
+          @media (max-width: 600px) {
+            flex-direction: column;
+            text-align: center;
+          }
+
+          .comparison-side {
+            flex: 1;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 0.5px solid #e5e7eb;
+
+            .side-label {
+              display: block;
+              font-size: 0.65rem;
+              text-transform: uppercase;
+              color: #9ca3af;
+              font-weight: 700;
+              margin-bottom: 6px;
+              text-align: center;
+            }
+
+            .item-list {
+              list-style: none;
+              padding: 0;
+              margin: 0;
+
+              li {
+                font-size: 0.8rem;
+                color: #4b5563;
+                padding: 2px 0;
+                border-bottom: 0.5px dashed #f3f4f6;
+                &:last-child { border: none; }
+              }
+            }
+          }
+
+          .comparison-arrow {
+            display: flex;
+            align-items: center;
+            color: #9ca3af;
+
+            mat-icon {
+              font-size: 20px;
+              width: 20px;
+              height: 20px;
+            }
+
+            @media (max-width: 600px) {
+              transform: rotate(90deg);
+              margin: 4px 0;
+            }
+          }
+        }
+
+        .event-footer {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          padding-top: 8px;
+          border-top: 0.5px solid #f3f4f6;
+
+          .event-detail {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: #6b7280;
+
+            mat-icon {
+              font-size: 14px;
+              width: 14px;
+              height: 14px;
+              color: #9ca3af;
+            }
+
+            strong { color: #374151; }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ── PILLS (SINCRONIZADAS COM O RESTANTE DO MODAL) ──────────────────
+.exchange-diff-pill {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.diff-positive {
+    background: #dcfce7; // Verde (Status PAID)
+    color: #166534;
+  }
+  &.diff-negative {
+    background: #fee2e2; // Vermelho (Status CANCELLED)
+    color: #991b1b;
+  }
+  &.diff-neutral {
+    background: #f3f4f6; // Cinza (Neutral)
+    color: #6b7280;
+  }
+
+  .exchange-column {
+  // ... (mantenha o que já existe)
+
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    .exchange-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 0.5px dashed #e5e7eb;
+      font-size: 0.8rem;
+      color: #4b5563;
+
+      &:last-child { border: none; }
+
+      .item-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .item-qty {
+        font-weight: 700;
+        color: #2563eb; // Cor azul para destacar a quantidade
+        min-width: 20px;
+      }
+
+      .item-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #374151;
+      }
+
+      .item-price {
+        font-weight: 600;
+        color: #111827;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+}
+

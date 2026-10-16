@@ -36,6 +36,8 @@ export class FiadoPaymentModal implements OnChanges {
   currentPaymentMethodId = signal<number | null>(null);
   currentAmount = signal<number>(0);
   paymentItems = signal<FiadoPaymentItem[]>([]);
+  discountValue = signal<number>(0);
+  discountType = signal<'FIXED' | 'PERCENTAGE'>('FIXED');
 
   isProcessing = signal(false);
   paymentSuccess = signal(false);
@@ -50,13 +52,28 @@ export class FiadoPaymentModal implements OnChanges {
     this.paymentItems().reduce((sum, i) => sum + i.amount, 0)
   );
 
+  totalDebtReduction = computed(() => {
+    const rawDiscount = this.discountValue();
+    let appliedDiscount = 0;
+
+    if (this.discountType() === 'PERCENTAGE') {
+      // Calcula a porcentagem sobre o saldo devedor
+      appliedDiscount = this.maxAmount * (rawDiscount / 100);
+    } else {
+      appliedDiscount = rawDiscount;
+    }
+
+    return this.totalPaid() + appliedDiscount;
+  });
+
   remainingAmount = computed(() => {
-    const remaining = this.maxAmount - this.totalPaid();
+    const remaining = this.maxAmount - this.totalDebtReduction();
     return remaining > 0 ? remaining : 0;
   });
 
   totalChange = computed(() => {
-    const excess = this.totalPaid() - this.maxAmount;
+    const effectiveDebt = this.maxAmount - this.discountValue();
+    const excess = this.totalPaid() - effectiveDebt;
     return excess > 0 ? excess : 0;
   });
 
@@ -70,7 +87,8 @@ export class FiadoPaymentModal implements OnChanges {
   });
 
   isFullyPaid = computed(() =>
-    this.paymentItems().length > 0 && this.totalPaid() >= this.maxAmount
+    (this.paymentItems().length > 0 || this.discountValue() > 0) &&
+    this.totalDebtReduction() >= this.maxAmount
   );
 
   canProcessPayment = computed(() =>
@@ -156,11 +174,20 @@ export class FiadoPaymentModal implements OnChanges {
     return method.displayName;
   }
 
+  getMethodIcon(code: string): string {
+    const c = code?.toUpperCase() || '';
+    if (c.includes('PIX')) return 'qr_code_2';
+    if (c.includes('CASH') || c.includes('DINHEIRO')) return 'payments';
+    if (c.includes('CARD') || c.includes('CARTAO')) return 'credit_card';
+    if (c.includes('DEBITO')) return 'account_balance';
+    return 'payment';
+  }
+
   submitPayment() {
     if (!this.customer) return;
 
-    if (this.paymentItems().length === 0) {
-      this.errorMessage.set('Adicione ao menos uma forma de pagamento.');
+    if (this.paymentItems().length === 0 && this.discountValue() <= 0) {
+      this.errorMessage.set('Adicione ao menos um pagamento ou um desconto.');
       return;
     }
 
@@ -172,9 +199,14 @@ export class FiadoPaymentModal implements OnChanges {
       amountPaid: i.amount
     }));
 
+    const finalDiscountValue = this.discountType() === 'PERCENTAGE'
+      ? this.maxAmount * (this.discountValue() / 100)
+      : this.discountValue();
+
     this.customerService.registerPayment({
       customerId: this.customer.id,
-      payments
+      payments,
+      discountValue: finalDiscountValue
     }).subscribe({
       next: (receipt) => {
         this.isProcessing.set(false);
@@ -185,15 +217,22 @@ export class FiadoPaymentModal implements OnChanges {
       },
       error: (err) => {
         this.isProcessing.set(false);
-        this.errorMessage.set(err?.message || 'Erro ao registrar pagamento.');
+        this.errorMessage.set(err?.error?.message || 'Erro ao registrar pagamento.');
         console.error(err);
       }
     });
   }
 
+
   reimprimir() {
     const receipt = this.lastReceipt();
     if (receipt) this.printReceipt(receipt);
+  }
+
+  updateDiscount(val: string | number) {
+    const normalized = String(val).replace(',', '.').replace(/[^\d.]/g, '');
+    const amount = normalized === '' ? 0 : parseFloat(normalized);
+    this.discountValue.set(isNaN(amount) ? 0 : amount);
   }
 
   private printReceipt(receipt: CustomerPaymentReceiptResponse) {
@@ -212,6 +251,7 @@ export class FiadoPaymentModal implements OnChanges {
     this.currentPaymentMethodId.set(null);
     this.currentAmount.set(0);
     this.paymentItems.set([]);
+    this.discountValue.set(0);
     this.errorMessage.set('');
     this.isProcessing.set(false);
     this.paymentSuccess.set(false);
@@ -229,5 +269,10 @@ export class FiadoPaymentModal implements OnChanges {
         input.select();
       }
     });
+  }
+
+  toggleDiscountType() {
+    this.discountType.update(type => type === 'FIXED' ? 'PERCENTAGE' : 'FIXED');
+    this.discountValue.set(0);
   }
 }

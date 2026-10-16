@@ -3,65 +3,77 @@ import { authGuard } from './core/interceptors/auth.guard';
 import { adminGuard } from './core/interceptors/admin.guard';
 
 export const routes: Routes = [
-
     { path: '', redirectTo: 'login', pathMatch: 'full' },
 
     {
-    path: 'login',
-    loadComponent: () => import('./pages/login/login').then(m => m.Login)
+        path: 'login',
+        loadComponent: () => import('./pages/login/login').then(m => m.Login)
     },
 
     {
-    path: 'users',
-    loadComponent: () => import('./pages/users/users').then(m => m.Users),
-    canActivate: [adminGuard]
+        path: 'users',
+        loadComponent: () => import('./pages/users/users').then(m => m.Users),
+        canActivate: [adminGuard]
     },
 
     {
-    path: 'dashboard',
-    loadComponent: () => import('./pages/dashboard/dashboard').then((m: any) => m.Dashboard)
-    },
-    {
-    path: 'cash',
-    loadComponent: () => import('./pages/cash/cash-management').then((m: any) => m.CashManagement),
-    canActivate: [authGuard]
-   },
-   {
-    path: 'sales',
-    loadComponent: () => import('./pages/sales/sales').then((m: any) => m.Sales)
-    },
-    {
-    path: 'embroidery',
-    loadComponent: () => import('./pages/embroidery/embroidery').then((m: any) => m.Embroidery)
-    },
-    {
-    path: 'products',
-    loadComponent: () => import('./pages/product/product').then((m: any) => m.Product)
-    },
-    {
-    path: 'customers',
-    loadComponent: () => import('./pages/customer/customer').then((m: any) => m.Customer)
-    },
-    {
-    path: 'pdv',
-    loadComponent: () => import('./pages/pdv/pdv').then((m: any) => m.Pdv),
-    canActivate: [authGuard]
-    },
-    {
-    path: 'payment',
-    loadComponent: () => import('./pages/payment/payment').then((m: any) => m.Payment),
-    canActivate: [authGuard]
-    },
-    {
-    path: 'exchange',
-    loadComponent: () =>
-        import('./pages/exchange/exchange.component').then(m => m.ExchangeComponent),
-    canActivate: [authGuard]
-    },
-    {
-    path: 'fiado',
-    loadComponent: () => import('./pages/fiado/fiado').then((m: any) => m.Fiado),
-    canActivate: [authGuard]
+        path: 'dashboard',
+        loadComponent: () => import('./pages/dashboard/dashboard').then((m: any) => m.Dashboard)
     },
 
+    {
+        path: 'cash',
+        loadComponent: () => import('./pages/cash/cash-management').then((m: any) => m.CashManagement),
+        canActivate: [authGuard]
+    },
+
+    {
+        path: 'sales',
+        loadComponent: () => import('./pages/sales/sales').then((m: any) => m.Sales)
+    },
+
+    {
+        path: 'embroidery',
+        loadComponent: () => import('./pages/embroidery/embroidery').then((m: any) => m.Embroidery)
+    },
+
+    {
+        path: 'products',
+        loadComponent: () => import('./pages/product/product').then((m: any) => m.Product)
+    },
+
+    {
+        path: 'customers',
+        loadComponent: () => import('./pages/customer/customer').then((m: any) => m.Customer)
+    },
+
+    {
+        path: 'pdv',
+        loadComponent: () => import('./pages/pdv/pdv').then((m: any) => m.Pdv),
+        canActivate: [authGuard]
+    },
+
+    {
+        path: 'payment',
+        loadComponent: () => import('./pages/payment/payment').then((m: any) => m.Payment),
+        canActivate: [authGuard]
+    },
+
+    {
+        path: 'exchange',
+        loadComponent: () => import('./pages/exchange/exchange.component').then(m => m.ExchangeComponent),
+        canActivate: [authGuard]
+    },
+
+    {
+        path: 'fiado',
+        loadComponent: () => import('./pages/fiado/fiado').then((m: any) => m.Fiado),
+        canActivate: [authGuard]
+    },
+
+    {
+        path: 'audit',
+        loadComponent: () => import('./pages/audit/audit-log.component').then(m => m.AuditLogComponent),
+        canActivate: [adminGuard]
+    }
 ];

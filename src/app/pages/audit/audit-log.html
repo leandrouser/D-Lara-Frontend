@@ -1,0 +1,60 @@
+<div class="audit-container">
+  <div class="page-header">
+    <h1><mat-icon>security</mat-icon> Log de Auditoria</h1>
+    <p class="subtitle">Rastreamento de operações críticas do sistema</p>
+  </div>
+
+  <!-- Filtros Estilo "SaaS" -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <mat-icon>person</mat-icon>
+      <input type="text" placeholder="ID do Operador"
+             [ngModel]="operatorFilter()" (ngModelChange)="operatorFilter.set($event); loadLogs()">
+    </div>
+
+    <div class="filter-group">
+      <mat-icon>category</mat-icon>
+      <select [ngModel]="entityFilter()" (ngModelChange)="entityFilter.set($event); loadLogs()">
+        <option value="all">Todas as Entidades</option>
+        <option value="Customer">Clientes</option>
+        <option value="Exchange">Trocas</option>
+        <option value="CashSession">Sessões de Caixa</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Data/Hora</th>
+          <th>Operador</th>
+          <th>Ação</th>
+          <th>Entidade</th>
+          <th>Detalhes</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of logs(); track log.id) {
+          <tr>
+            <td class="date">{{ log.timestamp | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>
+              <span class="operator-tag">{{ log.operator.userName }}</span>
+            </td>
+            <td>
+              <span class="action-badge" [class]="log.action.toLowerCase()">
+                {{ log.action }}
+              </span>
+            </td>
+            <td>{{ log.entityName }} (#{{ log.entityId }})</td>
+            <td class="details">
+              <span class="old-val">De: {{ log.oldValue }}</span>
+              <mat-icon class="arrow">arrow_forward</mat-icon>
+              <span class="new-val">Para: {{ log.newValue }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -97,6 +97,7 @@ export interface PaymentSplitRequest {
 export interface RegisterPaymentRequest {
   customerId: number;
   payments: PaymentSplitRequest[];
+  discountValue: number;
 }
 
 @Injectable({ providedIn: 'root' })

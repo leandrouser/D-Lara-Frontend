@@ -6,6 +6,7 @@ import { PhoneFormatPipe } from '../../../pipes/phone-pipe';
 import { SaleItemResponse, SaleResponse } from '../../../../core/service/sale.service';
 import { PaymentService, PaymentResponse } from '../../../../core/service/payment.service';
 import { PrintService, CupomRequest } from '../../../../core/service/print.service';
+import { ExchangeService, ExchangeResponse } from '../../../../core/service/exchange.service';
 
 @Component({
   selector: 'app-sale-details-modal',
@@ -21,96 +22,142 @@ export class SaleDetailsModalComponent implements OnInit {
   private paymentService = inject(PaymentService);
   private printService = inject(PrintService);
   private snackBar = inject(MatSnackBar);
+  private exchangeService = inject(ExchangeService);
 
   payments = signal<PaymentResponse[]>([]);
   loadingPayments = signal(true);
   isPrinting = signal(false);
+  exchanges = signal<ExchangeResponse[]>([]);
+  loadingExchanges = signal(true);
 
-  ngOnInit() {
-    this.loadingPayments.set(true);
-    this.paymentService.listPaymentsBySale(this.sale().id).subscribe({
-      next: payments => {
-        this.payments.set(payments);
-        this.loadingPayments.set(false);
-      },
-      error: () => this.loadingPayments.set(false)
-    });
-  }
+    ngOnInit() {
+      this.loadingPayments.set(true);
+      this.paymentService.listPaymentsBySale(this.sale().id).subscribe({
+        next: payments => {
+          this.payments.set(payments);
+          this.loadingPayments.set(false);
+        },
+        error: () => this.loadingPayments.set(false)
+      });
 
-  reimprimir() {
-    if (this.isPrinting()) return;
-
-    const sale = this.sale();
-    const payments = this.payments();
-
-    if (payments.length === 0) {
-      this.snackBar.open('Nenhum pagamento encontrado para reimprimir.', 'Fechar', { duration: 3000 });
-      return;
+      this.loadingExchanges.set(true);
+      this.exchangeService.listBySale(this.sale().id).subscribe({
+        next: exchanges => {
+          this.exchanges.set(exchanges);
+          this.loadingExchanges.set(false);
+        },
+        error: () => this.loadingExchanges.set(false)
+      });
     }
 
-    // Calcular troco (soma dos changeAmount dos pagamentos em dinheiro)
-    const troco = payments.reduce((acc, p) => acc + (p.changeAmount || 0), 0);
+    reimprimir() {
+      if (this.isPrinting()) return;
 
-    const cupom: CupomRequest = {
-      numeroVenda: sale.id,
-      dataHora: sale.dateSale,
-      cliente: {
-        nome: sale.customerName || 'Consumidor Final',
-        telefone: sale.customerPhone || '',
-      },
-      itens: sale.items.map((item, index) => ({
-        sequencia: index + 1,
-        descricao: item.productName || item.description || 'Item',
-        nomeBordado: null,
-        quantidade: item.quantity,
-        valorTotal: this.getItemTotal(item),
-      })),
-      subtotal: sale.subtotal,
-      desconto: sale.discount || 0,
-      total: sale.total,
-      pagamentos: payments.map(p => ({
-        forma: p.paymentMethod.code,
-        valor: p.amountPaid,
-      })),
-      troco,
-      reimpressao: true,
-    };
+      const sale = this.sale();
+      const payments = this.payments();
 
-    this.isPrinting.set(true);
-    this.printService.reimprimir(cupom).subscribe({
-      next: () => {
-        this.snackBar.open('✅ Cupom enviado para impressão!', '', { duration: 2500 });
-        this.isPrinting.set(false);
-      },
-      error: () => {
-        this.snackBar.open('❌ Erro ao imprimir. Verifique a impressora.', 'Fechar', { duration: 5000 });
-        this.isPrinting.set(false);
+      if (payments.length === 0) {
+        this.snackBar.open('Nenhum pagamento encontrado para reimprimir.', 'Fechar', { duration: 3000 });
+        return;
       }
-    });
-  }
 
-  closeModal() { this.onClose.emit(); }
+      const troco = payments.reduce((acc, p) => acc + (p.changeAmount || 0), 0);
 
-  handleBackdropClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('modal-backdrop')) {
-      this.closeModal();
+      const cupom: CupomRequest = {
+        numeroVenda: sale.id,
+        dataHora: sale.dateSale,
+        cliente: {
+          nome: sale.customerName || 'Consumidor Final',
+          telefone: sale.customerPhone || '',
+        },
+        itens: sale.items.map((item, index) => ({
+          sequencia: index + 1,
+          descricao: item.productName || item.description || 'Item',
+          nomeBordado: null,
+          quantidade: item.quantity,
+          valorTotal: this.getItemTotal(item),
+        })),
+        subtotal: sale.subtotal,
+        desconto: sale.discount || 0,
+        total: sale.total,
+        pagamentos: payments.map(p => ({
+          forma: p.paymentMethod.code,
+          valor: p.amountPaid,
+        })),
+        troco,
+        reimpressao: true,
+      };
+
+      this.isPrinting.set(true);
+      this.printService.reimprimir(cupom).subscribe({
+        next: () => {
+          this.snackBar.open('✅ Cupom enviado para impressão!', '', { duration: 2500 });
+          this.isPrinting.set(false);
+        },
+        error: () => {
+          this.snackBar.open('❌ Erro ao imprimir. Verifique a impressora.', 'Fechar', { duration: 5000 });
+          this.isPrinting.set(false);
+        }
+      });
+    }
+
+    closeModal() { this.onClose.emit(); }
+
+    handleBackdropClick(event: MouseEvent) {
+      if ((event.target as HTMLElement).classList.contains('modal-backdrop')) {
+        this.closeModal();
+      }
+    }
+
+    formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+      .format(value || 0);
+    }
+
+    formatDate(dateStr: string | undefined): string {
+      if (!dateStr) return '---';
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      }).format(new Date(dateStr));
+    }
+
+    parseExchangeItem(itemString: string) {
+    if (!itemString) return { quantity: '', name: '', price: 0 };
+
+    try {
+      const xIndex = itemString.indexOf('x');
+      const quantity = xIndex !== -1 ? itemString.substring(0, xIndex).trim() : '';
+
+      const priceStart = itemString.indexOf('(R$');
+      const priceEnd = itemString.lastIndexOf(')');
+
+      let priceValue = 0;
+      if (priceStart !== -1 && priceEnd !== -1) {
+        const priceRaw = itemString.substring(priceStart + 3, priceEnd).trim();
+        priceValue = parseFloat(priceRaw.replace(',', '.'));
+      }
+
+      let name = itemString;
+      if (xIndex !== -1 && priceStart !== -1) {
+        name = itemString.substring(xIndex + 1, priceStart).trim();
+      } else if (xIndex !== -1) {
+        name = itemString.substring(xIndex + 1).trim();
+      }
+
+      return {
+        quantity: quantity,
+        name: name,
+        price: priceValue
+      };
+    } catch {
+      return { quantity: '', name: itemString, price: 0 };
     }
   }
 
-  formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-    .format(value || 0);
+  getStatusClass(status: string): string {
+    return status?.toLowerCase() || 'pending';
   }
-
-  formatDate(dateStr: string): string {
-    if (!dateStr) return '---';
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit', month: 'long', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    }).format(new Date(dateStr));
-  }
-
-  getStatusClass(status: string): string { return status?.toLowerCase() || 'pending'; }
 
   getStatusIcon(status: string): string {
     const icons: any = { 'PAID': 'check_circle', 'PENDING': 'schedule', 'CANCELLED': 'cancel' };
@@ -141,5 +188,17 @@ export class SaleDetailsModalComponent implements OnInit {
       'CARTAO_DEBITO': 'credit_card', 'PIX': 'pix', 'CHEQUE': 'receipt',
     };
     return icons[code?.toUpperCase()] || 'attach_money';
+  }
+
+  hasExchange(): boolean {
+    return this.exchanges().length > 0;
+  }
+
+  getFirstExchangeObservation(): string {
+    if (this.exchanges().length > 0) {
+      const firstExchange = this.exchanges()[0];
+      return firstExchange.observation || '';
+    }
+    return '';
   }
 }

@@ -32,6 +32,7 @@ interface ExchangeRecord {
   totalNewItems: number;
   difference: number;
   message: string;
+  observation?: string;
   doneAt: string;
 }
 
@@ -226,11 +227,16 @@ export class ExchangeComponent implements OnInit {
 
   confirm() {
     if (!this.canSubmit()) return;
+
+    this.executeExchange(false);
+  }
+
+  private executeExchange(confirmRefund: boolean) {
     this.submitting.set(true);
 
     const returnedItems = this.returnItems()
       .filter(r => r.selected)
-        .map(r => ({ saleItemId: r.saleItem.id, quantity: r.quantityToReturn }));
+      .map(r => ({ saleItemId: r.saleItem.id, quantity: r.quantityToReturn }));
 
     const newItems = this.newItems().map(n => ({
       productId: n.productId,
@@ -243,6 +249,7 @@ export class ExchangeComponent implements OnInit {
       newItems,
       paymentMethodCode: this.paymentMethodCode(),
       reason: this.reason(),
+      confirmRefund: confirmRefund,
     }).subscribe({
       next: (res: ExchangeResponse) => {
         this.snackBar.open(res.message, 'OK', { duration: 5000 });
@@ -252,9 +259,22 @@ export class ExchangeComponent implements OnInit {
         this.submitting.set(false);
       },
       error: (err: any) => {
-        const msg = err?.error?.message || 'Erro ao processar troca.';
-        this.snackBar.open(msg, 'Fechar', { duration: 5000 });
         this.submitting.set(false);
+
+        if (err.status === 409 && !confirmRefund) {
+          const msg = err?.error?.message || 'A loja deve reembolsar o cliente. Deseja confirmar esta operação?';
+
+          if (window.confirm(msg)) {
+            this.executeExchange(true);
+          }
+          return;
+        }
+
+        const errorMessage = err?.error?.message || 'Erro ao processar troca.';
+        this.snackBar.open(errorMessage, 'Fechar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -267,6 +287,7 @@ export class ExchangeComponent implements OnInit {
       totalNewItems: res.totalNewItems,
       difference: res.difference,
       message: res.message,
+      observation: res.observation,
       doneAt: new Date().toISOString(),
     };
     this.history.set([record, ...this.history()]);

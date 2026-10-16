@@ -83,9 +83,12 @@ export interface ExchangeRequest {
   newItems: NewItemRequest[];
   paymentMethodCode: string;
   reason: string;
+  observation?: string;
+  confirmRefund: boolean;
 }
 
 export interface ExchangeResponse {
+  id: number;
   originalSaleId: number;
   returnedItems: string[];
   newItems: string[];
@@ -93,6 +96,9 @@ export interface ExchangeResponse {
   totalNewItems: number;
   difference: number;
   message: string;
+  observation?: string;
+  doneAt?: string;
+  reason?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -118,6 +124,12 @@ export class ExchangeService {
     return this.http.post<ExchangeResponse>(
       `${this.apiUrl}/exchange`,
       request
+    );
+  }
+
+  listBySale(saleId: number): Observable<ExchangeResponse[]> {
+    return this.http.get<ExchangeResponse[]>(
+      `${this.apiUrl}/exchange/sale/${saleId}`
     );
   }
 
