@@ -313,6 +313,7 @@ export class CashManagement implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onConfirmCashOpen(initialValue: number): void {
+    if (this.isLoading()) return;
     if (initialValue < 0) {
       this.showError('O valor inicial não pode ser negativo');
       return;
